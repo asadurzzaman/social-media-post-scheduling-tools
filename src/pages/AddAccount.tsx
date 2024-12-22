@@ -143,7 +143,7 @@ const AddAccount = () => {
             </CardHeader>
             <CardContent>
               <FacebookLoginButton
-                appId="1088888202967331"
+                appId="1294294115054311"
                 onSuccess={handleFacebookSuccess}
                 onError={handleFacebookError}
               />
