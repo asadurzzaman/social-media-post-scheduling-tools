@@ -1,6 +1,13 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { Calendar, LayoutDashboard, PenSquare, BarChart3 } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -20,8 +27,25 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <Sidebar>
           <SidebarContent>
             <SidebarGroup>
-              <div className="px-3 py-4">
+              <div className="flex items-center justify-between px-3 py-4">
                 <h1 className="text-xl font-bold text-primary">SocialManager</h1>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <SidebarGroupContent>
                 {menuItems.map((item) => (
