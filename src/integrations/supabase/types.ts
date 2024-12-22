@@ -87,7 +87,10 @@ export type Database = {
           account_name: string
           created_at: string
           id: string
+          page_access_token: string | null
+          page_id: string | null
           platform: string
+          token_expires_at: string | null
           user_id: string
         }
         Insert: {
@@ -95,7 +98,10 @@ export type Database = {
           account_name: string
           created_at?: string
           id?: string
+          page_access_token?: string | null
+          page_id?: string | null
           platform: string
+          token_expires_at?: string | null
           user_id: string
         }
         Update: {
@@ -103,7 +109,10 @@ export type Database = {
           account_name?: string
           created_at?: string
           id?: string
+          page_access_token?: string | null
+          page_id?: string | null
           platform?: string
+          token_expires_at?: string | null
           user_id?: string
         }
         Relationships: [
