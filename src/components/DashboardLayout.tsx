@@ -1,5 +1,5 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,8 @@ interface DashboardLayoutProps {
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: UserPlus, label: "Add Account", path: "/add-account" },
+  { icon: FilePlus, label: "Create Post", path: "/create-post" },
   { icon: PenSquare, label: "Compose", path: "/compose" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
