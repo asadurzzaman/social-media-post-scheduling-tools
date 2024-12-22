@@ -1,1 +1,4 @@
 project_id = "czuhcymoqjgsmwzimlzd"
+
+[functions.publish-facebook-post]
+verify_jwt = false
