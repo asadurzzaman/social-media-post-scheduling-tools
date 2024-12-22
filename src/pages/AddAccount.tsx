@@ -143,7 +143,7 @@ const AddAccount = () => {
             </CardHeader>
             <CardContent>
               <FacebookLoginButton
-                appId={import.meta.env.VITE_FACEBOOK_APP_ID || ''}
+                appId="1088888202967331"
                 onSuccess={handleFacebookSuccess}
                 onError={handleFacebookError}
               />
