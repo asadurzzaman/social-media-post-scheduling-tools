@@ -5,16 +5,72 @@ import { Facebook } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 const AddAccount = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const hash = window.location.hash;
+      
+      if (hash && session) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        
+        if (accessToken) {
+          try {
+            // Get Facebook Pages
+            const pagesResponse = await fetch(
+              `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`
+            );
+            const pagesData = await pagesResponse.json();
+
+            if (pagesData.data && pagesData.data.length > 0) {
+              const page = pagesData.data[0]; // Using first page for simplicity
+              
+              // Store the social account
+              const { error: insertError } = await supabase
+                .from('social_accounts')
+                .insert({
+                  user_id: session.user.id,
+                  platform: 'facebook',
+                  account_name: page.name,
+                  access_token: accessToken,
+                  page_id: page.id,
+                  page_access_token: page.access_token,
+                  token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // 60 days
+                });
+
+              if (insertError) {
+                toast.error("Failed to save Facebook account");
+                console.error("Error saving account:", insertError);
+                return;
+              }
+
+              toast.success("Facebook page connected successfully!");
+              navigate('/');
+            } else {
+              toast.error("No Facebook pages found. Please make sure you have a Facebook page.");
+            }
+          } catch (error) {
+            console.error("Error processing Facebook connection:", error);
+            toast.error("Failed to connect Facebook account");
+          }
+        }
+      }
+    };
+
+    handleAuthCallback();
+  }, [navigate]);
 
   const handleConnectFacebook = async () => {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          scopes: 'pages_manage_posts,pages_read_engagement',
+          scopes: 'pages_show_list,pages_read_engagement,pages_manage_posts',
           redirectTo: `${window.location.origin}/add-account`
         }
       });
@@ -26,8 +82,7 @@ const AddAccount = () => {
       }
 
       if (data) {
-        toast.success("Facebook account connected successfully!");
-        // After successful connection, we'll handle the token in a separate function
+        toast.success("Connecting to Facebook...");
       }
     } catch (error) {
       toast.error("An error occurred while connecting to Facebook");
