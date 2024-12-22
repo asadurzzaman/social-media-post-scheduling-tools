@@ -1,5 +1,5 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,18 @@ const CreatePost = () => {
   const [selectedAccount, setSelectedAccount] = useState("");
   const [date, setDate] = useState<Date>();
   const [imageUrl, setImageUrl] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get current user's ID on component mount
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   // Fetch user's Facebook accounts
   const { data: accounts, isLoading } = useQuery({
@@ -46,7 +58,7 @@ const CreatePost = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!content || !selectedAccount || !date) {
+    if (!content || !selectedAccount || !date || !userId) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -58,6 +70,7 @@ const CreatePost = () => {
         scheduled_for: date.toISOString(),
         image_url: imageUrl || null,
         status: "scheduled",
+        user_id: userId
       });
 
       if (error) throw error;
