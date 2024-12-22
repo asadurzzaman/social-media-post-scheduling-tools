@@ -139,6 +139,25 @@ const AddAccount = () => {
               <CardTitle>Connect Facebook</CardTitle>
               <CardDescription>
                 Connect your Facebook account to manage your pages and posts. Make sure you have a Facebook page before connecting.
+                By connecting, you agree to our{" "}
+                <a 
+                  href="https://lovable.dev/privacy" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Privacy Policy
+                </a>{" "}
+                and{" "}
+                <a 
+                  href="https://lovable.dev/terms" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Terms of Service
+                </a>
+                .
               </CardDescription>
             </CardHeader>
             <CardContent>
