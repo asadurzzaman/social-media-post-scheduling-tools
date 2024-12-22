@@ -27,6 +27,11 @@ const AddAccount = () => {
             );
             const pagesData = await pagesResponse.json();
 
+            if (pagesData.error) {
+              toast.error("Error fetching Facebook pages: " + pagesData.error.message);
+              return;
+            }
+
             if (pagesData.data && pagesData.data.length > 0) {
               const page = pagesData.data[0]; // Using first page for simplicity
               
@@ -103,7 +108,7 @@ const AddAccount = () => {
             <CardHeader>
               <CardTitle>Connect Facebook</CardTitle>
               <CardDescription>
-                Connect your Facebook account to manage your pages and posts
+                Connect your Facebook account to manage your pages and posts. Make sure you have a Facebook page before connecting.
               </CardDescription>
             </CardHeader>
             <CardContent>
