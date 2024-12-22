@@ -1,9 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,91 +7,97 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-    const now = new Date();
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    // Get posts that are scheduled to be published now
-    const { data: posts, error: fetchError } = await supabase
+    // Get posts that are scheduled and due for publishing
+    const { data: posts, error: postsError } = await supabaseClient
       .from('posts')
       .select(`
         *,
         social_accounts(access_token, platform)
       `)
       .eq('status', 'scheduled')
-      .lte('scheduled_for', now.toISOString());
+      .lte('scheduled_for', new Date().toISOString());
 
-    if (fetchError) {
-      throw new Error(`Error fetching posts: ${fetchError.message}`);
+    if (postsError) throw postsError;
+    if (!posts || posts.length === 0) {
+      return new Response(
+        JSON.stringify({ message: 'No posts to publish' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log(`Found ${posts?.length || 0} posts to publish`);
+    const results = await Promise.all(
+      posts.map(async (post) => {
+        if (post.social_accounts.platform !== 'facebook') {
+          return { id: post.id, status: 'error', message: 'Unsupported platform' };
+        }
 
-    const results = await Promise.all((posts || []).map(async (post) => {
-      if (post.social_accounts?.platform !== 'facebook') {
-        console.log(`Skipping post ${post.id} - not a Facebook post`);
-        return null;
-      }
+        try {
+          // Publish to Facebook using Graph API
+          const response = await fetch(
+            `https://graph.facebook.com/v18.0/me/feed`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${post.social_accounts.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: post.content,
+                ...(post.image_url && { link: post.image_url }),
+              }),
+            }
+          );
 
-      const accessToken = post.social_accounts?.access_token;
-      if (!accessToken) {
-        console.log(`Skipping post ${post.id} - no access token`);
-        return null;
-      }
+          const result = await response.json();
 
-      try {
-        // Publish to Facebook
-        const fbResponse = await fetch(
-          `https://graph.facebook.com/v18.0/me/feed`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: post.content,
-              access_token: accessToken,
-              ...(post.image_url ? { link: post.image_url } : {}),
-            }),
+          if (!response.ok) {
+            throw new Error(result.error?.message || 'Failed to publish to Facebook');
           }
-        );
 
-        if (!fbResponse.ok) {
-          throw new Error(`Facebook API error: ${await fbResponse.text()}`);
+          // Update post status to published
+          await supabaseClient
+            .from('posts')
+            .update({ status: 'published' })
+            .eq('id', post.id);
+
+          return {
+            id: post.id,
+            status: 'published',
+            facebook_post_id: result.id,
+          };
+        } catch (error) {
+          console.error(`Error publishing post ${post.id}:`, error);
+          
+          // Update post status to failed
+          await supabaseClient
+            .from('posts')
+            .update({ status: 'failed' })
+            .eq('id', post.id);
+
+          return {
+            id: post.id,
+            status: 'error',
+            message: error.message,
+          };
         }
-
-        // Update post status to published
-        const { error: updateError } = await supabase
-          .from('posts')
-          .update({ status: 'published' })
-          .eq('id', post.id);
-
-        if (updateError) {
-          throw new Error(`Error updating post status: ${updateError.message}`);
-        }
-
-        console.log(`Successfully published post ${post.id}`);
-        return { id: post.id, status: 'success' };
-      } catch (error) {
-        console.error(`Error publishing post ${post.id}:`, error);
-        return { id: post.id, status: 'error', error: error.message };
-      }
-    }));
+      })
+    );
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Posts processing completed', 
-        results: results.filter(Boolean)
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ results }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
     console.error('Error in publish-facebook-post function:', error);
     return new Response(
