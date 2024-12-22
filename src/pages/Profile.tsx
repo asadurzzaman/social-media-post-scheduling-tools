@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useToast } from "sonner";
+import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -11,7 +11,6 @@ import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Profile = () => {
-  const toast = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: profile, isLoading, refetch } = useQuery({
@@ -37,9 +36,9 @@ const Profile = () => {
 
     const formData = new FormData(e.currentTarget);
     const updates = {
-      full_name: formData.get('fullName'),
-      email: formData.get('email'),
-      timezone: formData.get('timezone'),
+      full_name: String(formData.get('fullName') || ''),
+      email: String(formData.get('email') || ''),
+      timezone: String(formData.get('timezone') || 'UTC'),
     };
 
     try {
