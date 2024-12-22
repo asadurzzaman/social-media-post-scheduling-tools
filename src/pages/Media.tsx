@@ -60,13 +60,42 @@ const Media = () => {
   const handleDelete = async (fileName: string) => {
     setDeleting(fileName);
     try {
-      const { error: deleteError } = await supabase.storage
+      // First, check if the file exists in storage
+      const { data: fileExists } = await supabase
+        .storage
+        .from('media')
+        .list('', {
+          search: fileName
+        });
+
+      if (!fileExists || fileExists.length === 0) {
+        toast.error('File not found in storage');
+        return;
+      }
+
+      // Delete from storage
+      const { error: deleteError } = await supabase
+        .storage
         .from('media')
         .remove([fileName]);
 
       if (deleteError) {
+        console.error('Delete error:', deleteError);
         toast.error(`Error deleting ${fileName}`);
-        throw deleteError;
+        return;
+      }
+
+      // Check if the file was actually deleted from storage
+      const { data: checkDelete } = await supabase
+        .storage
+        .from('media')
+        .list('', {
+          search: fileName
+        });
+
+      if (checkDelete && checkDelete.length > 0) {
+        toast.error('Failed to delete file from storage');
+        return;
       }
 
       toast.success(`${fileName} deleted successfully`);
