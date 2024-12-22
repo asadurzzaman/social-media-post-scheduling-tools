@@ -64,9 +64,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <SidebarGroupContent>
+              <SidebarGroupContent className="list-none">
                 {menuItems.map((item) => (
-                  <SidebarMenuItem key={item.path}>
+                  <SidebarMenuItem key={item.path} className="list-none">
                     <SidebarMenuButton asChild>
                       <Link to={item.path} className="flex items-center gap-3 px-3 py-2">
                         <item.icon className="h-5 w-5" />
