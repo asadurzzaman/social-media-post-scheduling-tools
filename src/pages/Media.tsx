@@ -60,17 +60,17 @@ const Media = () => {
   const handleDelete = async (fileName: string) => {
     setDeleting(fileName);
     try {
-      const { error } = await supabase.storage
+      const { error: deleteError } = await supabase.storage
         .from('media')
         .remove([fileName]);
 
-      if (error) {
+      if (deleteError) {
         toast.error(`Error deleting ${fileName}`);
-        console.error('Error:', error);
-      } else {
-        toast.success(`${fileName} deleted successfully`);
-        refetch();
+        throw deleteError;
       }
+
+      toast.success(`${fileName} deleted successfully`);
+      await refetch(); // Make sure to await the refetch
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('Failed to delete file');
