@@ -1,5 +1,5 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,9 +53,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Profile Settings
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />

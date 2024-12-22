@@ -13,6 +13,7 @@ import AddAccount from "./pages/AddAccount";
 import CreatePost from "./pages/CreatePost";
 import Media from "./pages/Media";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -63,6 +64,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />
