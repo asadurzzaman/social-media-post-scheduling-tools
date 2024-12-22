@@ -1,4 +1,9 @@
 project_id = "czuhcymoqjgsmwzimlzd"
 
+[api]
+enabled = true
+url = "https://czuhcymoqjgsmwzimlzd.supabase.co"
+
+[functions]
 [functions.publish-facebook-post]
-verify_jwt = false
+verify_jwt = true
