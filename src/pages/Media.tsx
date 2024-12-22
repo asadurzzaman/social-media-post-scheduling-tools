@@ -70,7 +70,7 @@ const Media = () => {
       }
 
       toast.success(`${fileName} deleted successfully`);
-      await refetch(); // Make sure to await the refetch
+      await refetch();
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('Failed to delete file');
@@ -91,20 +91,20 @@ const Media = () => {
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Media Library</h2>
-          <p className="text-muted-foreground">Upload and manage your media files</p>
+          <p className="text-muted-foreground mt-2">Upload and manage your media files</p>
         </div>
 
-        <Card>
+        <Card className="border border-border">
           <CardContent className="p-6">
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300'
+                isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
               }`}
             >
               <Input {...getInputProps()} />
-              <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-lg mb-2">
+              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-lg mb-2 font-medium">
                 {isDragActive
                   ? "Drop the files here..."
                   : "Drag 'n' drop files here, or click to select files"}
@@ -123,17 +123,17 @@ const Media = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {mediaFiles?.map((file) => (
-            <Card key={file.name} className="overflow-hidden group relative">
+            <Card key={file.name} className="group relative overflow-hidden border border-border">
               <CardContent className="p-4">
-                <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center relative group">
+                <div className="aspect-square rounded-lg bg-muted flex items-center justify-center relative group overflow-hidden">
                   {file.metadata?.mimetype?.startsWith('image/') ? (
                     <img
                       src={`${supabase.storage.from('media').getPublicUrl(file.name).data.publicUrl}`}
                       alt={file.name}
-                      className="object-cover w-full h-full rounded-lg"
+                      className="object-cover w-full h-full rounded-lg transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <ImageIcon className="w-12 h-12 text-gray-400" />
+                    <ImageIcon className="w-12 h-12 text-muted-foreground" />
                   )}
                   <Button
                     variant="destructive"
@@ -143,13 +143,13 @@ const Media = () => {
                     disabled={deleting === file.name}
                   >
                     {deleting === file.name ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background"></div>
                     ) : (
                       <Trash2 className="h-4 w-4" />
                     )}
                   </Button>
                 </div>
-                <p className="mt-2 text-sm truncate">{file.name}</p>
+                <p className="mt-2 text-sm truncate text-muted-foreground">{file.name}</p>
               </CardContent>
             </Card>
           ))}
