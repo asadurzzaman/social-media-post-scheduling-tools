@@ -1,5 +1,5 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,7 @@ const menuItems = [
   { icon: FilePlus, label: "Create Post", path: "/create-post" },
   { icon: PenSquare, label: "Compose", path: "/compose" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
+  { icon: Image, label: "Media", path: "/media" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
 ];
 

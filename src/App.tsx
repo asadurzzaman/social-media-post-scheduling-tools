@@ -11,6 +11,7 @@ import Calendar from "./pages/Calendar";
 import Analytics from "./pages/Analytics";
 import AddAccount from "./pages/AddAccount";
 import CreatePost from "./pages/CreatePost";
+import Media from "./pages/Media";
 import Auth from "./pages/Auth";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
@@ -94,6 +95,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Calendar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/media"
+            element={
+              <ProtectedRoute>
+                <Media />
               </ProtectedRoute>
             }
           />
