@@ -13,7 +13,7 @@ export const POST_TYPES = [
   { value: "text-only", label: "Text-only" },
 ] as const;
 
-export type PostType = (typeof POST_TYPES)[number]['value'];
+export type PostType = typeof POST_TYPES[number]['value'];
 
 interface PostTypeSelectProps {
   value: PostType;
