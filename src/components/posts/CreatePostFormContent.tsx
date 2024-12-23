@@ -6,6 +6,11 @@ import { SchedulingOptions } from './SchedulingOptions';
 import { PostFormMedia } from './PostFormMedia';
 import { PostFormActions } from './PostFormActions';
 
+interface PollOption {
+  id: string;
+  text: string;
+}
+
 interface CreatePostFormContentProps {
   accounts: any[];
   content: string;
@@ -35,8 +40,8 @@ interface CreatePostFormContentProps {
   setCustomIntervalHours: (hours: number) => void;
   onSubmit: (e: React.FormEvent) => void;
   clearDraft: () => void;
-  pollOptions: { id: string; text: string; }[];
-  setPollOptions: (options: { id: string; text: string; }[]) => void;
+  pollOptions: PollOption[];
+  setPollOptions: (options: PollOption[]) => void;
 }
 
 export const CreatePostFormContent = ({
@@ -73,9 +78,9 @@ export const CreatePostFormContent = ({
 }: CreatePostFormContentProps) => {
   const handleFileUpload = (files: File[]) => {
     if (postType === 'carousel') {
-      setUploadedFiles(prev => [...prev, ...files]);
+      setUploadedFiles((prev: File[]) => [...prev, ...files]);
       const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+      setPreviewUrls((prev: string[]) => [...prev, ...newPreviewUrls]);
     } else {
       setUploadedFiles([files[0]]);
       const objectUrl = URL.createObjectURL(files[0]);
@@ -84,8 +89,8 @@ export const CreatePostFormContent = ({
   };
 
   const handleFileDelete = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setUploadedFiles((prev: File[]) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev: string[]) => prev.filter((_, i) => i !== index));
   };
 
   return (

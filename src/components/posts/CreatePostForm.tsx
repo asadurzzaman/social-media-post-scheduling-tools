@@ -9,6 +9,11 @@ interface CreatePostFormProps {
   userId: string | null;
 }
 
+interface PollOption {
+  id: string;
+  text: string;
+}
+
 export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [content, setContent] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
@@ -18,7 +23,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDraft, setIsDraft] = useState(false);
   const [hashtags, setHashtags] = useState<string[]>([]);
-  const [pollOptions, setPollOptions] = useState([
+  const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: crypto.randomUUID(), text: "" },
     { id: crypto.randomUUID(), text: "" }
   ]);

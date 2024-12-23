@@ -64,6 +64,7 @@ export type Database = {
           hashtags: string[] | null
           id: string
           image_url: string | null
+          poll_options: string[] | null
           scheduled_for: string
           social_account_id: string
           status: string | null
@@ -76,6 +77,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
+          poll_options?: string[] | null
           scheduled_for: string
           social_account_id: string
           status?: string | null
@@ -88,6 +90,7 @@ export type Database = {
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
+          poll_options?: string[] | null
           scheduled_for?: string
           social_account_id?: string
           status?: string | null
@@ -150,6 +153,7 @@ export type Database = {
           image_url: string | null
           interval_value: number
           last_posted_at: string | null
+          poll_options: string[] | null
           social_account_id: string
           start_date: string
           status: string | null
@@ -166,6 +170,7 @@ export type Database = {
           image_url?: string | null
           interval_value?: number
           last_posted_at?: string | null
+          poll_options?: string[] | null
           social_account_id: string
           start_date: string
           status?: string | null
@@ -182,6 +187,7 @@ export type Database = {
           image_url?: string | null
           interval_value?: number
           last_posted_at?: string | null
+          poll_options?: string[] | null
           social_account_id?: string
           start_date?: string
           status?: string | null
