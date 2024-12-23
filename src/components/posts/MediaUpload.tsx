@@ -32,6 +32,8 @@ export const MediaUpload = ({
         return { 'video/*': ['.mp4', '.mov', '.avi'] };
       case 'carousel':
         return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
+      case 'text-only':
+        return {};
       default:
         return {};
     }
@@ -58,8 +60,7 @@ export const MediaUpload = ({
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
           isDragActive ? "border-primary bg-primary/5" : "border-gray-200 hover:border-primary/50",
-          "relative min-h-[200px] flex flex-col items-center justify-center",
-          postType === 'text-only' && "opacity-50 cursor-not-allowed"
+          "relative min-h-[200px] flex flex-col items-center justify-center"
         )}
       >
         <input {...getInputProps()} />

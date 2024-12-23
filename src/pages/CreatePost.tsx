@@ -13,6 +13,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { PostTypeSelect, PostType } from "@/components/posts/PostTypeSelect";
 import { MediaUpload } from "@/components/posts/MediaUpload";
@@ -125,7 +132,7 @@ const CreatePost = () => {
         <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
           <div className="space-y-2">
             <label htmlFor="account" className="text-sm font-medium">
-              Facebook Account
+              Facebook Account <span className="text-red-500">*</span>
             </label>
             <Select value={selectedAccount} onValueChange={setSelectedAccount}>
               <SelectTrigger>
@@ -148,7 +155,7 @@ const CreatePost = () => {
 
           <div className="space-y-2">
             <label htmlFor="content" className="text-sm font-medium">
-              Post Content
+              Post Content <span className="text-red-500">*</span>
             </label>
             <Textarea
               id="content"
@@ -167,7 +174,9 @@ const CreatePost = () => {
           />
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Schedule Date & Time</label>
+            <label className="text-sm font-medium">
+              Schedule Date & Time <span className="text-red-500">*</span>
+            </label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
