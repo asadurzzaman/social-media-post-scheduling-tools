@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -23,17 +23,23 @@ export const MentionSuggestions = ({
   onSelect,
   triggerRef 
 }: MentionSuggestionsProps) => {
+  const [searchValue, setSearchValue] = useState("");
+
+  const filteredMentions = SAMPLE_MENTIONS.filter(mention =>
+    mention.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
   return (
     <Popover open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <PopoverTrigger asChild>
         <span ref={triggerRef as React.RefObject<HTMLSpanElement>} />
       </PopoverTrigger>
       <PopoverContent className="p-0" align="start" side="bottom" sideOffset={5}>
-        <Command>
+        <Command value={searchValue} onValueChange={setSearchValue}>
           <CommandInput placeholder="Search mentions..." />
           <CommandEmpty>No mentions found.</CommandEmpty>
           <CommandGroup>
-            {SAMPLE_MENTIONS.map((mention) => (
+            {filteredMentions.map((mention) => (
               <CommandItem
                 key={mention}
                 value={mention}
