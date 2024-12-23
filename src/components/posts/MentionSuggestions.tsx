@@ -28,15 +28,14 @@ export const MentionSuggestions = ({
       <PopoverTrigger asChild>
         <span ref={triggerRef as React.RefObject<HTMLSpanElement>} />
       </PopoverTrigger>
-      <PopoverContent className="p-0" align="start">
-        <Command>
+      <PopoverContent className="p-0" align="start" side="bottom">
+        <Command shouldFilter={false}>
           <CommandInput placeholder="Search mentions..." />
           <CommandEmpty>No mentions found.</CommandEmpty>
-          <CommandGroup>
+          <CommandGroup heading="Suggestions">
             {SAMPLE_MENTIONS.map((mention) => (
               <CommandItem
                 key={mention}
-                value={mention}
                 onSelect={() => {
                   onSelect(mention);
                   onClose();
