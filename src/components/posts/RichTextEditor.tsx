@@ -11,11 +11,12 @@ interface RichTextEditorProps {
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
   const editorRef = useRef<any>(null);
   const [isEditorReady, setIsEditorReady] = useState(false);
+  const initialValueRef = useRef(value);
 
   useEffect(() => {
     return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy?.()
+      if (editorRef.current?.destroy) {
+        editorRef.current.destroy()
           .catch((error: any) => console.error('Error destroying editor:', error));
       }
     };
@@ -41,6 +42,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
   const handleEditorReady = (editor: any) => {
     try {
       editorRef.current = editor;
+      editor.setData(initialValueRef.current);
       setIsEditorReady(true);
     } catch (error) {
       console.error('Error in editor ready:', error);
@@ -49,7 +51,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
 
   return (
     <div className="space-y-2">
-      <div className="min-h-[200px]">
+      <div className="min-h-[200px] border rounded-md overflow-hidden">
         <CKEditor
           editor={ClassicEditor}
           data={value}
