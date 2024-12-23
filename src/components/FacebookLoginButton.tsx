@@ -9,13 +9,28 @@ declare global {
   }
 }
 
-interface FacebookLoginProps {
+// Define Facebook response types
+interface FacebookAuthResponse {
+  accessToken: string;
+  userID: string;
+  expiresIn: number;
+  signedRequest: string;
+  graphDomain: string;
+  data_access_expiration_time: number;
+}
+
+interface FacebookLoginStatusResponse {
+  status: 'connected' | 'not_authorized' | 'unknown';
+  authResponse: FacebookAuthResponse | null;
+}
+
+interface FacebookLoginButtonProps {
   appId: string;
   onSuccess: (response: { accessToken: string; userId: string }) => void;
   onError: (error: string) => void;
 }
 
-const FacebookLoginButton: React.FC<FacebookLoginProps> = ({
+const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   appId,
   onSuccess,
   onError
@@ -61,26 +76,26 @@ const FacebookLoginButton: React.FC<FacebookLoginProps> = ({
 
     try {
       // First check if user is already logged in
-      const loginStatusResponse = await new Promise((resolve) => {
-        window.FB.getLoginStatus((response: any) => resolve(response));
+      const loginStatusResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
+        window.FB.getLoginStatus((response: FacebookLoginStatusResponse) => resolve(response));
       });
 
-      if (loginStatusResponse.status === 'connected') {
+      if (loginStatusResponse.status === 'connected' && loginStatusResponse.authResponse) {
         onSuccess({
           accessToken: loginStatusResponse.authResponse.accessToken,
           userId: loginStatusResponse.authResponse.userID
         });
       } else {
         // User needs to log in
-        const loginResponse = await new Promise((resolve) => {
-          window.FB.login((response: any) => resolve(response), {
+        const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
+          window.FB.login((response: FacebookLoginStatusResponse) => resolve(response), {
             scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
             return_scopes: true,
             auth_type: 'rerequest'
           });
         });
 
-        if (loginResponse.status === 'connected') {
+        if (loginResponse.status === 'connected' && loginResponse.authResponse) {
           onSuccess({
             accessToken: loginResponse.authResponse.accessToken,
             userId: loginResponse.authResponse.userID
