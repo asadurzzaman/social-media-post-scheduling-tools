@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -13,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { PostTypeSelect, PostType } from './PostTypeSelect';
 import { MediaUpload } from './MediaUpload';
 import { SocialAccountList } from './SocialAccountList';
+import { RichTextEditor } from './RichTextEditor';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,9 +25,36 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [content, setContent] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [date, setDate] = useState<Date>();
-  const [postType, setPostType] = useState<PostType>("image");
+  const [postType, setPostType] = useState<PostType>("text");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isDraft, setIsDraft] = useState(false);
+
+  // Load draft from localStorage on component mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('postDraft');
+    if (savedDraft) {
+      const draft = JSON.parse(savedDraft);
+      setContent(draft.content || "");
+      setPostType(draft.postType || "text");
+      setSelectedAccount(draft.selectedAccount || "");
+      if (draft.date) setDate(new Date(draft.date));
+    }
+  }, []);
+
+  // Save draft to localStorage when content changes
+  useEffect(() => {
+    if (content || selectedAccount || date || postType !== "text") {
+      const draft = {
+        content,
+        postType,
+        selectedAccount,
+        date: date?.toISOString(),
+      };
+      localStorage.setItem('postDraft', JSON.stringify(draft));
+      setIsDraft(true);
+    }
+  }, [content, postType, selectedAccount, date]);
 
   const handleFileUpload = (files: File[]) => {
     if (postType === 'carousel') {
@@ -46,6 +73,17 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  const clearDraft = () => {
+    localStorage.removeItem('postDraft');
+    setContent("");
+    setSelectedAccount("");
+    setDate(undefined);
+    setPostType("text");
+    setUploadedFiles([]);
+    setPreviewUrls([]);
+    setIsDraft(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -54,7 +92,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
       return;
     }
 
-    if (postType !== 'text-only' && uploadedFiles.length === 0) {
+    if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
       toast.error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
       return;
     }
@@ -93,12 +131,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
       if (error) throw error;
 
       toast.success("Post scheduled successfully!");
-      setContent("");
-      setSelectedAccount("");
-      setDate(undefined);
-      setUploadedFiles([]);
-      setPreviewUrls([]);
-      setPostType("image");
+      clearDraft();
     } catch (error) {
       console.error("Error scheduling post:", error);
       toast.error("Failed to schedule post");
@@ -122,22 +155,22 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         <label htmlFor="content" className="text-sm font-medium">
           Post Content <span className="text-red-500">*</span>
         </label>
-        <Textarea
-          id="content"
+        <RichTextEditor
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your post content here..."
-          className="min-h-[150px]"
+          onChange={setContent}
+          maxLength={2200}
         />
       </div>
 
-      <MediaUpload
-        postType={postType}
-        uploadedFiles={uploadedFiles}
-        previewUrls={previewUrls}
-        onFileUpload={handleFileUpload}
-        onFileDelete={handleFileDelete}
-      />
+      {["image", "carousel", "video"].includes(postType) && (
+        <MediaUpload
+          postType={postType}
+          uploadedFiles={uploadedFiles}
+          previewUrls={previewUrls}
+          onFileUpload={handleFileUpload}
+          onFileDelete={handleFileDelete}
+        />
+      )}
 
       <div className="space-y-2">
         <label className="text-sm font-medium">
@@ -167,9 +200,16 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         </Popover>
       </div>
 
-      <Button type="submit" className="w-full">
-        Schedule Post
-      </Button>
+      <div className="flex gap-4">
+        <Button type="submit" className="flex-1">
+          Schedule Post
+        </Button>
+        {isDraft && (
+          <Button type="button" variant="outline" onClick={clearDraft}>
+            Clear Draft
+          </Button>
+        )}
+      </div>
     </form>
   );
 };

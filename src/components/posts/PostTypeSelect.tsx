@@ -5,12 +5,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { FileText, Image, Film, Link2, BarChart2, History } from "lucide-react";
 
 export const POST_TYPES = [
-  { value: "image", label: "Image" },
-  { value: "carousel", label: "Carousel" },
-  { value: "video", label: "Video" },
-  { value: "text-only", label: "Text-only" },
+  { value: "text", label: "Text Post", icon: FileText },
+  { value: "image", label: "Image", icon: Image },
+  { value: "carousel", label: "Image Carousel", icon: Image },
+  { value: "video", label: "Video", icon: Film },
+  { value: "link", label: "Link with Preview", icon: Link2 },
+  { value: "poll", label: "Poll", icon: BarChart2 },
+  { value: "story", label: "Story", icon: History },
 ] as const;
 
 export type PostType = typeof POST_TYPES[number]['value'];
@@ -31,15 +35,21 @@ export const PostTypeSelect = ({ value, onChange }: PostTypeSelectProps) => {
           <SelectValue placeholder="Select post type" />
         </SelectTrigger>
         <SelectContent>
-          {POST_TYPES.map((type) => (
-            <SelectItem 
-              key={type.value} 
-              value={type.value}
-              className="cursor-pointer"
-            >
-              {type.label}
-            </SelectItem>
-          ))}
+          {POST_TYPES.map((type) => {
+            const Icon = type.icon;
+            return (
+              <SelectItem 
+                key={type.value} 
+                value={type.value}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Icon className="h-4 w-4" />
+                  <span>{type.label}</span>
+                </div>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
     </div>
