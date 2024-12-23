@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
 
 // Add FB SDK types
 declare global {
@@ -60,34 +61,42 @@ const FacebookLoginButton: React.FC<FacebookLoginProps> = ({
 
     try {
       // First check if user is already logged in
-      window.FB.getLoginStatus((loginStatusResponse: any) => {
-        if (loginStatusResponse.status === 'connected') {
-          // User is already logged in and authenticated
-          onSuccess({
-            accessToken: loginStatusResponse.authResponse.accessToken,
-            userId: loginStatusResponse.authResponse.userID
-          });
-        } else {
-          // User needs to log in
-          window.FB.login((loginResponse: any) => {
-            if (loginResponse.status === 'connected') {
-              onSuccess({
-                accessToken: loginResponse.authResponse.accessToken,
-                userId: loginResponse.authResponse.userID
-              });
-            } else {
-              onError('Login failed or was cancelled');
-            }
-            setIsProcessing(false);
-          }, {
+      const loginStatusResponse = await new Promise((resolve) => {
+        window.FB.getLoginStatus((response: any) => resolve(response));
+      });
+
+      if (loginStatusResponse.status === 'connected') {
+        onSuccess({
+          accessToken: loginStatusResponse.authResponse.accessToken,
+          userId: loginStatusResponse.authResponse.userID
+        });
+      } else {
+        // User needs to log in
+        const loginResponse = await new Promise((resolve) => {
+          window.FB.login((response: any) => resolve(response), {
             scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
             return_scopes: true,
             auth_type: 'rerequest'
           });
+        });
+
+        if (loginResponse.status === 'connected') {
+          onSuccess({
+            accessToken: loginResponse.authResponse.accessToken,
+            userId: loginResponse.authResponse.userID
+          });
+        } else {
+          onError('Login failed or was cancelled');
         }
-      });
+      }
     } catch (error) {
-      onError('An error occurred during Facebook login');
+      console.error('Facebook login error:', error);
+      try {
+        await FacebookErrorHandler.handleError(error);
+      } catch (handledError: any) {
+        onError(handledError.message);
+      }
+    } finally {
       setIsProcessing(false);
     }
   };
