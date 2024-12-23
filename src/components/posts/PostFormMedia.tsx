@@ -1,5 +1,6 @@
-import { MediaUpload } from './MediaUpload';
-import { PostType } from './PostTypeSelect';
+import { MediaUpload } from "./MediaUpload";
+import { PollOptions } from "./PollOptions";
+import { PostType } from "./PostTypeSelect";
 
 interface PostFormMediaProps {
   postType: PostType;
@@ -7,6 +8,8 @@ interface PostFormMediaProps {
   previewUrls: string[];
   onFileUpload: (files: File[]) => void;
   onFileDelete: (index: number) => void;
+  pollOptions?: { id: string; text: string; }[];
+  onPollOptionsChange?: (options: { id: string; text: string; }[]) => void;
 }
 
 export const PostFormMedia = ({
@@ -14,10 +17,17 @@ export const PostFormMedia = ({
   uploadedFiles,
   previewUrls,
   onFileUpload,
-  onFileDelete
+  onFileDelete,
+  pollOptions,
+  onPollOptionsChange
 }: PostFormMediaProps) => {
-  if (!["image", "carousel", "video"].includes(postType)) {
-    return null;
+  if (postType === "poll" && onPollOptionsChange && pollOptions) {
+    return (
+      <PollOptions
+        options={pollOptions}
+        onChange={onPollOptionsChange}
+      />
+    );
   }
 
   return (

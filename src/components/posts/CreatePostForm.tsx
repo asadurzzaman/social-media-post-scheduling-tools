@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
-import { PostTypeSelect, PostType } from './PostTypeSelect';
-import { SocialAccountList } from './SocialAccountList';
-import { RichTextEditor } from './RichTextEditor';
-import { SchedulingOptions } from './SchedulingOptions';
-import { PostFormMedia } from './PostFormMedia';
-import { PostFormActions } from './PostFormActions';
+import { PostType } from './PostTypeSelect';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { CreatePostFormContent } from "./CreatePostFormContent";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -22,6 +18,10 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDraft, setIsDraft] = useState(false);
   const [hashtags, setHashtags] = useState<string[]>([]);
+  const [pollOptions, setPollOptions] = useState([
+    { id: crypto.randomUUID(), text: "" },
+    { id: crypto.randomUUID(), text: "" }
+  ]);
   
   // Recurring post states
   const [isRecurring, setIsRecurring] = useState(false);
@@ -40,40 +40,25 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
       setSelectedAccount(draft.selectedAccount || "");
       setHashtags(draft.hashtags || []);
       if (draft.date) setDate(new Date(draft.date));
+      if (draft.pollOptions) setPollOptions(draft.pollOptions);
     }
   }, []);
 
   // Save draft to localStorage when content changes
   useEffect(() => {
-    if (content || selectedAccount || date || postType !== "text" || hashtags.length > 0) {
+    if (content || selectedAccount || date || postType !== "text" || hashtags.length > 0 || pollOptions.some(opt => opt.text)) {
       const draft = {
         content,
         postType,
         selectedAccount,
         date: date?.toISOString(),
-        hashtags
+        hashtags,
+        pollOptions: postType === 'poll' ? pollOptions : undefined
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date, hashtags]);
-
-  const handleFileUpload = (files: File[]) => {
-    if (postType === 'carousel') {
-      setUploadedFiles(prev => [...prev, ...files]);
-      const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-      setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
-    } else {
-      setUploadedFiles([files[0]]);
-      const objectUrl = URL.createObjectURL(files[0]);
-      setPreviewUrls([objectUrl]);
-    }
-  };
-
-  const handleFileDelete = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
-  };
+  }, [content, postType, selectedAccount, date, hashtags, pollOptions]);
 
   const clearDraft = () => {
     localStorage.removeItem('postDraft');
@@ -84,6 +69,10 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
     setUploadedFiles([]);
     setPreviewUrls([]);
     setHashtags([]);
+    setPollOptions([
+      { id: crypto.randomUUID(), text: "" },
+      { id: crypto.randomUUID(), text: "" }
+    ]);
     setIsDraft(false);
   };
 
@@ -97,6 +86,11 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
 
     if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
       toast.error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
+      return;
+    }
+
+    if (postType === 'poll' && !pollOptions.every(opt => opt.text.trim())) {
+      toast.error("Please fill in all poll options");
       return;
     }
 
@@ -122,18 +116,23 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         }
       }
 
+      const postData = {
+        content,
+        social_account_id: selectedAccount,
+        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+        hashtags,
+        user_id: userId,
+        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+      };
+
       if (isRecurring) {
         const { error } = await supabase.from("recurring_posts").insert({
-          content,
-          social_account_id: selectedAccount,
+          ...postData,
           start_date: date.toISOString(),
           end_date: endDate?.toISOString(),
-          image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-          hashtags,
           frequency,
           interval_value: intervalValue,
           custom_interval_hours: frequency === 'custom' ? customIntervalHours : null,
-          user_id: userId,
           status: "active"
         });
 
@@ -141,13 +140,9 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         toast.success("Recurring post scheduled successfully!");
       } else {
         const { error } = await supabase.from("posts").insert({
-          content,
-          social_account_id: selectedAccount,
+          ...postData,
           scheduled_for: date.toISOString(),
-          image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-          hashtags,
           status: "scheduled",
-          user_id: userId
         });
 
         if (error) throw error;
@@ -162,60 +157,37 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <SocialAccountList
-        accounts={accounts}
-        selectedAccount={selectedAccount}
-        onSelect={setSelectedAccount}
-      />
-
-      <PostTypeSelect 
-        value={postType} 
-        onChange={setPostType} 
-      />
-
-      <div className="space-y-2">
-        <label htmlFor="content" className="text-sm font-medium">
-          Post Content <span className="text-red-500">*</span>
-        </label>
-        <RichTextEditor
-          value={content}
-          onChange={setContent}
-          maxLength={2200}
-          hashtags={hashtags}
-          onHashtagsChange={setHashtags}
-        />
-      </div>
-
-      <PostFormMedia
-        postType={postType}
-        uploadedFiles={uploadedFiles}
-        previewUrls={previewUrls}
-        onFileUpload={handleFileUpload}
-        onFileDelete={handleFileDelete}
-      />
-
-      <SchedulingOptions
-        date={date}
-        onDateChange={setDate}
-        isRecurring={isRecurring}
-        onRecurringChange={setIsRecurring}
-        frequency={frequency}
-        onFrequencyChange={setFrequency}
-        intervalValue={intervalValue}
-        onIntervalValueChange={setIntervalValue}
-        endDate={endDate}
-        onEndDateChange={setEndDate}
-        customIntervalHours={customIntervalHours}
-        onCustomIntervalChange={setCustomIntervalHours}
-      />
-
-      <PostFormActions
-        onSubmit={handleSubmit}
-        isRecurring={isRecurring}
-        isDraft={isDraft}
-        onClearDraft={clearDraft}
-      />
-    </div>
+    <CreatePostFormContent
+      accounts={accounts}
+      content={content}
+      setContent={setContent}
+      selectedAccount={selectedAccount}
+      setSelectedAccount={setSelectedAccount}
+      date={date}
+      setDate={setDate}
+      postType={postType}
+      setPostType={setPostType}
+      uploadedFiles={uploadedFiles}
+      setUploadedFiles={setUploadedFiles}
+      previewUrls={previewUrls}
+      setPreviewUrls={setPreviewUrls}
+      isDraft={isDraft}
+      hashtags={hashtags}
+      setHashtags={setHashtags}
+      isRecurring={isRecurring}
+      setIsRecurring={setIsRecurring}
+      frequency={frequency}
+      setFrequency={setFrequency}
+      intervalValue={intervalValue}
+      setIntervalValue={setIntervalValue}
+      endDate={endDate}
+      setEndDate={setEndDate}
+      customIntervalHours={customIntervalHours}
+      setCustomIntervalHours={setCustomIntervalHours}
+      onSubmit={handleSubmit}
+      clearDraft={clearDraft}
+      pollOptions={pollOptions}
+      setPollOptions={setPollOptions}
+    />
   );
 };
