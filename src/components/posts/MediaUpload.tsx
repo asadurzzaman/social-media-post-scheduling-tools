@@ -3,31 +3,24 @@ import { useDropzone } from 'react-dropzone';
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostType } from './PostTypeSelect';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { ImagePreviewGrid } from './ImagePreviewGrid';
 
 interface MediaUploadProps {
   postType: PostType;
-  uploadedFile: File | null;
-  previewUrl: string | null;
-  onFileUpload: (file: File) => void;
+  uploadedFiles: File[];
+  previewUrls: string[];
+  onFileUpload: (files: File[]) => void;
 }
 
 export const MediaUpload = ({ 
   postType, 
-  uploadedFile, 
-  previewUrl, 
+  uploadedFiles, 
+  previewUrls, 
   onFileUpload 
 }: MediaUploadProps) => {
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      onFileUpload(file);
+    if (acceptedFiles.length > 0) {
+      onFileUpload(acceptedFiles);
     }
   }, [onFileUpload]);
 
@@ -50,16 +43,16 @@ export const MediaUpload = ({
     onDrop,
     accept: getAcceptedFiles(postType),
     maxFiles: postType === 'carousel' ? 10 : 1,
-    disabled: postType === 'text-only'
+    disabled: postType === 'text-only',
+    multiple: postType === 'carousel'
   });
 
-  // Early return for text-only posts
   if (postType === 'text-only') {
     return null;
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       <label className="text-sm font-medium">
         Media Upload <span className="text-red-500">*</span>
       </label>
@@ -72,39 +65,22 @@ export const MediaUpload = ({
         )}
       >
         <input {...getInputProps()} />
-        {previewUrl ? (
+        {previewUrls.length > 0 ? (
           <>
             {postType === 'video' ? (
               <video 
-                src={previewUrl} 
+                src={previewUrls[0]} 
                 className="max-h-[180px] object-contain mb-4" 
                 controls
               />
-            ) : postType === 'carousel' ? (
-              <Carousel className="w-full max-w-xs">
-                <CarouselContent>
-                  {[previewUrl].map((url, index) => (
-                    <CarouselItem key={index}>
-                      <img
-                        src={url}
-                        alt={`Preview ${index + 1}`}
-                        className="max-h-[180px] w-full object-contain"
-                      />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
             ) : (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-[180px] object-contain mb-4"
+              <ImagePreviewGrid 
+                previewUrls={previewUrls} 
+                className="mb-4"
               />
             )}
             <p className="text-sm text-muted-foreground">
-              Click or drag to replace
+              Click or drag to {postType === 'carousel' ? 'add more' : 'replace'}
             </p>
           </>
         ) : (
@@ -112,7 +88,7 @@ export const MediaUpload = ({
             <Upload className="h-10 w-10 text-muted-foreground mb-4" />
             <p className="text-sm text-muted-foreground">
               {isDragActive
-                ? "Drop the file here"
+                ? "Drop the files here"
                 : `Drag and drop your ${postType} here, or click to select`}
             </p>
             {postType === 'carousel' && (
@@ -123,7 +99,7 @@ export const MediaUpload = ({
           </>
         )}
       </div>
-      {!uploadedFile && (
+      {uploadedFiles.length === 0 && (
         <p className="text-sm text-orange-500">
           Please upload {postType === 'carousel' ? 'at least one image' : `1 ${postType}`}
         </p>
