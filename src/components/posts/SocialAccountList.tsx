@@ -13,6 +13,29 @@ interface SocialAccountListProps {
   onSelect: (accountId: string) => void;
 }
 
+const demoAccounts = [
+  {
+    id: 'demo-linkedin',
+    platform: 'linkedin',
+    account_name: 'Demo LinkedIn Page'
+  },
+  {
+    id: 'demo-youtube',
+    platform: 'youtube',
+    account_name: 'Demo YouTube Channel'
+  },
+  {
+    id: 'demo-instagram',
+    platform: 'instagram',
+    account_name: 'Demo Instagram Profile'
+  },
+  {
+    id: 'demo-twitter',
+    platform: 'twitter',
+    account_name: 'Demo Twitter Account'
+  }
+];
+
 export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: SocialAccountListProps) => {
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
@@ -44,13 +67,15 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
     }
   };
 
+  const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
+
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">
         Select Social Media Account <span className="text-red-500">*</span>
       </label>
       <div className="space-y-2">
-        {accounts.map((account) => (
+        {displayAccounts.map((account) => (
           <button
             key={account.id}
             type="button"
@@ -63,10 +88,15 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
           >
             {getPlatformIcon(account.platform)}
             <span className="font-medium">{account.account_name}</span>
+            {accounts.length === 0 && (
+              <span className="ml-auto text-sm bg-white/20 px-2 py-0.5 rounded">Demo</span>
+            )}
           </button>
         ))}
         {accounts.length === 0 && (
-          <p className="text-sm text-muted-foreground">No social media accounts connected yet.</p>
+          <p className="text-sm text-muted-foreground mt-4">
+            These are demo accounts. Connect your social media accounts to start posting.
+          </p>
         )}
       </div>
     </div>
