@@ -21,6 +21,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDraft, setIsDraft] = useState(false);
+  const [hashtags, setHashtags] = useState<string[]>([]);
   
   // Recurring post states
   const [isRecurring, setIsRecurring] = useState(false);
@@ -37,23 +38,25 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
       setContent(draft.content || "");
       setPostType(draft.postType || "text");
       setSelectedAccount(draft.selectedAccount || "");
+      setHashtags(draft.hashtags || []);
       if (draft.date) setDate(new Date(draft.date));
     }
   }, []);
 
   // Save draft to localStorage when content changes
   useEffect(() => {
-    if (content || selectedAccount || date || postType !== "text") {
+    if (content || selectedAccount || date || postType !== "text" || hashtags.length > 0) {
       const draft = {
         content,
         postType,
         selectedAccount,
         date: date?.toISOString(),
+        hashtags
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date]);
+  }, [content, postType, selectedAccount, date, hashtags]);
 
   const handleFileUpload = (files: File[]) => {
     if (postType === 'carousel') {
@@ -80,6 +83,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
     setPostType("text");
     setUploadedFiles([]);
     setPreviewUrls([]);
+    setHashtags([]);
     setIsDraft(false);
   };
 
@@ -125,6 +129,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
           start_date: date.toISOString(),
           end_date: endDate?.toISOString(),
           image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+          hashtags,
           frequency,
           interval_value: intervalValue,
           custom_interval_hours: frequency === 'custom' ? customIntervalHours : null,
@@ -140,6 +145,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
           social_account_id: selectedAccount,
           scheduled_for: date.toISOString(),
           image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+          hashtags,
           status: "scheduled",
           user_id: userId
         });
@@ -176,6 +182,8 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
           value={content}
           onChange={setContent}
           maxLength={2200}
+          hashtags={hashtags}
+          onHashtagsChange={setHashtags}
         />
       </div>
 
