@@ -9,43 +9,32 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
-  const editorRef = useRef<any>(null);
-  const [isEditorReady, setIsEditorReady] = useState(false);
-  const initialValueRef = useRef(value);
+  const [editor, setEditor] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+  const initialValue = useRef(value);
 
   useEffect(() => {
     return () => {
-      if (editorRef.current?.destroy) {
-        editorRef.current.destroy()
+      if (editor && typeof editor.destroy === 'function') {
+        editor.destroy()
           .catch((error: any) => console.error('Error destroying editor:', error));
       }
     };
-  }, []);
+  }, [editor]);
 
-  const handleEditorChange = (_event: any, editor: any) => {
-    if (!editor || !isEditorReady) return;
-
-    try {
-      const data = editor.getData();
-      const strippedContent = data.replace(/<[^>]*>/g, '');
-      
-      if (!maxLength || strippedContent.length <= maxLength) {
-        onChange(data);
-      } else {
-        editor.setData(value);
-      }
-    } catch (error) {
-      console.error('Error handling editor change:', error);
-    }
+  const handleReady = (editor: any) => {
+    setEditor(editor);
+    setIsReady(true);
   };
 
-  const handleEditorReady = (editor: any) => {
-    try {
-      editorRef.current = editor;
-      editor.setData(initialValueRef.current);
-      setIsEditorReady(true);
-    } catch (error) {
-      console.error('Error in editor ready:', error);
+  const handleChange = (_event: any, editor: any) => {
+    if (!editor || !isReady) return;
+
+    const data = editor.getData();
+    const strippedContent = data.replace(/<[^>]*>/g, '');
+    
+    if (!maxLength || strippedContent.length <= maxLength) {
+      onChange(data);
     }
   };
 
@@ -55,28 +44,21 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
         <CKEditor
           editor={ClassicEditor}
           data={value}
-          onChange={handleEditorChange}
-          onReady={handleEditorReady}
+          onReady={handleReady}
+          onChange={handleChange}
           config={{
-            toolbar: [
-              'heading',
-              '|',
-              'bold',
-              'italic',
-              'link',
-              'bulletedList',
-              'numberedList',
-              '|',
-              'outdent',
-              'indent',
-              '|',
-              'blockQuote',
-              'insertTable',
-              'undo',
-              'redo'
-            ],
+            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList'],
             placeholder: 'Write your post content here...',
-            removePlugins: ['CKFinderUploadAdapter', 'CKFinder', 'EasyImage', 'Image', 'ImageCaption', 'ImageStyle', 'ImageToolbar', 'ImageUpload'],
+            removePlugins: [
+              'CKFinderUploadAdapter',
+              'CKFinder',
+              'EasyImage',
+              'Image',
+              'ImageCaption',
+              'ImageStyle',
+              'ImageToolbar',
+              'ImageUpload'
+            ],
           }}
         />
       </div>
