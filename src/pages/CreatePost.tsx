@@ -29,9 +29,9 @@ const CreatePost = () => {
   const [selectedAccount, setSelectedAccount] = useState("");
   const [date, setDate] = useState<Date>();
   const [postType, setPostType] = useState<PostType>("image");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   // Get current user's ID on component mount
   useEffect(() => {
@@ -59,9 +59,15 @@ const CreatePost = () => {
   });
 
   const handleFileUpload = (file: File) => {
-    setUploadedFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+    if (postType === 'carousel') {
+      setUploadedFiles(prev => [...prev, file]);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrls(prev => [...prev, objectUrl]);
+    } else {
+      setUploadedFiles([file]);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrls([objectUrl]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,36 +78,38 @@ const CreatePost = () => {
       return;
     }
 
-    if (postType !== 'text-only' && !uploadedFile) {
-      toast.error(`Please upload a ${postType}`);
+    if (postType !== 'text-only' && uploadedFiles.length === 0) {
+      toast.error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
       return;
     }
 
     try {
-      let imageUrl = null;
+      let imageUrls: string[] = [];
       
-      if (uploadedFile) {
-        const fileExt = uploadedFile.name.split('.').pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('media')
-          .upload(filePath, uploadedFile);
+      if (uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
+          const fileExt = file.name.split('.').pop();
+          const filePath = `${crypto.randomUUID()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('media')
+            .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('media')
-          .getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage
+            .from('media')
+            .getPublicUrl(filePath);
 
-        imageUrl = publicUrl;
+          imageUrls.push(publicUrl);
+        }
       }
 
       const { error } = await supabase.from("posts").insert({
         content,
         social_account_id: selectedAccount,
         scheduled_for: date.toISOString(),
-        image_url: imageUrl,
+        image_url: imageUrls.length > 0 ? imageUrls[0] : null,
         status: "scheduled",
         user_id: userId
       });
@@ -112,8 +120,8 @@ const CreatePost = () => {
       setContent("");
       setSelectedAccount("");
       setDate(undefined);
-      setUploadedFile(null);
-      setPreviewUrl(null);
+      setUploadedFiles([]);
+      setPreviewUrls([]);
       setPostType("image");
     } catch (error) {
       console.error("Error scheduling post:", error);
@@ -168,8 +176,8 @@ const CreatePost = () => {
 
           <MediaUpload
             postType={postType}
-            uploadedFile={uploadedFile}
-            previewUrl={previewUrl}
+            uploadedFile={uploadedFiles[0] || null}
+            previewUrl={previewUrls[0] || null}
             onFileUpload={handleFileUpload}
           />
 

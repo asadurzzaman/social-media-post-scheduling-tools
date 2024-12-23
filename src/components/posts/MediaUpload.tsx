@@ -3,6 +3,13 @@ import { useDropzone } from 'react-dropzone';
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostType } from './PostTypeSelect';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface MediaUploadProps {
   postType: PostType;
@@ -73,6 +80,22 @@ export const MediaUpload = ({
                 className="max-h-[180px] object-contain mb-4" 
                 controls
               />
+            ) : postType === 'carousel' ? (
+              <Carousel className="w-full max-w-xs">
+                <CarouselContent>
+                  {[previewUrl].map((url, index) => (
+                    <CarouselItem key={index}>
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="max-h-[180px] w-full object-contain"
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+              </Carousel>
             ) : (
               <img
                 src={previewUrl}
