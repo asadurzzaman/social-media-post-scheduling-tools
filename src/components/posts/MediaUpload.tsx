@@ -68,7 +68,7 @@ export const MediaUpload = ({
       >
         <input {...getInputProps()} />
         {previewUrls.length > 0 ? (
-          <>
+          <div className="w-full">
             {postType === 'video' ? (
               <video 
                 src={previewUrls[0]} 
@@ -82,10 +82,12 @@ export const MediaUpload = ({
                 onDelete={onFileDelete}
               />
             )}
-            <p className="text-sm text-muted-foreground">
-              Click or drag to {postType === 'carousel' ? 'add more' : 'replace'}
-            </p>
-          </>
+            {postType === 'carousel' && previewUrls.length < 10 && (
+              <p className="text-sm text-muted-foreground mt-4">
+                Click or drag to add more images ({10 - previewUrls.length} remaining)
+              </p>
+            )}
+          </div>
         ) : (
           <>
             <Upload className="h-10 w-10 text-muted-foreground mb-4" />
