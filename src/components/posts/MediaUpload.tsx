@@ -46,6 +46,7 @@ export const MediaUpload = ({
     disabled: postType === 'text-only'
   });
 
+  // Early return for text-only posts
   if (postType === 'text-only') {
     return null;
   }
@@ -99,7 +100,7 @@ export const MediaUpload = ({
           </>
         )}
       </div>
-      {!uploadedFile && postType !== 'text-only' && (
+      {!uploadedFile && (
         <p className="text-sm text-orange-500">
           Please upload {postType === 'carousel' ? 'at least one image' : `1 ${postType}`}
         </p>
