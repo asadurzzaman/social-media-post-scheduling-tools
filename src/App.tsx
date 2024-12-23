@@ -14,6 +14,7 @@ import CreatePost from "./pages/CreatePost";
 import Media from "./pages/Media";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import Posts from "./pages/Posts";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -64,6 +65,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/posts"
+            element={
+              <ProtectedRoute>
+                <Posts />
               </ProtectedRoute>
             }
           />

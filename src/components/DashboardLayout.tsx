@@ -1,5 +1,5 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings, Layers } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: UserPlus, label: "Add Account", path: "/add-account" },
   { icon: FilePlus, label: "Create Post", path: "/create-post" },
+  { icon: Layers, label: "My Posts", path: "/posts" },
   { icon: PenSquare, label: "Compose", path: "/compose" },
   { icon: Calendar, label: "Calendar", path: "/calendar" },
   { icon: Image, label: "Media", path: "/media" },
