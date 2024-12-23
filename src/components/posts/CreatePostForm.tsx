@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { PostTypeSelect, PostType } from './PostTypeSelect';
-import { MediaUpload } from './MediaUpload';
 import { SocialAccountList } from './SocialAccountList';
 import { RichTextEditor } from './RichTextEditor';
 import { SchedulingOptions } from './SchedulingOptions';
+import { PostFormMedia } from './PostFormMedia';
+import { PostFormActions } from './PostFormActions';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -162,7 +162,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl">
       <SocialAccountList
         accounts={accounts}
         selectedAccount={selectedAccount}
@@ -187,15 +187,13 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         />
       </div>
 
-      {["image", "carousel", "video"].includes(postType) && (
-        <MediaUpload
-          postType={postType}
-          uploadedFiles={uploadedFiles}
-          previewUrls={previewUrls}
-          onFileUpload={handleFileUpload}
-          onFileDelete={handleFileDelete}
-        />
-      )}
+      <PostFormMedia
+        postType={postType}
+        uploadedFiles={uploadedFiles}
+        previewUrls={previewUrls}
+        onFileUpload={handleFileUpload}
+        onFileDelete={handleFileDelete}
+      />
 
       <SchedulingOptions
         date={date}
@@ -212,16 +210,12 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         onCustomIntervalChange={setCustomIntervalHours}
       />
 
-      <div className="flex gap-4">
-        <Button type="submit" className="flex-1">
-          {isRecurring ? 'Schedule Recurring Post' : 'Schedule Post'}
-        </Button>
-        {isDraft && (
-          <Button type="button" variant="outline" onClick={clearDraft}>
-            Clear Draft
-          </Button>
-        )}
-      </div>
-    </form>
+      <PostFormActions
+        onSubmit={handleSubmit}
+        isRecurring={isRecurring}
+        isDraft={isDraft}
+        onClearDraft={clearDraft}
+      />
+    </div>
   );
 };
