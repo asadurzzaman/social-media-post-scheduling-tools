@@ -34,7 +34,10 @@ export const MediaUpload = ({
         return { 'video/*': ['.mp4', '.mov', '.avi'] };
       case 'carousel':
         return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
-      case 'text-only':
+      case 'text':
+      case 'link':
+      case 'poll':
+      case 'story':
         return {};
       default:
         return {};
@@ -45,11 +48,11 @@ export const MediaUpload = ({
     onDrop,
     accept: getAcceptedFiles(postType),
     maxFiles: postType === 'carousel' ? 10 : 1,
-    disabled: postType === 'text-only',
+    disabled: postType === 'text',
     multiple: postType === 'carousel'
   });
 
-  if (postType === 'text-only') {
+  if (postType === 'text' || postType === 'link' || postType === 'poll') {
     return null;
   }
 
