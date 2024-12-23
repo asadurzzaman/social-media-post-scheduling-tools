@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { PostTypeSelect, PostType } from './PostTypeSelect';
 import { MediaUpload } from './MediaUpload';
 import { SocialAccountList } from './SocialAccountList';
-import { TinyMCEEditor } from './TinyMCEEditor';
+import { RichTextEditor } from './RichTextEditor';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -155,7 +155,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         <label htmlFor="content" className="text-sm font-medium">
           Post Content <span className="text-red-500">*</span>
         </label>
-        <TinyMCEEditor
+        <RichTextEditor
           value={content}
           onChange={setContent}
           maxLength={2200}

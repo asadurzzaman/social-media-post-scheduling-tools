@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Bold, Italic, List, Link, Hash, AtSign } from "lucide-react";
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { useRef } from 'react';
 
 interface RichTextEditorProps {
   value: string;
@@ -10,152 +9,61 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
-  const [charCount, setCharCount] = useState(0);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<any>(null);
 
-  useEffect(() => {
-    setCharCount(value.length);
-  }, [value]);
-
-  const handleFormat = (format: string) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = value.substring(start, end);
-
-    if (start === end) return; // No text selected
-
-    let newText = value;
-    let cursorOffset = 0;
-
-    switch (format) {
-      case 'bold':
-        newText = value.substring(0, start) + `**${selectedText}**` + value.substring(end);
-        cursorOffset = 4;
-        break;
-      case 'italic':
-        newText = value.substring(0, start) + `*${selectedText}*` + value.substring(end);
-        cursorOffset = 2;
-        break;
-      case 'list':
-        newText = value.substring(0, start) + `\n- ${selectedText}` + value.substring(end);
-        cursorOffset = 3;
-        break;
-      case 'link':
-        newText = value.substring(0, start) + `[${selectedText}](url)` + value.substring(end);
-        cursorOffset = 7;
-        break;
-      case 'hashtag':
-        newText = value.substring(0, start) + `#${selectedText}` + value.substring(end);
-        cursorOffset = 1;
-        break;
-      case 'mention':
-        newText = value.substring(0, start) + `@${selectedText}` + value.substring(end);
-        cursorOffset = 1;
-        break;
+  const handleEditorChange = (_event: any, editor: any) => {
+    const content = editor.getData();
+    // Strip HTML tags for character count
+    const strippedContent = content.replace(/<[^>]*>/g, '');
+    
+    if (!maxLength || strippedContent.length <= maxLength) {
+      onChange(content);
+    } else {
+      // If over limit, revert to previous content
+      editor.setData(value);
     }
-
-    onChange(newText);
-
-    // Restore cursor position after state update
-    setTimeout(() => {
-      textarea.focus();
-      const newPosition = end + cursorOffset;
-      textarea.setSelectionRange(newPosition, newPosition);
-    }, 0);
   };
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-1 pb-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFormat('bold')}
-          className="h-8 w-8 p-0"
-          title="Bold"
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFormat('italic')}
-          className="h-8 w-8 p-0"
-          title="Italic"
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFormat('list')}
-          className="h-8 w-8 p-0"
-          title="List"
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFormat('link')}
-          className="h-8 w-8 p-0"
-          title="Link"
-        >
-          <Link className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFormat('hashtag')}
-          className="h-8 w-8 p-0"
-          title="Hashtag"
-        >
-          <Hash className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => handleFormat('mention')}
-          className="h-8 w-8 p-0"
-          title="Mention"
-        >
-          <AtSign className="h-4 w-4" />
-        </Button>
-      </div>
-      <Textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => {
-          if (!maxLength || e.target.value.length <= maxLength) {
-            onChange(e.target.value);
+      <CKEditor
+        editor={ClassicEditor}
+        data={value}
+        onChange={handleEditorChange}
+        onReady={(editor) => {
+          editorRef.current = editor;
+          // Remove the bottom bar that shows "Powered by CKEditor"
+          const element = editor.ui.view.element;
+          if (element) {
+            const bottomBar = element.querySelector('.ck-editor__bottom-bar');
+            if (bottomBar) {
+              bottomBar.remove();
+            }
           }
         }}
-        placeholder="Write your post content here..."
-        className="min-h-[150px]"
+        config={{
+          toolbar: [
+            'heading',
+            '|',
+            'bold',
+            'italic',
+            'link',
+            'bulletedList',
+            'numberedList',
+            '|',
+            'outdent',
+            'indent',
+            '|',
+            'blockQuote',
+            'insertTable',
+            'undo',
+            'redo'
+          ],
+          placeholder: 'Write your post content here...',
+        }}
       />
-      <div className="flex justify-between items-center text-sm text-muted-foreground">
-        <span>
-          {value.split('#').length > 1 && (
-            <span className="mr-2">
-              {value.split('#').length - 1} hashtags
-            </span>
-          )}
-          {value.split('@').length > 1 && (
-            <span>
-              {value.split('@').length - 1} mentions
-            </span>
-          )}
-        </span>
-        <span>{charCount}/{maxLength}</span>
+      <div className="flex justify-end text-sm text-muted-foreground">
+        <span>{value.replace(/<[^>]*>/g, '').length}/{maxLength}</span>
       </div>
     </div>
   );
