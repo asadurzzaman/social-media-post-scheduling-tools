@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Upload } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -22,13 +21,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+
+const POST_TYPES = [
+  { value: "image", label: "Image" },
+  { value: "carousel", label: "Carousel" },
+  { value: "video", label: "Video" },
+  { value: "text-only", label: "Text-only" },
+];
 
 const CreatePost = () => {
   const [content, setContent] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [date, setDate] = useState<Date>();
-  const [imageUrl, setImageUrl] = useState("");
+  const [postType, setPostType] = useState("image");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Get current user's ID on component mount
   useEffect(() => {
@@ -55,6 +65,23 @@ const CreatePost = () => {
     },
   });
 
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      setUploadedFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
+    },
+    maxFiles: 1
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -64,11 +91,30 @@ const CreatePost = () => {
     }
 
     try {
+      let imageUrl = null;
+      
+      if (uploadedFile) {
+        const fileExt = uploadedFile.name.split('.').pop();
+        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(filePath, uploadedFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('media')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      }
+
       const { error } = await supabase.from("posts").insert({
         content,
         social_account_id: selectedAccount,
         scheduled_for: date.toISOString(),
-        image_url: imageUrl || null,
+        image_url: imageUrl,
         status: "scheduled",
         user_id: userId
       });
@@ -79,7 +125,9 @@ const CreatePost = () => {
       setContent("");
       setSelectedAccount("");
       setDate(undefined);
-      setImageUrl("");
+      setUploadedFile(null);
+      setPreviewUrl(null);
+      setPostType("image");
     } catch (error) {
       console.error("Error scheduling post:", error);
       toast.error("Failed to schedule post");
@@ -114,6 +162,24 @@ const CreatePost = () => {
           </div>
 
           <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Post Type <span className="text-red-500">*</span>
+            </label>
+            <Select value={postType} onValueChange={setPostType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select post type" />
+              </SelectTrigger>
+              <SelectContent>
+                {POST_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <label htmlFor="content" className="text-sm font-medium">
               Post Content
             </label>
@@ -127,16 +193,43 @@ const CreatePost = () => {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="image" className="text-sm font-medium">
-              Image URL (optional)
+            <label className="text-sm font-medium">
+              Media Upload {postType !== 'text-only' && <span className="text-red-500">*</span>}
             </label>
-            <Input
-              id="image"
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Enter image URL"
-            />
+            <div
+              {...getRootProps()}
+              className={cn(
+                "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                isDragActive ? "border-primary bg-primary/5" : "border-gray-200 hover:border-primary/50",
+                "relative min-h-[200px] flex flex-col items-center justify-center"
+              )}
+            >
+              <input {...getInputProps()} />
+              {previewUrl ? (
+                <>
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="max-h-[180px] object-contain mb-4"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Click or drag to replace
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-10 w-10 text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground">
+                    {isDragActive
+                      ? "Drop the file here"
+                      : "Drag and drop your image here, or click to select"}
+                  </p>
+                </>
+              )}
+            </div>
+            {postType !== 'text-only' && !uploadedFile && (
+              <p className="text-sm text-orange-500">Please upload 1 image</p>
+            )}
           </div>
 
           <div className="space-y-2">
