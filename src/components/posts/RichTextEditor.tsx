@@ -1,6 +1,6 @@
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface RichTextEditorProps {
   value: string;
@@ -10,26 +10,27 @@ interface RichTextEditorProps {
 
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
   const editorRef = useRef<any>(null);
+  const [isEditorReady, setIsEditorReady] = useState(false);
 
   useEffect(() => {
-    // Cleanup function
     return () => {
-      if (editorRef.current && editorRef.current.destroy) {
-        editorRef.current.destroy();
+      if (editorRef.current) {
+        editorRef.current.destroy?.()
+          .catch((error: any) => console.error('Error destroying editor:', error));
       }
     };
   }, []);
 
   const handleEditorChange = (_event: any, editor: any) => {
+    if (!editor || !isEditorReady) return;
+
     try {
       const data = editor.getData();
-      // Strip HTML tags for character count
       const strippedContent = data.replace(/<[^>]*>/g, '');
       
       if (!maxLength || strippedContent.length <= maxLength) {
         onChange(data);
       } else {
-        // If over limit, revert to previous content
         editor.setData(value);
       }
     } catch (error) {
@@ -40,15 +41,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
   const handleEditorReady = (editor: any) => {
     try {
       editorRef.current = editor;
-      
-      // Remove the bottom bar that shows "Powered by CKEditor"
-      const element = editor.ui.view.element;
-      if (element) {
-        const bottomBar = element.querySelector('.ck-editor__bottom-bar');
-        if (bottomBar) {
-          bottomBar.remove();
-        }
-      }
+      setIsEditorReady(true);
     } catch (error) {
       console.error('Error in editor ready:', error);
     }
