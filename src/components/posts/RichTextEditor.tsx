@@ -1,6 +1,6 @@
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface RichTextEditorProps {
   value: string;
@@ -9,26 +9,29 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
-  const [editor, setEditor] = useState<any>(null);
-  const [isReady, setIsReady] = useState(false);
-  const initialValue = useRef(value);
+  const editorRef = useRef<any>(null);
 
   useEffect(() => {
+    // Cleanup function to properly destroy the editor instance
     return () => {
-      if (editor && typeof editor.destroy === 'function') {
-        editor.destroy()
+      if (editorRef.current) {
+        editorRef.current.destroy?.()
           .catch((error: any) => console.error('Error destroying editor:', error));
       }
     };
-  }, [editor]);
+  }, []);
 
   const handleReady = (editor: any) => {
-    setEditor(editor);
-    setIsReady(true);
+    editorRef.current = editor;
+    
+    // Set initial data after editor is ready
+    if (value) {
+      editor.setData(value);
+    }
   };
 
   const handleChange = (_event: any, editor: any) => {
-    if (!editor || !isReady) return;
+    if (!editor) return;
 
     const data = editor.getData();
     const strippedContent = data.replace(/<[^>]*>/g, '');
@@ -43,7 +46,6 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
       <div className="min-h-[200px] border rounded-md overflow-hidden">
         <CKEditor
           editor={ClassicEditor}
-          data={value}
           onReady={handleReady}
           onChange={handleChange}
           config={{
