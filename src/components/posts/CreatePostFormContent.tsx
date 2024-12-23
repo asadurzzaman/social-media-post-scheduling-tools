@@ -78,9 +78,10 @@ export const CreatePostFormContent = ({
 }: CreatePostFormContentProps) => {
   const handleFileUpload = (files: File[]) => {
     if (postType === 'carousel') {
-      setUploadedFiles((prev: File[]) => [...prev, ...files]);
+      const newFiles = [...uploadedFiles, ...files];
+      setUploadedFiles(newFiles);
       const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-      setPreviewUrls((prev: string[]) => [...prev, ...newPreviewUrls]);
+      setPreviewUrls([...previewUrls, ...newPreviewUrls]);
     } else {
       setUploadedFiles([files[0]]);
       const objectUrl = URL.createObjectURL(files[0]);
@@ -89,8 +90,10 @@ export const CreatePostFormContent = ({
   };
 
   const handleFileDelete = (index: number) => {
-    setUploadedFiles((prev: File[]) => prev.filter((_, i) => i !== index));
-    setPreviewUrls((prev: string[]) => prev.filter((_, i) => i !== index));
+    const newFiles = uploadedFiles.filter((_, i) => i !== index);
+    const newPreviewUrls = previewUrls.filter((_, i) => i !== index);
+    setUploadedFiles(newFiles);
+    setPreviewUrls(newPreviewUrls);
   };
 
   return (
