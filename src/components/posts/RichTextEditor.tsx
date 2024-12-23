@@ -43,6 +43,20 @@ export const RichTextEditor = ({
     
     if (lastAtSymbol !== -1 && !hasSpaceAfterAt && lastAtSymbol === textBeforeCursor.length - 1) {
       setShowMentions(true);
+      // Update trigger position to match cursor
+      if (triggerRef.current && textareaRef.current) {
+        const { offsetLeft, offsetTop } = textareaRef.current;
+        const textBeforeCursor = value.slice(0, cursorPos);
+        const dummySpan = document.createElement('span');
+        dummySpan.style.font = window.getComputedStyle(textareaRef.current).font;
+        dummySpan.textContent = textBeforeCursor;
+        document.body.appendChild(dummySpan);
+        const textWidth = dummySpan.offsetWidth;
+        document.body.removeChild(dummySpan);
+        
+        triggerRef.current.style.left = `${offsetLeft + textWidth}px`;
+        triggerRef.current.style.top = `${offsetTop}px`;
+      }
     } else {
       setShowMentions(false);
     }
@@ -67,6 +81,7 @@ export const RichTextEditor = ({
         }, 0);
       }
     }
+    setShowMentions(false);
   };
 
   return (

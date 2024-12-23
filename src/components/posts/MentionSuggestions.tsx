@@ -1,54 +1,76 @@
-import React, { useState } from 'react';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import React, { useEffect, useState } from 'react';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface MentionSuggestionsProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (value: string) => void;
-  triggerRef: React.RefObject<HTMLElement>;
+  onSelect: (mention: string) => void;
+  triggerRef: React.RefObject<HTMLSpanElement>;
 }
 
-const SAMPLE_MENTIONS = [
-  "@social_media_tips",
-  "@marketing_guru",
+const SUGGESTIONS = [
+  "@john_doe",
+  "@jane_smith",
+  "@social_media_expert",
   "@content_creator",
-  "@digital_marketer",
-  "@brand_builder"
+  "@marketing_guru"
 ];
 
-export const MentionSuggestions = ({ 
-  isOpen, 
-  onClose, 
+export const MentionSuggestions = ({
+  isOpen,
+  onClose,
   onSelect,
-  triggerRef 
+  triggerRef
 }: MentionSuggestionsProps) => {
+  const [mounted, setMounted] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const filteredMentions = SAMPLE_MENTIONS.filter(mention =>
-    mention.toLowerCase().includes(searchValue.toLowerCase())
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  const filteredSuggestions = SUGGESTIONS.filter(suggestion =>
+    suggestion.toLowerCase().includes(searchValue.toLowerCase())
   );
 
   return (
     <Popover open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <PopoverTrigger asChild>
-        <span ref={triggerRef as React.RefObject<HTMLSpanElement>} />
+        <span ref={triggerRef} className="absolute" />
       </PopoverTrigger>
-      <PopoverContent className="p-0" align="start" side="bottom" sideOffset={5}>
+      <PopoverContent 
+        className="p-0" 
+        sideOffset={5}
+        align="start"
+      >
         <Command value={searchValue} onValueChange={setSearchValue}>
           <CommandInput placeholder="Search mentions..." />
-          <CommandEmpty>No mentions found.</CommandEmpty>
+          <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup>
-            {filteredMentions.map((mention) => (
+            {filteredSuggestions.map((suggestion) => (
               <CommandItem
-                key={mention}
-                value={mention}
+                key={suggestion}
+                value={suggestion}
                 onSelect={() => {
-                  onSelect(mention);
+                  onSelect(suggestion);
                   onClose();
                 }}
               >
-                {mention}
+                {suggestion}
               </CommandItem>
             ))}
           </CommandGroup>
