@@ -46,7 +46,6 @@ export const MediaUpload = ({
     disabled: postType === 'text-only'
   });
 
-  // Early return for text-only posts
   if (postType === 'text-only') {
     return null;
   }
