@@ -9,74 +9,72 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
-  const [editor, setEditor] = useState<any>(null);
-  const [isReady, setIsReady] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<any>(null);
+  const [isEditorReady, setIsEditorReady] = useState(false);
 
   useEffect(() => {
     return () => {
-      if (editor && editor.destroy) {
-        editor.destroy()
-          .then(() => {
-            setEditor(null);
-            setIsReady(false);
-          })
-          .catch((error: any) => {
-            console.error('Error destroying editor:', error);
-          });
+      if (editorRef.current) {
+        editorRef.current.destroy?.()
+          .catch((error: any) => console.error('Error destroying editor:', error));
       }
     };
-  }, [editor]);
+  }, []);
 
-  const handleEditorChange = (_event: any, editorInstance: any) => {
-    if (!editorInstance || !isReady) return;
+  const handleEditorChange = (_event: any, editor: any) => {
+    if (!editor || !isEditorReady) return;
 
     try {
-      const data = editorInstance.getData();
+      const data = editor.getData();
       const strippedContent = data.replace(/<[^>]*>/g, '');
       
       if (!maxLength || strippedContent.length <= maxLength) {
         onChange(data);
       } else {
-        editorInstance.setData(value);
+        editor.setData(value);
       }
     } catch (error) {
       console.error('Error handling editor change:', error);
     }
   };
 
-  const handleEditorReady = (editorInstance: any) => {
+  const handleEditorReady = (editor: any) => {
     try {
-      setEditor(editorInstance);
-      setIsReady(true);
+      editorRef.current = editor;
+      setIsEditorReady(true);
     } catch (error) {
       console.error('Error in editor ready:', error);
     }
   };
 
   return (
-    <div className="space-y-2" ref={containerRef}>
-      <div className="min-h-[200px] border rounded-md">
+    <div className="space-y-2">
+      <div className="min-h-[200px]">
         <CKEditor
           editor={ClassicEditor}
           data={value}
           onChange={handleEditorChange}
           onReady={handleEditorReady}
           config={{
-            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList'],
-            placeholder: 'Write your post content here...',
-            removePlugins: [
-              'CKFinderUploadAdapter',
-              'CKFinder',
-              'EasyImage',
-              'Image',
-              'ImageCaption',
-              'ImageStyle',
-              'ImageToolbar',
-              'ImageUpload',
-              'MediaEmbed',
-              'Table'
+            toolbar: [
+              'heading',
+              '|',
+              'bold',
+              'italic',
+              'link',
+              'bulletedList',
+              'numberedList',
+              '|',
+              'outdent',
+              'indent',
+              '|',
+              'blockQuote',
+              'insertTable',
+              'undo',
+              'redo'
             ],
+            placeholder: 'Write your post content here...',
+            removePlugins: ['CKFinderUploadAdapter', 'CKFinder', 'EasyImage', 'Image', 'ImageCaption', 'ImageStyle', 'ImageToolbar', 'ImageUpload'],
           }}
         />
       </div>
