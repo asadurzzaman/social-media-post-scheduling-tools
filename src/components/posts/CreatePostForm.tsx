@@ -7,6 +7,7 @@ import { CreatePostFormContent } from "./CreatePostFormContent";
 interface CreatePostFormProps {
   accounts: any[];
   userId: string | null;
+  initialDate?: Date;
 }
 
 interface PollOption {
@@ -14,10 +15,10 @@ interface PollOption {
   text: string;
 }
 
-export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
+export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostFormProps) => {
   const [content, setContent] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
-  const [date, setDate] = useState<Date>();
+  const [date, setDate] = useState<Date | undefined>(initialDate);
   const [postType, setPostType] = useState<PostType>("text");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
