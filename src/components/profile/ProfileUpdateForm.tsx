@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface ProfileUpdateFormProps {
   profile: {
+    id?: string;
     full_name?: string;
     email?: string;
     timezone?: string;
@@ -22,6 +23,11 @@ export const ProfileUpdateForm = ({ profile, onUpdate }: ProfileUpdateFormProps)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!profile?.id) {
+      toast.error('Profile ID is missing');
+      return;
+    }
+    
     setIsUpdating(true);
 
     const formData = new FormData(e.currentTarget);
@@ -35,7 +41,7 @@ export const ProfileUpdateForm = ({ profile, onUpdate }: ProfileUpdateFormProps)
       const { error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', profile?.id);
+        .eq('id', profile.id);
 
       if (error) throw error;
 
