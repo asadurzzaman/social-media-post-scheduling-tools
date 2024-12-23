@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Linkedin, Github, Youtube, X } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -111,11 +111,26 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
     }
   };
 
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'linkedin':
+        return <Linkedin className="h-4 w-4 mr-2" />;
+      case 'github':
+        return <Github className="h-4 w-4 mr-2" />;
+      case 'x':
+        return <X className="h-4 w-4 mr-2" />;
+      case 'youtube':
+        return <Youtube className="h-4 w-4 mr-2" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
       <div className="space-y-2">
         <label htmlFor="account" className="text-sm font-medium">
-          Facebook Account <span className="text-red-500">*</span>
+          Select Social Media Account <span className="text-red-500">*</span>
         </label>
         <Select value={selectedAccount} onValueChange={setSelectedAccount}>
           <SelectTrigger>
@@ -123,8 +138,15 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
           </SelectTrigger>
           <SelectContent>
             {accounts?.map((account) => (
-              <SelectItem key={account.id} value={account.id}>
-                {account.account_name}
+              <SelectItem 
+                key={account.id} 
+                value={account.id}
+                className="flex items-center"
+              >
+                <div className="flex items-center">
+                  {getPlatformIcon(account.platform)}
+                  {account.account_name}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
