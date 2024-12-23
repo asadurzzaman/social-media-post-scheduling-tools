@@ -1,22 +1,17 @@
 import React, { useRef, useState } from 'react';
 import { cn } from "@/lib/utils";
-import { HashtagSuggestions } from './HashtagSuggestions';
 import { MentionSuggestions } from './MentionSuggestions';
 
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   maxLength?: number;
-  hashtags?: string[];
-  onHashtagsChange?: (hashtags: string[]) => void;
 }
 
 export const RichTextEditor = ({ 
   value, 
   onChange, 
-  maxLength = 2200,
-  hashtags = [],
-  onHashtagsChange = () => {}
+  maxLength = 2200
 }: RichTextEditorProps) => {
   const [showMentions, setShowMentions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
@@ -110,10 +105,6 @@ export const RichTextEditor = ({
           <span>{value.length}/{maxLength}</span>
         </div>
       </div>
-      <HashtagSuggestions 
-        hashtags={hashtags}
-        onHashtagsChange={onHashtagsChange}
-      />
     </div>
   );
 };

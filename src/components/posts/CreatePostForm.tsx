@@ -22,7 +22,6 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDraft, setIsDraft] = useState(false);
-  const [hashtags, setHashtags] = useState<string[]>([]);
   const [pollOptions, setPollOptions] = useState<PollOption[]>([
     { id: crypto.randomUUID(), text: "" },
     { id: crypto.randomUUID(), text: "" }
@@ -43,7 +42,6 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
       setContent(draft.content || "");
       setPostType(draft.postType || "text");
       setSelectedAccount(draft.selectedAccount || "");
-      setHashtags(draft.hashtags || []);
       if (draft.date) setDate(new Date(draft.date));
       if (draft.pollOptions) setPollOptions(draft.pollOptions);
     }
@@ -51,19 +49,18 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
 
   // Save draft to localStorage when content changes
   useEffect(() => {
-    if (content || selectedAccount || date || postType !== "text" || hashtags.length > 0 || pollOptions.some(opt => opt.text)) {
+    if (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text)) {
       const draft = {
         content,
         postType,
         selectedAccount,
         date: date?.toISOString(),
-        hashtags,
         pollOptions: postType === 'poll' ? pollOptions : undefined
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date, hashtags, pollOptions]);
+  }, [content, postType, selectedAccount, date, pollOptions]);
 
   const clearDraft = () => {
     localStorage.removeItem('postDraft');
@@ -73,7 +70,6 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
     setPostType("text");
     setUploadedFiles([]);
     setPreviewUrls([]);
-    setHashtags([]);
     setPollOptions([
       { id: crypto.randomUUID(), text: "" },
       { id: crypto.randomUUID(), text: "" }
@@ -125,7 +121,6 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         content,
         social_account_id: selectedAccount,
         image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        hashtags,
         user_id: userId,
         poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
       };
@@ -177,8 +172,6 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
       previewUrls={previewUrls}
       setPreviewUrls={setPreviewUrls}
       isDraft={isDraft}
-      hashtags={hashtags}
-      setHashtags={setHashtags}
       isRecurring={isRecurring}
       setIsRecurring={setIsRecurring}
       frequency={frequency}

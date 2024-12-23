@@ -26,8 +26,6 @@ interface CreatePostFormContentProps {
   previewUrls: string[];
   setPreviewUrls: (urls: string[]) => void;
   isDraft: boolean;
-  hashtags: string[];
-  setHashtags: (hashtags: string[]) => void;
   isRecurring: boolean;
   setIsRecurring: (isRecurring: boolean) => void;
   frequency: string;
@@ -59,8 +57,6 @@ export const CreatePostFormContent = ({
   previewUrls,
   setPreviewUrls,
   isDraft,
-  hashtags,
-  setHashtags,
   isRecurring,
   setIsRecurring,
   frequency,
@@ -117,8 +113,6 @@ export const CreatePostFormContent = ({
           value={content}
           onChange={setContent}
           maxLength={2200}
-          hashtags={hashtags}
-          onHashtagsChange={setHashtags}
         />
       </div>
 
