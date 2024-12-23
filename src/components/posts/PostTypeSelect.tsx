@@ -31,8 +31,10 @@ export const PostTypeSelect = ({ value, onChange }: PostTypeSelectProps) => {
         Post Type <span className="text-red-500">*</span>
       </label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue placeholder="Select post type" />
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select post type">
+            {POST_TYPES.find(type => type.value === value)?.label}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {POST_TYPES.map((type) => {
