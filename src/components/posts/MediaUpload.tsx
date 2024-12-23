@@ -10,13 +10,15 @@ interface MediaUploadProps {
   uploadedFiles: File[];
   previewUrls: string[];
   onFileUpload: (files: File[]) => void;
+  onFileDelete: (index: number) => void;
 }
 
 export const MediaUpload = ({ 
   postType, 
   uploadedFiles, 
   previewUrls, 
-  onFileUpload 
+  onFileUpload,
+  onFileDelete
 }: MediaUploadProps) => {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -77,6 +79,7 @@ export const MediaUpload = ({
               <ImagePreviewGrid 
                 previewUrls={previewUrls} 
                 className="mb-4"
+                onDelete={onFileDelete}
               />
             )}
             <p className="text-sm text-muted-foreground">

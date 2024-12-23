@@ -47,6 +47,11 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
     }
   };
 
+  const handleFileDelete = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -149,6 +154,7 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         uploadedFiles={uploadedFiles}
         previewUrls={previewUrls}
         onFileUpload={handleFileUpload}
+        onFileDelete={handleFileDelete}
       />
 
       <div className="space-y-2">
