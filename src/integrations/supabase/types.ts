@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      post_time_analytics: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          engagement_score: number
+          hour_of_day: number
+          id: string
+          social_account_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          engagement_score: number
+          hour_of_day: number
+          id?: string
+          social_account_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          engagement_score?: number
+          hour_of_day?: number
+          id?: string
+          social_account_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_time_analytics_social_account_id_fkey"
+            columns: ["social_account_id"]
+            isOneToOne: false
+            referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_time_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           content: string
@@ -19,6 +67,7 @@ export type Database = {
           scheduled_for: string
           social_account_id: string
           status: string | null
+          timezone: string | null
           user_id: string
         }
         Insert: {
@@ -30,6 +79,7 @@ export type Database = {
           scheduled_for: string
           social_account_id: string
           status?: string | null
+          timezone?: string | null
           user_id: string
         }
         Update: {
@@ -41,6 +91,7 @@ export type Database = {
           scheduled_for?: string
           social_account_id?: string
           status?: string | null
+          timezone?: string | null
           user_id?: string
         }
         Relationships: [
@@ -86,6 +137,72 @@ export type Database = {
           timezone?: string | null
         }
         Relationships: []
+      }
+      recurring_posts: {
+        Row: {
+          content: string
+          created_at: string
+          custom_interval_hours: number | null
+          end_date: string | null
+          frequency: string
+          hashtags: string[] | null
+          id: string
+          image_url: string | null
+          interval_value: number
+          last_posted_at: string | null
+          social_account_id: string
+          start_date: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          custom_interval_hours?: number | null
+          end_date?: string | null
+          frequency: string
+          hashtags?: string[] | null
+          id?: string
+          image_url?: string | null
+          interval_value?: number
+          last_posted_at?: string | null
+          social_account_id: string
+          start_date: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          custom_interval_hours?: number | null
+          end_date?: string | null
+          frequency?: string
+          hashtags?: string[] | null
+          id?: string
+          image_url?: string | null
+          interval_value?: number
+          last_posted_at?: string | null
+          social_account_id?: string
+          start_date?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_posts_social_account_id_fkey"
+            columns: ["social_account_id"]
+            isOneToOne: false
+            referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_accounts: {
         Row: {

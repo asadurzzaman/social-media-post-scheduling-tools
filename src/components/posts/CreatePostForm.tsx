@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { PostTypeSelect, PostType } from './PostTypeSelect';
 import { MediaUpload } from './MediaUpload';
 import { SocialAccountList } from './SocialAccountList';
 import { RichTextEditor } from './RichTextEditor';
+import { SchedulingOptions } from './SchedulingOptions';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,6 +21,13 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDraft, setIsDraft] = useState(false);
+  
+  // Recurring post states
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState("daily");
+  const [intervalValue, setIntervalValue] = useState(1);
+  const [endDate, setEndDate] = useState<Date>();
+  const [customIntervalHours, setCustomIntervalHours] = useState(24);
 
   // Load draft from localStorage on component mount
   useEffect(() => {
@@ -119,18 +118,36 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         }
       }
 
-      const { error } = await supabase.from("posts").insert({
-        content,
-        social_account_id: selectedAccount,
-        scheduled_for: date.toISOString(),
-        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        status: "scheduled",
-        user_id: userId
-      });
+      if (isRecurring) {
+        const { error } = await supabase.from("recurring_posts").insert({
+          content,
+          social_account_id: selectedAccount,
+          start_date: date.toISOString(),
+          end_date: endDate?.toISOString(),
+          image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+          frequency,
+          interval_value: intervalValue,
+          custom_interval_hours: frequency === 'custom' ? customIntervalHours : null,
+          user_id: userId,
+          status: "active"
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Recurring post scheduled successfully!");
+      } else {
+        const { error } = await supabase.from("posts").insert({
+          content,
+          social_account_id: selectedAccount,
+          scheduled_for: date.toISOString(),
+          image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+          status: "scheduled",
+          user_id: userId
+        });
 
-      toast.success("Post scheduled successfully!");
+        if (error) throw error;
+        toast.success("Post scheduled successfully!");
+      }
+
       clearDraft();
     } catch (error) {
       console.error("Error scheduling post:", error);
@@ -172,37 +189,24 @@ export const CreatePostForm = ({ accounts, userId }: CreatePostFormProps) => {
         />
       )}
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">
-          Schedule Date & Time <span className="text-red-500">*</span>
-        </label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+      <SchedulingOptions
+        date={date}
+        onDateChange={setDate}
+        isRecurring={isRecurring}
+        onRecurringChange={setIsRecurring}
+        frequency={frequency}
+        onFrequencyChange={setFrequency}
+        intervalValue={intervalValue}
+        onIntervalValueChange={setIntervalValue}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        customIntervalHours={customIntervalHours}
+        onCustomIntervalChange={setCustomIntervalHours}
+      />
 
       <div className="flex gap-4">
         <Button type="submit" className="flex-1">
-          Schedule Post
+          {isRecurring ? 'Schedule Recurring Post' : 'Schedule Post'}
         </Button>
         {isDraft && (
           <Button type="button" variant="outline" onClick={clearDraft}>
