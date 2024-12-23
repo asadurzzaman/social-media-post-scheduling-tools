@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Bold, Italic, List, Link, Hash, AtSign } from "lucide-react";
@@ -11,38 +11,60 @@ interface RichTextEditorProps {
 
 export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEditorProps) => {
   const [charCount, setCharCount] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setCharCount(value.length);
   }, [value]);
 
   const handleFormat = (format: string) => {
-    let newText = value;
-    const selection = window.getSelection();
-    if (!selection || !selection.toString()) return;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
 
-    const selectedText = selection.toString();
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = value.substring(start, end);
+
+    if (start === end) return; // No text selected
+
+    let newText = value;
+    let cursorOffset = 0;
+
     switch (format) {
       case 'bold':
-        newText = value.replace(selectedText, `**${selectedText}**`);
+        newText = value.substring(0, start) + `**${selectedText}**` + value.substring(end);
+        cursorOffset = 4;
         break;
       case 'italic':
-        newText = value.replace(selectedText, `*${selectedText}*`);
+        newText = value.substring(0, start) + `*${selectedText}*` + value.substring(end);
+        cursorOffset = 2;
         break;
       case 'list':
-        newText = value.replace(selectedText, `\n- ${selectedText}`);
+        newText = value.substring(0, start) + `\n- ${selectedText}` + value.substring(end);
+        cursorOffset = 3;
         break;
       case 'link':
-        newText = value.replace(selectedText, `[${selectedText}](url)`);
+        newText = value.substring(0, start) + `[${selectedText}](url)` + value.substring(end);
+        cursorOffset = 7;
         break;
       case 'hashtag':
-        newText = value.replace(selectedText, `#${selectedText}`);
+        newText = value.substring(0, start) + `#${selectedText}` + value.substring(end);
+        cursorOffset = 1;
         break;
       case 'mention':
-        newText = value.replace(selectedText, `@${selectedText}`);
+        newText = value.substring(0, start) + `@${selectedText}` + value.substring(end);
+        cursorOffset = 1;
         break;
     }
+
     onChange(newText);
+
+    // Restore cursor position after state update
+    setTimeout(() => {
+      textarea.focus();
+      const newPosition = end + cursorOffset;
+      textarea.setSelectionRange(newPosition, newPosition);
+    }, 0);
   };
 
   return (
@@ -54,6 +76,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
           size="sm"
           onClick={() => handleFormat('bold')}
           className="h-8 w-8 p-0"
+          title="Bold"
         >
           <Bold className="h-4 w-4" />
         </Button>
@@ -63,6 +86,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
           size="sm"
           onClick={() => handleFormat('italic')}
           className="h-8 w-8 p-0"
+          title="Italic"
         >
           <Italic className="h-4 w-4" />
         </Button>
@@ -72,6 +96,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
           size="sm"
           onClick={() => handleFormat('list')}
           className="h-8 w-8 p-0"
+          title="List"
         >
           <List className="h-4 w-4" />
         </Button>
@@ -81,6 +106,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
           size="sm"
           onClick={() => handleFormat('link')}
           className="h-8 w-8 p-0"
+          title="Link"
         >
           <Link className="h-4 w-4" />
         </Button>
@@ -90,6 +116,7 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
           size="sm"
           onClick={() => handleFormat('hashtag')}
           className="h-8 w-8 p-0"
+          title="Hashtag"
         >
           <Hash className="h-4 w-4" />
         </Button>
@@ -99,11 +126,13 @@ export const RichTextEditor = ({ value, onChange, maxLength = 2200 }: RichTextEd
           size="sm"
           onClick={() => handleFormat('mention')}
           className="h-8 w-8 p-0"
+          title="Mention"
         >
           <AtSign className="h-4 w-4" />
         </Button>
       </div>
       <Textarea
+        ref={textareaRef}
         value={value}
         onChange={(e) => {
           if (!maxLength || e.target.value.length <= maxLength) {
