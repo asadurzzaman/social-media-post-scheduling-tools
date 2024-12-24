@@ -15,16 +15,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SchedulingOptionsProps {
   date: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
+  onTimezoneChange: (timezone: string) => void;
 }
 
 export const SchedulingOptions = ({
   date,
   onDateChange,
+  onTimezoneChange,
 }: SchedulingOptionsProps) => {
+  const [userTimezone, setUserTimezone] = useState<string>('UTC');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUserTimezone = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('timezone')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.timezone) {
+          setUserTimezone(profile.timezone);
+          onTimezoneChange(profile.timezone);
+        } else {
+          // Default to browser's timezone if user hasn't set one
+          const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          setUserTimezone(browserTimezone);
+          onTimezoneChange(browserTimezone);
+        }
+      }
+      setLoading(false);
+    };
+
+    loadUserTimezone();
+  }, []);
+
   const handleTimeChange = (timeString: string) => {
     if (!date) return;
     
@@ -43,6 +76,11 @@ export const SchedulingOptions = ({
     onDateChange(newDate);
   };
 
+  const handleTimezoneChange = (newTimezone: string) => {
+    setUserTimezone(newTimezone);
+    onTimezoneChange(newTimezone);
+  };
+
   // Generate time options in 30-minute intervals with AM/PM format
   const generateTimeOptions = () => {
     const options = [];
@@ -56,6 +94,23 @@ export const SchedulingOptions = ({
     }
     return options;
   };
+
+  const timezones = [
+    'UTC',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'Europe/London',
+    'Europe/Paris',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Australia/Sydney'
+  ];
+
+  if (loading) {
+    return <div>Loading timezone settings...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -122,6 +177,25 @@ export const SchedulingOptions = ({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium">Timezone</label>
+        <Select value={userTimezone} onValueChange={handleTimezoneChange}>
+          <SelectTrigger className="w-full mt-1.5">
+            <SelectValue placeholder="Select timezone" />
+          </SelectTrigger>
+          <SelectContent>
+            {timezones.map((tz) => (
+              <SelectItem key={tz} value={tz}>
+                {tz}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-sm text-muted-foreground mt-1">
+          Times are shown in {userTimezone}
+        </p>
       </div>
     </div>
   );

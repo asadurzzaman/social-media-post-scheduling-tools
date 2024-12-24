@@ -21,6 +21,7 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
   const [content, setContent] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [date, setDate] = useState<Date | undefined>(initialDate);
+  const [timezone, setTimezone] = useState<string>("UTC");
   const [postType, setPostType] = useState<PostType>("text");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -39,6 +40,7 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       setPostType(draft.postType || "text");
       setSelectedAccount(draft.selectedAccount || "");
       if (draft.date) setDate(new Date(draft.date));
+      if (draft.timezone) setTimezone(draft.timezone);
       if (draft.pollOptions) setPollOptions(draft.pollOptions);
     }
   }, []);
@@ -51,12 +53,13 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
         postType,
         selectedAccount,
         date: date?.toISOString(),
+        timezone,
         pollOptions: postType === 'poll' ? pollOptions : undefined
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date, pollOptions]);
+  }, [content, postType, selectedAccount, date, timezone, pollOptions]);
 
   const clearDraft = () => {
     localStorage.removeItem('postDraft');
@@ -120,6 +123,7 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
         user_id: userId,
         scheduled_for: date.toISOString(),
         status: "scheduled",
+        timezone: timezone,
         poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
       });
 
@@ -154,6 +158,8 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       clearDraft={clearDraft}
       pollOptions={pollOptions}
       setPollOptions={setPollOptions}
+      timezone={timezone}
+      onTimezoneChange={setTimezone}
     />
   );
 };
