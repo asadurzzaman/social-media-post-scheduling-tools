@@ -28,18 +28,29 @@ export const SchedulingOptions = ({
   const handleTimeChange = (timeString: string) => {
     if (!date) return;
     
-    const [hours, minutes] = timeString.split(':').map(Number);
+    // Convert 12-hour format to 24-hour for internal handling
+    const [time, period] = timeString.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
     const newDate = new Date(date);
     newDate.setHours(hours, minutes);
     onDateChange(newDate);
   };
 
-  // Generate time options in 30-minute intervals
+  // Generate time options in 30-minute intervals with AM/PM format
   const generateTimeOptions = () => {
     const options = [];
     for (let hour = 0; hour < 24; hour++) {
       for (let minute of [0, 30]) {
-        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const period = hour < 12 ? 'AM' : 'PM';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const timeString = `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
         options.push(timeString);
       }
     }
@@ -90,7 +101,7 @@ export const SchedulingOptions = ({
           </Popover>
 
           <Select
-            value={date ? format(date, "HH:mm") : undefined}
+            value={date ? format(date, "h:mm a").toUpperCase() : undefined}
             onValueChange={handleTimeChange}
             disabled={!date}
           >
@@ -98,7 +109,7 @@ export const SchedulingOptions = ({
               <SelectValue placeholder="Select time">
                 <div className="flex items-center">
                   <Clock className="mr-2 h-4 w-4" />
-                  {date ? format(date, "HH:mm") : "Select time"}
+                  {date ? format(date, "h:mm a").toUpperCase() : "Select time"}
                 </div>
               </SelectValue>
             </SelectTrigger>
