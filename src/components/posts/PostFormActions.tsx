@@ -6,6 +6,7 @@ interface PostFormActionsProps {
   onClearDraft: () => void;
   onPublishNow?: () => void;
   onSaveDraft?: () => void;
+  isEditing?: boolean;
 }
 
 export const PostFormActions = ({ 
@@ -13,12 +14,13 @@ export const PostFormActions = ({
   isDraft, 
   onClearDraft,
   onPublishNow,
-  onSaveDraft
+  onSaveDraft,
+  isEditing
 }: PostFormActionsProps) => {
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <div className="flex flex-wrap gap-4">
-        {onPublishNow && (
+        {onPublishNow && !isEditing && (
           <Button 
             type="button" 
             onClick={onPublishNow} 
@@ -28,10 +30,10 @@ export const PostFormActions = ({
           </Button>
         )}
         <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
-          Schedule Post
+          {isEditing ? "Update Post" : "Schedule Post"}
         </Button>
         <div className="flex gap-2 flex-1">
-          {onSaveDraft && (
+          {onSaveDraft && !isEditing && (
             <Button 
               type="button" 
               variant="secondary" 
@@ -41,7 +43,7 @@ export const PostFormActions = ({
               Save Draft
             </Button>
           )}
-          {isDraft && (
+          {isDraft && !isEditing && (
             <Button 
               type="button" 
               variant="outline" 
