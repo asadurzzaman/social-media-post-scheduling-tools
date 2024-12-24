@@ -37,7 +37,7 @@ export const PostPreviewDialog = ({ post, open, onOpenChange }: PostPreviewDialo
         </div>
 
         {/* Scrollable Content */}
-        <ScrollArea className="flex-1 h-[calc(80vh-140px)]">
+        <ScrollArea className="flex-1 h-[calc(80vh-160px)]">
           <div className="p-4">
             <p className="whitespace-pre-wrap mb-4">{post.content}</p>
             
@@ -62,7 +62,7 @@ export const PostPreviewDialog = ({ post, open, onOpenChange }: PostPreviewDialo
         </ScrollArea>
 
         {/* Footer */}
-        <div className="p-4 border-t mt-auto">
+        <div className="p-6 border-t mt-auto">
           <div className="flex justify-between text-gray-500 text-sm">
             <span>0 Likes</span>
             <span>0 Comments</span>
