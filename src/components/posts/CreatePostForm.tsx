@@ -31,7 +31,6 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
     { id: crypto.randomUUID(), text: "" }
   ]);
 
-  // Load draft from localStorage on component mount
   useEffect(() => {
     const savedDraft = localStorage.getItem('postDraft');
     if (savedDraft) {
@@ -61,6 +60,20 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
     }
   }, [content, postType, selectedAccount, date, timezone, pollOptions]);
 
+  const handleSaveDraft = () => {
+    const draft = {
+      content,
+      postType,
+      selectedAccount,
+      date: date?.toISOString(),
+      timezone,
+      pollOptions: postType === 'poll' ? pollOptions : undefined
+    };
+    localStorage.setItem('postDraft', JSON.stringify(draft));
+    setIsDraft(true);
+    toast.success("Draft saved successfully!");
+  };
+
   const clearDraft = () => {
     localStorage.removeItem('postDraft');
     setContent("");
@@ -74,6 +87,7 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       { id: crypto.randomUUID(), text: "" }
     ]);
     setIsDraft(false);
+    toast.success("Draft cleared successfully!");
   };
 
   const handlePublishNow = async () => {
@@ -149,6 +163,7 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       timezone={timezone}
       onTimezoneChange={setTimezone}
       onPublishNow={handlePublishNow}
+      onSaveDraft={handleSaveDraft}
     />
   );
 };
