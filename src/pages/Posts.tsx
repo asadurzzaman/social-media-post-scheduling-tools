@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useState } from "react";
 import { EditPostForm } from "@/components/posts/EditPostForm";
 import { toast } from "sonner";
-import { PostStatusBadge } from "@/components/posts/PostStatusBadge";
+import { PostStatusBadge, PostStatus } from "@/components/posts/PostStatusBadge";
 import {
   Select,
   SelectContent,
@@ -161,7 +161,7 @@ const Posts = () => {
                       <span className="text-sm font-medium">
                         {format(new Date(post.scheduled_for), 'PPP p')}
                       </span>
-                      <PostStatusBadge status={post.status} />
+                      <PostStatusBadge status={post.status as PostStatus} />
                       {post.social_accounts?.platform === 'facebook' && (
                         <Facebook className="h-4 w-4 text-blue-600" />
                       )}

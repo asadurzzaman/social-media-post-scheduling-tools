@@ -1,6 +1,6 @@
 import React from 'react';
 
-type PostStatus = 'draft' | 'scheduled' | 'published' | 'failed';
+export type PostStatus = 'draft' | 'scheduled' | 'published' | 'failed';
 
 interface PostStatusBadgeProps {
   status: PostStatus;
@@ -23,7 +23,7 @@ export const PostStatusBadge = ({ status }: PostStatusBadgeProps) => {
   };
 
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusStyles(status as PostStatus)}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusStyles(status)}`}>
       {status}
     </span>
   );
