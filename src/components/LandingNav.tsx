@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function LandingNav() {
   const navigate = useNavigate();
@@ -20,8 +21,13 @@ export function LandingNav() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      await supabase.auth.signOut();
+      toast.success("Logged out successfully");
+      navigate("/");
+    } catch (error) {
+      toast.error("Error logging out");
+    }
   };
 
   return (
@@ -43,7 +49,7 @@ export function LandingNav() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
-              <Button variant="ghost" onClick={() => navigate("/")}>
+              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
                 Dashboard
               </Button>
               <Button variant="ghost" onClick={handleLogout}>
