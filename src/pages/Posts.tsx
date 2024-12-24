@@ -49,10 +49,16 @@ const Posts = () => {
           const draft = JSON.parse(draftJson);
           allPosts = [{
             id: 'draft-' + Date.now(),
-            content: draft.content,
+            content: draft.content || '',
             status: 'draft',
             created_at: new Date().toISOString(),
             scheduled_for: draft.date || new Date().toISOString(),
+            hashtags: [],
+            image_url: null,
+            poll_options: [],
+            social_account_id: draft.selectedAccount || '',
+            timezone: draft.timezone || 'UTC',
+            user_id: '', // This will be filtered out by RLS if trying to access DB
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
