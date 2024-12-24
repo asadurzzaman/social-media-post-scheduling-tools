@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Facebook, Pencil, Trash2, Image, Film, X, Share2, Clock } from "lucide-react";
+import { X, Pencil, Trash2, Image, Film, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PostStatus, PostStatusBadge } from "./PostStatusBadge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -53,7 +53,7 @@ export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
         {/* Platform and Status Badge */}
         <div className="absolute top-4 left-4 flex items-center gap-2">
           {post.social_accounts?.platform === 'facebook' && (
-            <Facebook className="h-5 w-5 text-blue-400" />
+            <X className="h-5 w-5 text-blue-400" />
           )}
           <PostStatusBadge status={post.status} />
         </div>
@@ -94,14 +94,6 @@ export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
           >
             <Pencil className="h-4 w-4 mr-2" />
             Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1 bg-white/5 hover:bg-white/10 text-white"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
           </Button>
           <Button
             variant="ghost"
