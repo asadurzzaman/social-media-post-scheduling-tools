@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
+import { supabase } from "@/integrations/supabase/client";
 
 declare global {
   interface Window {
@@ -84,6 +85,29 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     };
   }, [appId]);
 
+  const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
+    try {
+      const expirationDate = new Date();
+      expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
+
+      const { error } = await supabase
+        .from('social_accounts')
+        .update({
+          access_token: accessToken,
+          token_expires_at: expirationDate.toISOString()
+        })
+        .eq('platform', 'facebook');
+
+      if (error) {
+        console.error('Error updating token in database:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Failed to update token in database:', error);
+      throw error;
+    }
+  };
+
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
     if (!isSDKLoaded) {
@@ -109,7 +133,12 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       });
 
       if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-        console.log('Login successful, proceeding with success callback');
+        console.log('Login successful, updating token in database');
+        await updateTokenInDatabase(
+          loginResponse.authResponse.accessToken,
+          loginResponse.authResponse.expiresIn
+        );
+        
         onSuccess({
           accessToken: loginResponse.authResponse.accessToken,
           userId: loginResponse.authResponse.userID
