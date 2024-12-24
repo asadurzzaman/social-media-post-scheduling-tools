@@ -62,22 +62,32 @@ export const publishPost = async ({
   }
 
   // Insert the post
-  const { error } = await supabase.from("posts").insert({
-    content,
-    social_account_id: selectedAccount,
-    image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-    user_id: userId,
-    scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
-    status: "scheduled",
-    timezone,
-    poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
-  });
+  const { data: post, error } = await supabase
+    .from("posts")
+    .insert({
+      content,
+      social_account_id: selectedAccount,
+      image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+      user_id: userId,
+      scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
+      status: scheduledFor ? "scheduled" : "pending",
+      timezone,
+      poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+    })
+    .select()
+    .single();
 
   if (error) throw error;
 
   // If it's an immediate publish, trigger the edge function
   if (!scheduledFor) {
-    const { error: publishError } = await supabase.functions.invoke('publish-facebook-post');
+    const { error: publishError } = await supabase.functions.invoke(
+      'publish-facebook-post',
+      {
+        body: { postId: post.id }
+      }
+    );
+    
     if (publishError) throw publishError;
   }
 };
