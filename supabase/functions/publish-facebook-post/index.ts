@@ -8,7 +8,7 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -23,6 +23,8 @@ serve(async (req) => {
     if (!postId) {
       throw new Error('Post ID is required');
     }
+
+    console.log('Publishing post:', postId);
 
     // Fetch the post details
     const { data: post, error: postError } = await supabaseClient
@@ -39,8 +41,11 @@ serve(async (req) => {
       .single();
 
     if (postError || !post) {
+      console.error('Failed to fetch post:', postError);
       throw new Error('Failed to fetch post details');
     }
+
+    console.log('Post details:', post);
 
     const pageId = post.social_accounts.page_id;
     const pageAccessToken = post.social_accounts.page_access_token;
@@ -50,39 +55,40 @@ serve(async (req) => {
     }
 
     // Prepare the post data
-    const postData: Record<string, any> = {
+    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+    let postData: Record<string, any> = {
       message: post.content,
+      access_token: pageAccessToken,
     };
 
-    // Add image if present
-    if (post.image_url) {
-      const imageUrls = post.image_url.split(',');
-      if (imageUrls.length > 0) {
-        postData.url = imageUrls[0]; // Use the first image URL
-      }
+    // If there's no image, use the /feed endpoint instead
+    if (!post.image_url) {
+      endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
+    } else {
+      // Add image URL if present
+      postData.url = post.image_url.split(',')[0]; // Use the first image URL
     }
 
+    console.log('Making Facebook API request to:', endpoint);
+    console.log('Post data:', { ...postData, access_token: '[REDACTED]' });
+
     // Make the Facebook API request
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${pageId}/feed`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...postData,
-          access_token: pageAccessToken,
-        }),
-      }
-    );
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(postData),
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('Facebook API Error:', errorData);
       throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
     }
 
     const result = await response.json();
+    console.log('Facebook API response:', result);
 
     // Update post status to published
     const { error: updateError } = await supabaseClient
@@ -91,6 +97,7 @@ serve(async (req) => {
       .eq('id', postId);
 
     if (updateError) {
+      console.error('Failed to update post status:', updateError);
       throw new Error('Failed to update post status');
     }
 
@@ -102,6 +109,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error('Error in edge function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
