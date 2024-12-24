@@ -61,6 +61,9 @@ export const publishPost = async ({
     }
   }
 
+  // Set initial status based on whether it's immediate or scheduled
+  const initialStatus = scheduledFor ? 'scheduled' : 'pending';
+
   // Insert the post
   const { data: post, error } = await supabase
     .from("posts")
@@ -70,7 +73,7 @@ export const publishPost = async ({
       image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
       user_id: userId,
       scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
-      status: scheduledFor ? "scheduled" : "pending",
+      status: initialStatus,
       timezone,
       poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
     })
