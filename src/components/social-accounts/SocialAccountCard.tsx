@@ -35,8 +35,30 @@ export const SocialAccountCard = ({
     
     try {
       setIsDisconnecting(true);
+      
+      // If it's a Facebook account, logout from Facebook SDK
+      if (platform === 'Facebook' && window.FB) {
+        await new Promise<void>((resolve) => {
+          window.FB.logout(() => {
+            console.log('Logged out from Facebook SDK');
+            resolve();
+          });
+        });
+      }
+
       await onDisconnect();
       toast.success(`${platform} account disconnected successfully`);
+
+      // Reinitialize Facebook SDK if it was a Facebook account
+      if (platform === 'Facebook' && window.FB) {
+        window.FB.init({
+          appId: '1294294115054311',
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0'
+        });
+        console.log('Facebook SDK reinitialized');
+      }
     } catch (error) {
       console.error(`Error disconnecting ${platform} account:`, error);
       toast.error(`Failed to disconnect ${platform} account`);
