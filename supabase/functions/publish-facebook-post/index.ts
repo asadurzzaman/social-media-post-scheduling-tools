@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting publish-facebook-post function');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -22,54 +24,116 @@ serve(async (req) => {
       .from('posts')
       .select(`
         *,
-        social_accounts(access_token, platform)
+        social_accounts(access_token, platform, page_access_token, page_id)
       `)
       .eq('status', 'scheduled')
       .lte('scheduled_for', new Date().toISOString());
 
-    if (postsError) throw postsError;
+    if (postsError) {
+      console.error('Error fetching posts:', postsError);
+      throw postsError;
+    }
+
     if (!posts || posts.length === 0) {
+      console.log('No posts to publish');
       return new Response(
         JSON.stringify({ message: 'No posts to publish' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log(`Found ${posts.length} posts to publish`);
+
     const results = await Promise.all(
       posts.map(async (post) => {
+        console.log(`Processing post ${post.id} for platform ${post.social_accounts.platform}`);
+        
         if (post.social_accounts.platform !== 'facebook') {
+          console.log(`Skipping post ${post.id} - unsupported platform ${post.social_accounts.platform}`);
           return { id: post.id, status: 'error', message: 'Unsupported platform' };
         }
 
         try {
-          // Publish to Facebook using Graph API
+          const accessToken = post.social_accounts.page_access_token || post.social_accounts.access_token;
+          const endpoint = post.social_accounts.page_id 
+            ? `https://graph.facebook.com/v18.0/${post.social_accounts.page_id}/feed`
+            : 'https://graph.facebook.com/v18.0/me/feed';
+
+          console.log(`Publishing to Facebook endpoint: ${endpoint}`);
+          
+          let body: any = {
+            message: post.content,
+          };
+
+          // Handle different post types
+          if (post.image_url) {
+            if (post.image_url.includes(',')) {
+              // Multiple images - create a carousel post
+              const imageUrls = post.image_url.split(',');
+              const mediaIds = await Promise.all(
+                imageUrls.map(async (url) => {
+                  const response = await fetch(
+                    `https://graph.facebook.com/v18.0/me/photos`,
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                      },
+                      body: JSON.stringify({
+                        url: url,
+                        published: false,
+                      }),
+                    }
+                  );
+                  const result = await response.json();
+                  if (result.error) throw new Error(result.error.message);
+                  return result.id;
+                })
+              );
+              
+              body = {
+                message: post.content,
+                attached_media: mediaIds.map(id => ({ media_fbid: id })),
+              };
+            } else {
+              // Single image
+              body.link = post.image_url;
+            }
+          }
+
+          console.log('Request body:', JSON.stringify(body));
+
           const response = await fetch(
-            `https://graph.facebook.com/v18.0/me/feed`,
+            endpoint,
             {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${post.social_accounts.access_token}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
-                message: post.content,
-                ...(post.image_url && { link: post.image_url }),
-              }),
+              body: JSON.stringify(body),
             }
           );
 
           const result = await response.json();
+          console.log('Facebook API response:', result);
 
           if (!response.ok) {
             throw new Error(result.error?.message || 'Failed to publish to Facebook');
           }
 
           // Update post status to published
-          await supabaseClient
+          const { error: updateError } = await supabaseClient
             .from('posts')
             .update({ status: 'published' })
             .eq('id', post.id);
 
+          if (updateError) {
+            console.error(`Error updating post ${post.id} status:`, updateError);
+            throw updateError;
+          }
+
+          console.log(`Successfully published post ${post.id}`);
           return {
             id: post.id,
             status: 'published',
@@ -79,10 +143,14 @@ serve(async (req) => {
           console.error(`Error publishing post ${post.id}:`, error);
           
           // Update post status to failed
-          await supabaseClient
+          const { error: updateError } = await supabaseClient
             .from('posts')
             .update({ status: 'failed' })
             .eq('id', post.id);
+
+          if (updateError) {
+            console.error(`Error updating post ${post.id} status to failed:`, updateError);
+          }
 
           return {
             id: post.id,
@@ -93,6 +161,7 @@ serve(async (req) => {
       })
     );
 
+    console.log('Finished processing all posts');
     return new Response(
       JSON.stringify({ results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
