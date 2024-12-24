@@ -18,13 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type SortOption = 'newest' | 'oldest' | 'scheduled';
+
 const Posts = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ['posts', statusFilter],
+    queryKey: ['posts', statusFilter, sortBy],
     queryFn: async () => {
       let query = supabase
         .from('posts')
@@ -35,8 +38,18 @@ const Posts = () => {
         query = query.eq('status', statusFilter);
       }
       
-      // Always order by created_at, with most recent first
-      query = query.order('created_at', { ascending: false });
+      // Apply sorting
+      switch (sortBy) {
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'oldest':
+          query = query.order('created_at', { ascending: true });
+          break;
+        case 'scheduled':
+          query = query.order('scheduled_for', { ascending: true });
+          break;
+      }
       
       const { data, error } = await query;
       if (error) throw error;
@@ -59,7 +72,7 @@ const Posts = () => {
             poll_options: [],
             social_account_id: draft.selectedAccount || '',
             timezone: draft.timezone || 'UTC',
-            user_id: '', // This will be filtered out by RLS if trying to access DB
+            user_id: '',
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
@@ -124,6 +137,19 @@ const Posts = () => {
                 <SelectItem value="published">Published</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={sortBy}
+              onValueChange={(value: SortOption) => setSortBy(value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="scheduled">Schedule Date</SelectItem>
               </SelectContent>
             </Select>
             <Button
