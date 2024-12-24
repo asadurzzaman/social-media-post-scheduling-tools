@@ -1,5 +1,5 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings, Layers } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings, Layers, FileText } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
@@ -24,6 +25,11 @@ const menuItems = [
   { icon: Calendar, label: "Calendar", path: "/calendar" },
   { icon: Image, label: "Media", path: "/media" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
+];
+
+const legalItems = [
+  { icon: FileText, label: "Privacy Policy", path: "/privacy-policy" },
+  { icon: FileText, label: "Terms of Service", path: "/terms-of-service" },
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -69,6 +75,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
               <SidebarGroupContent className="list-none">
                 {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.path} className="list-none">
+                    <SidebarMenuButton asChild>
+                      <Link to={item.path} className="flex items-center gap-3 px-3 py-2">
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                <div className="mt-4 mb-2 px-3">
+                  <div className="text-xs font-medium text-muted-foreground">Legal</div>
+                </div>
+                {legalItems.map((item) => (
                   <SidebarMenuItem key={item.path} className="list-none">
                     <SidebarMenuButton asChild>
                       <Link to={item.path} className="flex items-center gap-3 px-3 py-2">
