@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Facebook, Pencil, Trash2, Image, Film, X } from "lucide-react";
+import { Facebook, Pencil, Trash2, Image, Film, X, Share2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PostStatus, PostStatusBadge } from "./PostStatusBadge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -26,78 +26,93 @@ export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
 
   return (
     <Card className={cn(
-      "h-full flex flex-col bg-white hover:shadow-lg transition-shadow duration-200",
-      hasMedia && "relative"
+      "group h-full flex flex-col bg-[#1A1F2C] text-white overflow-hidden hover:shadow-xl transition-all duration-300",
+      "border-0 rounded-lg"
     )}>
-      <CardHeader className="flex-none space-y-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-600">
-              {format(new Date(post.scheduled_for), 'PPP p')}
-            </span>
-            <PostStatusBadge status={post.status} />
-            {post.social_accounts?.platform === 'facebook' && (
-              <Facebook className="h-4 w-4 text-blue-600" />
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(post)}
-              className="hover:bg-gray-100"
-            >
-              <Pencil className="h-4 w-4 text-gray-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(post.id)}
-              className="hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4 text-red-500" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col relative">
-        <p className="text-sm text-gray-600 mb-4 flex-1">{post.content}</p>
-        {hasMedia && (
-          <div className="mt-auto relative group">
-            {/* Media preview */}
+      <div className="relative w-full aspect-video">
+        {hasMedia ? (
+          <>
             {isVideo ? (
-              <div className="relative">
-                <video
-                  src={post.image_url}
-                  className="rounded-md w-full h-32 object-cover"
-                />
-                <Film className="absolute top-2 left-2 h-6 w-6 text-white drop-shadow-lg" />
-              </div>
+              <video
+                src={post.image_url}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className="relative">
-                <img
-                  src={post.image_url}
-                  alt="Post preview"
-                  className="rounded-md w-full h-32 object-cover"
-                />
-                <Image className="absolute top-2 left-2 h-6 w-6 text-white drop-shadow-lg" />
-              </div>
+              <img
+                src={post.image_url}
+                alt="Post preview"
+                className="w-full h-full object-cover"
+              />
             )}
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => onDelete(post.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1A1F2C] to-transparent opacity-90" />
+          </>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-t from-[#1A1F2C] to-[#2A2F3C]" />
+        )}
+        
+        {/* Platform and Status Badge */}
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          {post.social_accounts?.platform === 'facebook' && (
+            <Facebook className="h-5 w-5 text-blue-400" />
+          )}
+          <PostStatusBadge status={post.status} />
+        </div>
+        
+        {/* Media Type Indicator */}
+        {hasMedia && (
+          <div className="absolute top-4 right-4">
+            {isVideo ? (
+              <Film className="h-5 w-5 text-white/80" />
+            ) : (
+              <Image className="h-5 w-5 text-white/80" />
+            )}
           </div>
         )}
+      </div>
+
+      <CardContent className="flex-1 flex flex-col p-6">
+        {/* Schedule Time */}
+        <div className="flex items-center gap-2 text-white/60 mb-3">
+          <Clock className="h-4 w-4" />
+          <span className="text-sm">
+            {format(new Date(post.scheduled_for), 'PPP p')}
+          </span>
+        </div>
+
+        {/* Content */}
+        <p className="text-sm text-white/80 mb-6 flex-1 line-clamp-3">
+          {post.content}
+        </p>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 pt-4 border-t border-white/10">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(post)}
+            className="flex-1 bg-white/5 hover:bg-white/10 text-white"
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1 bg-white/5 hover:bg-white/10 text-white"
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(post.id)}
+            className="flex-1 bg-white/5 hover:bg-red-500/20 text-white"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
