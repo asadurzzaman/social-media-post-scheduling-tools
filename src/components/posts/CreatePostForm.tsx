@@ -3,6 +3,7 @@ import { PostType } from './PostTypeSelect';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostFormContent } from "./CreatePostFormContent";
+import { useNavigate } from "react-router-dom";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -16,6 +17,7 @@ interface PollOption {
 }
 
 export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostFormProps) => {
+  const navigate = useNavigate();
   const [content, setContent] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [date, setDate] = useState<Date | undefined>(initialDate);
@@ -151,6 +153,8 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       }
 
       clearDraft();
+      // Redirect to posts page after successful creation
+      navigate('/posts');
     } catch (error) {
       console.error("Error scheduling post:", error);
       toast.error("Failed to schedule post");
