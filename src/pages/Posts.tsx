@@ -1,15 +1,14 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, Pencil, Trash2, Facebook } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { EditPostForm } from "@/components/posts/EditPostForm";
 import { toast } from "sonner";
-import { PostStatusBadge, PostStatus } from "@/components/posts/PostStatusBadge";
+import { PostList } from "@/components/posts/PostList";
 import {
   Select,
   SelectContent,
@@ -33,12 +32,10 @@ const Posts = () => {
         .from('posts')
         .select('*, social_accounts(platform)');
 
-      // Apply status filter
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
       
-      // Apply sorting
       switch (sortBy) {
         case 'newest':
           query = query.order('created_at', { ascending: false });
@@ -54,7 +51,6 @@ const Posts = () => {
       const { data, error } = await query;
       if (error) throw error;
       
-      // Include drafts from localStorage if viewing all or specifically draft posts
       let allPosts = data || [];
       
       if (statusFilter === 'all' || statusFilter === 'draft') {
@@ -84,7 +80,6 @@ const Posts = () => {
 
   const handleDelete = async (postId: string) => {
     try {
-      // Handle draft deletion from localStorage
       if (postId.startsWith('draft-')) {
         localStorage.removeItem('postDraft');
         toast.success("Draft deleted successfully");
@@ -92,7 +87,6 @@ const Posts = () => {
         return;
       }
 
-      // Handle regular post deletion from database
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -170,84 +164,30 @@ const Posts = () => {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {posts?.map((post) => (
-              <div
-                key={post.id}
-                className="flex items-start gap-4 p-4 rounded-lg border bg-card"
-              >
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        {format(new Date(post.scheduled_for), 'PPP p')}
-                      </span>
-                      <PostStatusBadge status={post.status as PostStatus} />
-                      {post.social_accounts?.platform === 'facebook' && (
-                        <Facebook className="h-4 w-4 text-blue-600" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(post)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(post.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{post.content}</p>
-                  {post.image_url && (
-                    <img
-                      src={post.image_url}
-                      alt="Post preview"
-                      className="mt-2 rounded-md max-w-[200px] h-auto"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-            {posts?.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No posts found</p>
-                <Button asChild className="mt-4">
-                  <Link to="/create-post">Create your first post</Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+        <PostList
+          posts={posts}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Edit Post</DialogTitle>
-          </DialogHeader>
-          {selectedPost && (
-            <EditPostForm
-              post={selectedPost}
-              onSuccess={() => {
-                setIsEditDialogOpen(false);
-                refetch();
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Edit Post</DialogTitle>
+            </DialogHeader>
+            {selectedPost && (
+              <EditPostForm
+                post={selectedPost}
+                onSuccess={() => {
+                  setIsEditDialogOpen(false);
+                  refetch();
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
     </DashboardLayout>
   );
 };
