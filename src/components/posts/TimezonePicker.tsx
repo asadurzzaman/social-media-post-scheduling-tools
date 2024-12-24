@@ -12,19 +12,40 @@ interface TimezonePickerProps {
 }
 
 export const TimezonePicker = ({ value, onChange }: TimezonePickerProps) => {
-  // UTC offsets from UTC-12 to UTC+14
+  // UTC offsets with major cities
   const utcOffsets = [
-    'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00',
-    'UTC-07:00', 'UTC-06:00', 'UTC-05:00', 'UTC-04:00', 'UTC-03:00',
-    'UTC-02:00', 'UTC-01:00', 'UTC+00:00', 'UTC+01:00', 'UTC+02:00',
-    'UTC+03:00', 'UTC+04:00', 'UTC+05:00', 'UTC+06:00', 'UTC+07:00',
-    'UTC+08:00', 'UTC+09:00', 'UTC+10:00', 'UTC+11:00', 'UTC+12:00',
-    'UTC+13:00', 'UTC+14:00'
+    { offset: 'UTC-12:00', cities: '(Baker Island)' },
+    { offset: 'UTC-11:00', cities: '(American Samoa)' },
+    { offset: 'UTC-10:00', cities: '(Hawaii)' },
+    { offset: 'UTC-09:00', cities: '(Alaska)' },
+    { offset: 'UTC-08:00', cities: '(Los Angeles, Vancouver)' },
+    { offset: 'UTC-07:00', cities: '(Denver, Phoenix)' },
+    { offset: 'UTC-06:00', cities: '(Chicago, Mexico City)' },
+    { offset: 'UTC-05:00', cities: '(New York, Toronto)' },
+    { offset: 'UTC-04:00', cities: '(Halifax, Santiago)' },
+    { offset: 'UTC-03:00', cities: '(São Paulo, Buenos Aires)' },
+    { offset: 'UTC-02:00', cities: '(South Georgia)' },
+    { offset: 'UTC-01:00', cities: '(Cape Verde)' },
+    { offset: 'UTC+00:00', cities: '(London, Dublin)' },
+    { offset: 'UTC+01:00', cities: '(Paris, Berlin, Rome)' },
+    { offset: 'UTC+02:00', cities: '(Cairo, Athens)' },
+    { offset: 'UTC+03:00', cities: '(Moscow, Istanbul)' },
+    { offset: 'UTC+04:00', cities: '(Dubai, Baku)' },
+    { offset: 'UTC+05:00', cities: '(Karachi, Tashkent)' },
+    { offset: 'UTC+06:00', cities: '(Dhaka, Almaty)' },
+    { offset: 'UTC+07:00', cities: '(Bangkok, Jakarta)' },
+    { offset: 'UTC+08:00', cities: '(Singapore, Beijing)' },
+    { offset: 'UTC+09:00', cities: '(Tokyo, Seoul)' },
+    { offset: 'UTC+10:00', cities: '(Sydney, Brisbane)' },
+    { offset: 'UTC+11:00', cities: '(Solomon Islands)' },
+    { offset: 'UTC+12:00', cities: '(Auckland, Fiji)' },
+    { offset: 'UTC+13:00', cities: '(Samoa, Tonga)' },
+    { offset: 'UTC+14:00', cities: '(Line Islands)' }
   ];
 
   // Comprehensive list of major timezones grouped by region
   const timezones = {
-    'UTC/GMT': utcOffsets,
+    'UTC/GMT': utcOffsets.map(({ offset, cities }) => `${offset} ${cities}`),
     'Americas': [
       'America/New_York',
       'America/Chicago',
