@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
 
-// Add FB SDK types
 declare global {
   interface Window {
     FB: any;
@@ -9,7 +8,6 @@ declare global {
   }
 }
 
-// Define Facebook response types
 interface FacebookAuthResponse {
   accessToken: string;
   userID: string;
@@ -39,8 +37,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // Initialize Facebook SDK
     const loadFacebookSDK = () => {
+      console.log('Starting Facebook SDK initialization...');
       window.fbAsyncInit = function() {
         window.FB.init({
           appId: appId,
@@ -48,10 +46,10 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           xfbml: true,
           version: 'v18.0'
         });
+        console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
       };
 
-      // Load the SDK
       (function(d, s, id) {
         let js: HTMLScriptElement;
         const fjs = d.getElementsByTagName(s)[0];
@@ -67,7 +65,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   }, [appId]);
 
   const handleFacebookLogin = async () => {
+    console.log('Starting Facebook login process...');
     if (!isSDKLoaded) {
+      console.error('Facebook SDK not loaded yet');
       onError('Facebook SDK not loaded yet');
       return;
     }
@@ -75,20 +75,27 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      // First check if user is already logged in
+      console.log('Checking login status...');
       const loginStatusResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
-        window.FB.getLoginStatus((response: FacebookLoginStatusResponse) => resolve(response));
+        window.FB.getLoginStatus((response: FacebookLoginStatusResponse) => {
+          console.log('Login status response:', response);
+          resolve(response);
+        });
       });
 
       if (loginStatusResponse.status === 'connected' && loginStatusResponse.authResponse) {
+        console.log('User already connected, proceeding with success callback');
         onSuccess({
           accessToken: loginStatusResponse.authResponse.accessToken,
           userId: loginStatusResponse.authResponse.userID
         });
       } else {
-        // User needs to log in
+        console.log('User not connected, initiating login...');
         const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
-          window.FB.login((response: FacebookLoginStatusResponse) => resolve(response), {
+          window.FB.login((response: FacebookLoginStatusResponse) => {
+            console.log('Login response:', response);
+            resolve(response);
+          }, {
             scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
             return_scopes: true,
             auth_type: 'rerequest'
@@ -96,11 +103,13 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         });
 
         if (loginResponse.status === 'connected' && loginResponse.authResponse) {
+          console.log('Login successful, proceeding with success callback');
           onSuccess({
             accessToken: loginResponse.authResponse.accessToken,
             userId: loginResponse.authResponse.userID
           });
         } else {
+          console.error('Login failed or was cancelled');
           onError('Login failed or was cancelled');
         }
       }
@@ -129,7 +138,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         w-full max-w-sm
       `}
     >
-      {/* Facebook Icon */}
       <svg
         className="w-5 h-5 fill-current"
         role="img"
