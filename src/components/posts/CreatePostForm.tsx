@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { PostType } from './PostTypeSelect';
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { CreatePostFormContent } from "./CreatePostFormContent";
 import { useNavigate } from "react-router-dom";
+import { publishPost } from "@/utils/postPublisher";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -77,130 +77,52 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
   };
 
   const handlePublishNow = async () => {
-    if (!content || !selectedAccount || !userId) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
-      toast.error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
-      return;
-    }
-
-    if (postType === 'poll' && !pollOptions.every(opt => opt.text.trim())) {
-      toast.error("Please fill in all poll options");
-      return;
-    }
-
     try {
-      let imageUrls: string[] = [];
-      
-      if (uploadedFiles.length > 0) {
-        for (const file of uploadedFiles) {
-          const fileExt = file.name.split('.').pop();
-          const filePath = `${crypto.randomUUID()}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('media')
-            .upload(filePath, file);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('media')
-            .getPublicUrl(filePath);
-
-          imageUrls.push(publicUrl);
-        }
-      }
-
-      // Insert the post with current timestamp
-      const { error } = await supabase.from("posts").insert({
+      await publishPost({
         content,
-        social_account_id: selectedAccount,
-        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        user_id: userId,
-        scheduled_for: new Date().toISOString(), // Use current time
-        status: "scheduled", // The edge function will pick this up immediately
-        timezone: timezone,
-        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+        selectedAccount,
+        userId: userId!,
+        postType,
+        uploadedFiles,
+        pollOptions,
+        timezone,
       });
-
-      if (error) throw error;
-
-      // Trigger immediate publishing
-      const { error: publishError } = await supabase.functions.invoke('publish-facebook-post');
-      
-      if (publishError) throw publishError;
       
       toast.success("Post published successfully!");
       clearDraft();
       navigate('/posts');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error publishing post:", error);
-      toast.error("Failed to publish post");
+      toast.error(error.message || "Failed to publish post");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!content || !selectedAccount || !date || !userId) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
-      toast.error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
-      return;
-    }
-
-    if (postType === 'poll' && !pollOptions.every(opt => opt.text.trim())) {
-      toast.error("Please fill in all poll options");
+    if (!date) {
+      toast.error("Please select a date and time");
       return;
     }
 
     try {
-      let imageUrls: string[] = [];
-      
-      if (uploadedFiles.length > 0) {
-        for (const file of uploadedFiles) {
-          const fileExt = file.name.split('.').pop();
-          const filePath = `${crypto.randomUUID()}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('media')
-            .upload(filePath, file);
-
-          if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('media')
-            .getPublicUrl(filePath);
-
-          imageUrls.push(publicUrl);
-        }
-      }
-
-      const { error } = await supabase.from("posts").insert({
+      await publishPost({
         content,
-        social_account_id: selectedAccount,
-        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        user_id: userId,
-        scheduled_for: date.toISOString(),
-        status: "scheduled",
-        timezone: timezone,
-        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+        selectedAccount,
+        userId: userId!,
+        postType,
+        uploadedFiles,
+        pollOptions,
+        timezone,
+        scheduledFor: date,
       });
-
-      if (error) throw error;
       
       toast.success("Post scheduled successfully!");
       clearDraft();
       navigate('/posts');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error scheduling post:", error);
-      toast.error("Failed to schedule post");
+      toast.error(error.message || "Failed to schedule post");
     }
   };
 

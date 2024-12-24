@@ -19,7 +19,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get posts that are scheduled and due for publishing
     const { data: posts, error: postsError } = await supabaseClient
       .from('posts')
       .select(`
@@ -65,7 +64,7 @@ serve(async (req) => {
             message: post.content,
           };
 
-          // Handle different post types
+          // Handle media attachments
           if (post.image_url) {
             if (post.image_url.includes(',')) {
               // Multiple images - create a carousel post
@@ -97,7 +96,7 @@ serve(async (req) => {
               };
             } else {
               // Single image
-              body.link = post.image_url;
+              body.url = post.image_url;
             }
           }
 
