@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { DatePicker } from "./DatePicker";
 import { TimePicker } from "./TimePicker";
-import { TimezonePicker } from "./TimezonePicker";
 
 interface SchedulingOptionsProps {
   date: Date | undefined;
@@ -44,29 +43,6 @@ export const SchedulingOptions = ({
     loadUserTimezone();
   }, []);
 
-  const handleTimeChange = (timeString: string) => {
-    if (!date) return;
-    
-    // Convert 12-hour format to 24-hour for internal handling
-    const [time, period] = timeString.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-    
-    if (period === 'PM' && hours !== 12) {
-      hours += 12;
-    } else if (period === 'AM' && hours === 12) {
-      hours = 0;
-    }
-    
-    const newDate = new Date(date);
-    newDate.setHours(hours, minutes);
-    onDateChange(newDate);
-  };
-
-  const handleTimezoneChange = (newTimezone: string) => {
-    setUserTimezone(newTimezone);
-    onTimezoneChange(newTimezone);
-  };
-
   if (loading) {
     return <div>Loading timezone settings...</div>;
   }
@@ -79,14 +55,28 @@ export const SchedulingOptions = ({
         </label>
         <div className="flex gap-2 mt-1.5">
           <DatePicker date={date} onDateChange={onDateChange} />
-          <TimePicker date={date} onTimeChange={handleTimeChange} />
+          <TimePicker date={date} onTimeChange={(timeString) => {
+            if (!date) return;
+            
+            // Convert 12-hour format to 24-hour for internal handling
+            const [time, period] = timeString.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            
+            if (period === 'PM' && hours !== 12) {
+              hours += 12;
+            } else if (period === 'AM' && hours === 12) {
+              hours = 0;
+            }
+            
+            const newDate = new Date(date);
+            newDate.setHours(hours, minutes);
+            onDateChange(newDate);
+          }} />
         </div>
       </div>
-
-      <TimezonePicker 
-        value={userTimezone}
-        onChange={handleTimezoneChange}
-      />
+      <p className="text-sm text-muted-foreground">
+        Times are shown in {userTimezone}. You can change your timezone in your profile settings.
+      </p>
     </div>
   );
 };

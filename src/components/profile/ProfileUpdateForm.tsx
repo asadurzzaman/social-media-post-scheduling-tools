@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TimezonePicker } from "@/components/posts/TimezonePicker";
 
 interface ProfileUpdateFormProps {
   profile: {
@@ -55,19 +56,6 @@ export const ProfileUpdateForm = ({ profile, onUpdate }: ProfileUpdateFormProps)
     }
   };
 
-  const timezones = [
-    'UTC',
-    'America/New_York',
-    'America/Chicago',
-    'America/Denver',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Paris',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney'
-  ];
-
   return (
     <Card className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -94,18 +82,19 @@ export const ProfileUpdateForm = ({ profile, onUpdate }: ProfileUpdateFormProps)
 
         <div className="space-y-2">
           <Label htmlFor="timezone">Timezone</Label>
-          <Select name="timezone" defaultValue={profile?.timezone || 'UTC'}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select your timezone" />
-            </SelectTrigger>
-            <SelectContent>
-              {timezones.map((tz) => (
-                <SelectItem key={tz} value={tz}>
-                  {tz}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <TimezonePicker
+            value={profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+            onChange={(timezone) => {
+              const timezoneInput = document.querySelector('input[name="timezone"]') as HTMLInputElement;
+              if (timezoneInput) {
+                timezoneInput.value = timezone;
+              }
+            }}
+          />
+          <input type="hidden" name="timezone" defaultValue={profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone} />
+          <p className="text-sm text-muted-foreground mt-1">
+            This timezone will be used for all your scheduled posts
+          </p>
         </div>
 
         <Button type="submit" disabled={isUpdating}>
