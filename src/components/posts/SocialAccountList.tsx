@@ -1,3 +1,4 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,30 +41,15 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'linkedin':
-        return <Linkedin className="h-5 w-5" />;
+        return <Linkedin className="h-4 w-4" />;
       case 'youtube':
-        return <Youtube className="h-5 w-5" />;
+        return <Youtube className="h-4 w-4" />;
       case 'instagram':
-        return <Instagram className="h-5 w-5" />;
+        return <Instagram className="h-4 w-4" />;
       case 'twitter':
-        return <Twitter className="h-5 w-5" />;
+        return <Twitter className="h-4 w-4" />;
       default:
         return null;
-    }
-  };
-
-  const getPlatformColor = (platform: string): string => {
-    switch (platform.toLowerCase()) {
-      case 'linkedin':
-        return 'bg-[#0077B5] hover:bg-[#006399]';
-      case 'youtube':
-        return 'bg-[#FF0000] hover:bg-[#CC0000]';
-      case 'instagram':
-        return 'bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90';
-      case 'twitter':
-        return 'bg-[#1DA1F2] hover:bg-[#1A91DA]';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
     }
   };
 
@@ -74,31 +60,33 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
       <label className="text-sm font-medium">
         Select Social Media Account <span className="text-red-500">*</span>
       </label>
-      <div className="space-y-2">
-        {displayAccounts.map((account) => (
-          <button
-            key={account.id}
-            type="button"
-            onClick={() => onSelect(account.id)}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white transition-all",
-              getPlatformColor(account.platform),
-              selectedAccount === account.id ? 'ring-2 ring-offset-2 ring-black' : ''
-            )}
-          >
-            {getPlatformIcon(account.platform)}
-            <span className="font-medium">{account.account_name}</span>
-            {accounts.length === 0 && (
-              <span className="ml-auto text-sm bg-white/20 px-2 py-0.5 rounded">Demo</span>
-            )}
-          </button>
-        ))}
-        {accounts.length === 0 && (
-          <p className="text-sm text-muted-foreground mt-4">
-            These are demo accounts. Connect your social media accounts to start posting.
-          </p>
-        )}
-      </div>
+      <Select value={selectedAccount} onValueChange={onSelect}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select an account" />
+        </SelectTrigger>
+        <SelectContent>
+          {displayAccounts.map((account) => (
+            <SelectItem 
+              key={account.id} 
+              value={account.id}
+              className="flex items-center gap-2"
+            >
+              <div className="flex items-center gap-2">
+                {getPlatformIcon(account.platform)}
+                <span>{account.account_name}</span>
+                {accounts.length === 0 && (
+                  <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
+                )}
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {accounts.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          These are demo accounts. Connect your social media accounts to start posting.
+        </p>
+      )}
     </div>
   );
 };
