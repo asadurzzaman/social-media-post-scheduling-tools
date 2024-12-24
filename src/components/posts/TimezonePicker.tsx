@@ -12,9 +12,19 @@ interface TimezonePickerProps {
 }
 
 export const TimezonePicker = ({ value, onChange }: TimezonePickerProps) => {
+  // UTC offsets from UTC-12 to UTC+14
+  const utcOffsets = [
+    'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00',
+    'UTC-07:00', 'UTC-06:00', 'UTC-05:00', 'UTC-04:00', 'UTC-03:00',
+    'UTC-02:00', 'UTC-01:00', 'UTC+00:00', 'UTC+01:00', 'UTC+02:00',
+    'UTC+03:00', 'UTC+04:00', 'UTC+05:00', 'UTC+06:00', 'UTC+07:00',
+    'UTC+08:00', 'UTC+09:00', 'UTC+10:00', 'UTC+11:00', 'UTC+12:00',
+    'UTC+13:00', 'UTC+14:00'
+  ];
+
   // Comprehensive list of major timezones grouped by region
   const timezones = {
-    'UTC': ['UTC'],
+    'UTC/GMT': utcOffsets,
     'Americas': [
       'America/New_York',
       'America/Chicago',
@@ -46,24 +56,30 @@ export const TimezonePicker = ({ value, onChange }: TimezonePickerProps) => {
       'Asia/Seoul',
       'Asia/Kolkata',
       'Asia/Bangkok',
-      'Asia/Jakarta'
+      'Asia/Jakarta',
+      'Asia/Dhaka',
+      'Asia/Almaty',
+      'Asia/Tashkent'
     ],
     'Pacific': [
       'Pacific/Auckland',
       'Pacific/Fiji',
-      'Pacific/Honolulu'
+      'Pacific/Honolulu',
+      'Pacific/Guam'
     ],
     'Australia': [
       'Australia/Sydney',
       'Australia/Melbourne',
       'Australia/Perth',
-      'Australia/Brisbane'
+      'Australia/Brisbane',
+      'Australia/Adelaide'
     ],
     'Africa': [
       'Africa/Cairo',
       'Africa/Lagos',
       'Africa/Johannesburg',
-      'Africa/Nairobi'
+      'Africa/Nairobi',
+      'Africa/Casablanca'
     ]
   };
 
