@@ -50,6 +50,15 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         setIsSDKLoaded(true);
       };
 
+      // Remove existing Facebook SDK if present
+      const existingScript = document.getElementById('facebook-jssdk');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      // Clear any existing FB cookies
+      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
       (function(d, s, id) {
         let js: HTMLScriptElement;
         const fjs = d.getElementsByTagName(s)[0];
@@ -62,6 +71,17 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     };
 
     loadFacebookSDK();
+
+    // Cleanup function to ensure proper SDK cleanup
+    return () => {
+      const existingScript = document.getElementById('facebook-jssdk');
+      if (existingScript) {
+        existingScript.remove();
+      }
+      // Clear FB instance
+      delete window.FB;
+      delete window.fbAsyncInit;
+    };
   }, [appId]);
 
   const handleFacebookLogin = async () => {
@@ -75,43 +95,28 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      console.log('Checking login status...');
-      const loginStatusResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
-        window.FB.getLoginStatus((response: FacebookLoginStatusResponse) => {
-          console.log('Login status response:', response);
+      // Force a new login attempt instead of checking status first
+      console.log('Initiating Facebook login...');
+      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
+        window.FB.login((response: FacebookLoginStatusResponse) => {
+          console.log('Login response:', response);
           resolve(response);
+        }, {
+          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
+          return_scopes: true,
+          auth_type: 'rerequest'
         });
       });
 
-      if (loginStatusResponse.status === 'connected' && loginStatusResponse.authResponse) {
-        console.log('User already connected, proceeding with success callback');
+      if (loginResponse.status === 'connected' && loginResponse.authResponse) {
+        console.log('Login successful, proceeding with success callback');
         onSuccess({
-          accessToken: loginStatusResponse.authResponse.accessToken,
-          userId: loginStatusResponse.authResponse.userID
+          accessToken: loginResponse.authResponse.accessToken,
+          userId: loginResponse.authResponse.userID
         });
       } else {
-        console.log('User not connected, initiating login...');
-        const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
-          window.FB.login((response: FacebookLoginStatusResponse) => {
-            console.log('Login response:', response);
-            resolve(response);
-          }, {
-            scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
-            return_scopes: true,
-            auth_type: 'rerequest'
-          });
-        });
-
-        if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-          console.log('Login successful, proceeding with success callback');
-          onSuccess({
-            accessToken: loginResponse.authResponse.accessToken,
-            userId: loginResponse.authResponse.userID
-          });
-        } else {
-          console.error('Login failed or was cancelled');
-          onError('Login failed or was cancelled');
-        }
+        console.error('Login failed or was cancelled');
+        onError('Login failed or was cancelled');
       }
     } catch (error) {
       console.error('Facebook login error:', error);
