@@ -4,11 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { EditPostForm } from "@/components/posts/EditPostForm";
 import { toast } from "sonner";
 import { PostList } from "@/components/posts/PostList";
+import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
 import {
   Select,
   SelectContent,
@@ -78,6 +77,20 @@ const Posts = () => {
     }
   });
 
+  // Query to get social accounts for the edit dialog
+  const { data: accounts } = useQuery({
+    queryKey: ["social-accounts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("social_accounts")
+        .select("*")
+        .eq("platform", "facebook");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const handleDelete = async (postId: string) => {
     try {
       if (postId.startsWith('draft-')) {
@@ -106,6 +119,18 @@ const Posts = () => {
     setSelectedPost(post);
     setIsEditDialogOpen(true);
   };
+
+  // Get current user ID
+  const [userId, setUserId] = useState<string | null>(null);
+  useState(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   return (
     <DashboardLayout>
@@ -171,22 +196,20 @@ const Posts = () => {
           onDelete={handleDelete}
         />
 
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Edit Post</DialogTitle>
-            </DialogHeader>
-            {selectedPost && (
-              <EditPostForm
-                post={selectedPost}
-                onSuccess={() => {
-                  setIsEditDialogOpen(false);
-                  refetch();
-                }}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+        {selectedPost && (
+          <CreatePostDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => {
+              setIsEditDialogOpen(false);
+              setSelectedPost(null);
+              refetch();
+            }}
+            selectedDate={selectedPost.scheduled_for ? new Date(selectedPost.scheduled_for) : null}
+            accounts={accounts || []}
+            userId={userId}
+            initialPost={selectedPost}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
