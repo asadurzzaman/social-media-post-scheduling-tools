@@ -26,16 +26,6 @@ interface CreatePostFormContentProps {
   previewUrls: string[];
   setPreviewUrls: (urls: string[]) => void;
   isDraft: boolean;
-  isRecurring: boolean;
-  setIsRecurring: (isRecurring: boolean) => void;
-  frequency: string;
-  setFrequency: (frequency: string) => void;
-  intervalValue: number;
-  setIntervalValue: (value: number) => void;
-  endDate: Date | undefined;
-  setEndDate: (date: Date | undefined) => void;
-  customIntervalHours: number;
-  setCustomIntervalHours: (hours: number) => void;
   onSubmit: (e: React.FormEvent) => void;
   clearDraft: () => void;
   pollOptions: PollOption[];
@@ -57,16 +47,6 @@ export const CreatePostFormContent = ({
   previewUrls,
   setPreviewUrls,
   isDraft,
-  isRecurring,
-  setIsRecurring,
-  frequency,
-  setFrequency,
-  intervalValue,
-  setIntervalValue,
-  endDate,
-  setEndDate,
-  customIntervalHours,
-  setCustomIntervalHours,
   onSubmit,
   clearDraft,
   pollOptions,
@@ -129,21 +109,10 @@ export const CreatePostFormContent = ({
       <SchedulingOptions
         date={date}
         onDateChange={setDate}
-        isRecurring={isRecurring}
-        onRecurringChange={setIsRecurring}
-        frequency={frequency}
-        onFrequencyChange={setFrequency}
-        intervalValue={intervalValue}
-        onIntervalValueChange={setIntervalValue}
-        endDate={endDate}
-        onEndDateChange={setEndDate}
-        customIntervalHours={customIntervalHours}
-        onCustomIntervalChange={setCustomIntervalHours}
       />
 
       <PostFormActions
         onSubmit={onSubmit}
-        isRecurring={isRecurring}
         isDraft={isDraft}
         onClearDraft={clearDraft}
       />

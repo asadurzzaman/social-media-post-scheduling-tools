@@ -29,13 +29,6 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
     { id: crypto.randomUUID(), text: "" },
     { id: crypto.randomUUID(), text: "" }
   ]);
-  
-  // Recurring post states
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [frequency, setFrequency] = useState("daily");
-  const [intervalValue, setIntervalValue] = useState(1);
-  const [endDate, setEndDate] = useState<Date>();
-  const [customIntervalHours, setCustomIntervalHours] = useState(24);
 
   // Load draft from localStorage on component mount
   useEffect(() => {
@@ -120,40 +113,20 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
         }
       }
 
-      const postData = {
+      const { error } = await supabase.from("posts").insert({
         content,
         social_account_id: selectedAccount,
         image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
         user_id: userId,
+        scheduled_for: date.toISOString(),
+        status: "scheduled",
         poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
-      };
+      });
 
-      if (isRecurring) {
-        const { error } = await supabase.from("recurring_posts").insert({
-          ...postData,
-          start_date: date.toISOString(),
-          end_date: endDate?.toISOString(),
-          frequency,
-          interval_value: intervalValue,
-          custom_interval_hours: frequency === 'custom' ? customIntervalHours : null,
-          status: "active"
-        });
-
-        if (error) throw error;
-        toast.success("Recurring post scheduled successfully!");
-      } else {
-        const { error } = await supabase.from("posts").insert({
-          ...postData,
-          scheduled_for: date.toISOString(),
-          status: "scheduled",
-        });
-
-        if (error) throw error;
-        toast.success("Post scheduled successfully!");
-      }
-
+      if (error) throw error;
+      
+      toast.success("Post scheduled successfully!");
       clearDraft();
-      // Redirect to posts page after successful creation
       navigate('/posts');
     } catch (error) {
       console.error("Error scheduling post:", error);
@@ -177,16 +150,6 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       previewUrls={previewUrls}
       setPreviewUrls={setPreviewUrls}
       isDraft={isDraft}
-      isRecurring={isRecurring}
-      setIsRecurring={setIsRecurring}
-      frequency={frequency}
-      setFrequency={setFrequency}
-      intervalValue={intervalValue}
-      setIntervalValue={setIntervalValue}
-      endDate={endDate}
-      setEndDate={setEndDate}
-      customIntervalHours={customIntervalHours}
-      setCustomIntervalHours={setCustomIntervalHours}
       onSubmit={handleSubmit}
       clearDraft={clearDraft}
       pollOptions={pollOptions}
