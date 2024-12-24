@@ -9,19 +9,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useState } from "react";
 import { EditPostForm } from "@/components/posts/EditPostForm";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Posts = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ['posts'],
+    queryKey: ['posts', statusFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('posts')
         .select('*, social_accounts(platform)')
         .order('created_at', { ascending: false });
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
       
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     }
@@ -60,6 +73,21 @@ const Posts = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Select
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Posts</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               variant="outline"
               size="sm"
