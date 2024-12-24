@@ -93,6 +93,9 @@ export const ProfileUpdateForm = ({ profile, onUpdate }: ProfileUpdateFormProps)
           />
           <input type="hidden" name="timezone" defaultValue={profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone} />
           <p className="text-sm text-muted-foreground mt-1">
+            Times are shown in {profile?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+          </p>
+          <p className="text-sm text-muted-foreground">
             This timezone will be used for all your scheduled posts
           </p>
         </div>
