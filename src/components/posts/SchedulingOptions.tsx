@@ -73,6 +73,18 @@ export const SchedulingOptions = ({
                 onSelect={onDateChange}
                 initialFocus
                 disabled={(date) => date < new Date()}
+                modifiers={{
+                  today: new Date(),
+                }}
+                modifiersStyles={{
+                  today: {
+                    fontWeight: 'bold',
+                    backgroundColor: '#8B5CF6',
+                    color: 'white',
+                  }
+                }}
+                className="rounded-md border"
+                fromDate={new Date()}
               />
             </PopoverContent>
           </Popover>
