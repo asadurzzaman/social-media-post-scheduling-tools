@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { PostList } from "@/components/posts/PostList";
 import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
@@ -23,6 +23,17 @@ const Posts = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   const { data: posts, isLoading, refetch } = useQuery({
     queryKey: ['posts', statusFilter, sortBy],
@@ -119,18 +130,6 @@ const Posts = () => {
     setSelectedPost(post);
     setIsEditDialogOpen(true);
   };
-
-  // Get current user ID
-  const [userId, setUserId] = useState<string | null>(null);
-  useState(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   return (
     <DashboardLayout>

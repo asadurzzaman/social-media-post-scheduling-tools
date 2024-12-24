@@ -9,6 +9,8 @@ interface CreatePostFormProps {
   accounts: any[];
   userId: string | null;
   initialDate?: Date;
+  initialPost?: any;
+  onSuccess?: () => void;
 }
 
 interface PollOption {
@@ -16,37 +18,52 @@ interface PollOption {
   text: string;
 }
 
-export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostFormProps) => {
+export const CreatePostForm = ({ 
+  accounts, 
+  userId, 
+  initialDate,
+  initialPost,
+  onSuccess 
+}: CreatePostFormProps) => {
   const navigate = useNavigate();
-  const [content, setContent] = useState("");
-  const [selectedAccount, setSelectedAccount] = useState("");
-  const [date, setDate] = useState<Date | undefined>(initialDate);
-  const [timezone, setTimezone] = useState<string>("UTC");
+  const [content, setContent] = useState(initialPost?.content || "");
+  const [selectedAccount, setSelectedAccount] = useState(initialPost?.social_account_id || "");
+  const [date, setDate] = useState<Date | undefined>(initialPost ? new Date(initialPost.scheduled_for) : initialDate);
+  const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
   const [postType, setPostType] = useState<PostType>("text");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>(initialPost?.image_url ? [initialPost.image_url] : []);
   const [isDraft, setIsDraft] = useState(false);
-  const [pollOptions, setPollOptions] = useState<PollOption[]>([
-    { id: crypto.randomUUID(), text: "" },
-    { id: crypto.randomUUID(), text: "" }
-  ]);
+  const [pollOptions, setPollOptions] = useState<PollOption[]>(
+    initialPost?.poll_options?.length > 0
+      ? initialPost.poll_options.map((text: string) => ({ 
+          id: crypto.randomUUID(), 
+          text 
+        }))
+      : [
+          { id: crypto.randomUUID(), text: "" },
+          { id: crypto.randomUUID(), text: "" }
+        ]
+  );
 
   useEffect(() => {
-    const savedDraft = localStorage.getItem('postDraft');
-    if (savedDraft) {
-      const draft = JSON.parse(savedDraft);
-      setContent(draft.content || "");
-      setPostType(draft.postType || "text");
-      setSelectedAccount(draft.selectedAccount || "");
-      if (draft.date) setDate(new Date(draft.date));
-      if (draft.timezone) setTimezone(draft.timezone);
-      if (draft.pollOptions) setPollOptions(draft.pollOptions);
+    if (!initialPost) {
+      const savedDraft = localStorage.getItem('postDraft');
+      if (savedDraft) {
+        const draft = JSON.parse(savedDraft);
+        setContent(draft.content || "");
+        setPostType(draft.postType || "text");
+        setSelectedAccount(draft.selectedAccount || "");
+        if (draft.date) setDate(new Date(draft.date));
+        if (draft.timezone) setTimezone(draft.timezone);
+        if (draft.pollOptions) setPollOptions(draft.pollOptions);
+      }
     }
-  }, []);
+  }, [initialPost]);
 
   // Save draft to localStorage when content changes
   useEffect(() => {
-    if (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text)) {
+    if (!initialPost && (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text))) {
       const draft = {
         content,
         postType,
@@ -58,7 +75,7 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date, timezone, pollOptions]);
+  }, [content, postType, selectedAccount, date, timezone, pollOptions, initialPost]);
 
   const handleSaveDraft = () => {
     const draft = {
@@ -104,7 +121,8 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
       
       toast.success("Post published successfully!");
       clearDraft();
-      navigate('/posts');
+      onSuccess?.();
+      if (!onSuccess) navigate('/posts');
     } catch (error: any) {
       console.error("Error publishing post:", error);
       toast.error(error.message || "Failed to publish post");
@@ -129,11 +147,13 @@ export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostForm
         pollOptions,
         timezone,
         scheduledFor: date,
+        postId: initialPost?.id, // Pass the post ID if we're editing
       });
       
-      toast.success("Post scheduled successfully!");
+      toast.success(initialPost ? "Post updated successfully!" : "Post scheduled successfully!");
       clearDraft();
-      navigate('/posts');
+      onSuccess?.();
+      if (!onSuccess) navigate('/posts');
     } catch (error: any) {
       console.error("Error scheduling post:", error);
       toast.error(error.message || "Failed to schedule post");
