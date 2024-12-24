@@ -3,22 +3,51 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Pencil, Trash2, Facebook } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { EditPostForm } from "@/components/posts/EditPostForm";
+import { toast } from "sonner";
 
 const Posts = () => {
+  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   const { data: posts, isLoading, refetch } = useQuery({
     queryKey: ['posts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select('*, social_accounts(platform)')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
       return data || [];
     }
   });
+
+  const handleDelete = async (postId: string) => {
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+      
+      toast.success("Post deleted successfully");
+      refetch();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast.error("Failed to delete post");
+    }
+  };
+
+  const handleEdit = (post: any) => {
+    setSelectedPost(post);
+    setIsEditDialogOpen(true);
+  };
 
   return (
     <DashboardLayout>
@@ -61,13 +90,34 @@ const Posts = () => {
                 className="flex items-start gap-4 p-4 rounded-lg border bg-card"
               >
                 <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {format(new Date(post.scheduled_for), 'PPP p')}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                      {post.status}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        {format(new Date(post.scheduled_for), 'PPP p')}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        {post.status}
+                      </span>
+                      {post.social_accounts?.platform === 'facebook' && (
+                        <Facebook className="h-4 w-4 text-blue-600" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(post)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(post.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{post.content}</p>
                   {post.image_url && (
@@ -91,6 +141,23 @@ const Posts = () => {
           </div>
         )}
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          {selectedPost && (
+            <EditPostForm
+              post={selectedPost}
+              onSuccess={() => {
+                setIsEditDialogOpen(false);
+                refetch();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
