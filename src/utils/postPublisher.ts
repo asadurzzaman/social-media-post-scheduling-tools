@@ -28,8 +28,17 @@ export const publishPost = async ({
   timezone,
   scheduledFor,
 }: PublishPostParams) => {
-  if (!content || !selectedAccount || !userId) {
-    throw new Error("Please fill in all required fields");
+  // Validate required fields with specific error messages
+  if (!selectedAccount) {
+    throw new Error("Please select a social media account");
+  }
+
+  if (!content) {
+    throw new Error("Please add a caption for your post");
+  }
+
+  if (!userId) {
+    throw new Error("You must be logged in to publish a post");
   }
 
   if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
