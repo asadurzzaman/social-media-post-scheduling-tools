@@ -1,6 +1,7 @@
 import { LandingNav } from "@/components/LandingNav";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Footer } from "@/components/Footer";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -131,6 +132,7 @@ export default function Landing() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }
