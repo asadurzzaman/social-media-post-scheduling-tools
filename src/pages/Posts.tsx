@@ -27,21 +27,52 @@ const Posts = () => {
     queryFn: async () => {
       let query = supabase
         .from('posts')
-        .select('*, social_accounts(platform)')
-        .order('created_at', { ascending: false });
+        .select('*, social_accounts(platform)');
 
+      // Apply status filter
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
       }
       
+      // Always order by created_at, with most recent first
+      query = query.order('created_at', { ascending: false });
+      
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      
+      // Include drafts from localStorage if viewing all or specifically draft posts
+      let allPosts = data || [];
+      
+      if (statusFilter === 'all' || statusFilter === 'draft') {
+        const draftJson = localStorage.getItem('postDraft');
+        if (draftJson) {
+          const draft = JSON.parse(draftJson);
+          allPosts = [{
+            id: 'draft-' + Date.now(),
+            content: draft.content,
+            status: 'draft',
+            created_at: new Date().toISOString(),
+            scheduled_for: draft.date || new Date().toISOString(),
+            social_accounts: { platform: 'draft' }
+          }, ...allPosts];
+        }
+      }
+      
+      return allPosts;
     }
   });
 
   const handleDelete = async (postId: string) => {
     try {
+      // Handle draft deletion from localStorage
+      if (postId.startsWith('draft-')) {
+        localStorage.removeItem('postDraft');
+        toast.success("Draft deleted successfully");
+        refetch();
+        return;
+      }
+
+      // Handle regular post deletion from database
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -123,7 +154,11 @@ const Posts = () => {
                       <span className="text-sm font-medium">
                         {format(new Date(post.scheduled_for), 'PPP p')}
                       </span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        post.status === 'draft' 
+                          ? 'bg-yellow-500/10 text-yellow-500'
+                          : 'bg-primary/10 text-primary'
+                      }`}>
                         {post.status}
                       </span>
                       {post.social_accounts?.platform === 'facebook' && (
