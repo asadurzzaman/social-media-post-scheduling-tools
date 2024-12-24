@@ -32,6 +32,7 @@ interface CreatePostFormContentProps {
   setPollOptions: (options: PollOption[]) => void;
   timezone: string;
   onTimezoneChange: (timezone: string) => void;
+  onPublishNow?: () => void;
 }
 
 export const CreatePostFormContent = ({
@@ -54,7 +55,8 @@ export const CreatePostFormContent = ({
   pollOptions,
   setPollOptions,
   timezone,
-  onTimezoneChange
+  onTimezoneChange,
+  onPublishNow
 }: CreatePostFormContentProps) => {
   const handleFileUpload = (files: File[]) => {
     if (postType === 'carousel') {
@@ -120,6 +122,7 @@ export const CreatePostFormContent = ({
         onSubmit={onSubmit}
         isDraft={isDraft}
         onClearDraft={clearDraft}
+        onPublishNow={onPublishNow}
       />
     </div>
   );
