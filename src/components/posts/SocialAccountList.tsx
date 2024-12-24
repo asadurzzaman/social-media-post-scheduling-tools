@@ -41,13 +41,13 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'linkedin':
-        return <Linkedin className="h-4 w-4" />;
+        return <Linkedin className="h-6 w-6 text-[#0077B5]" />;
       case 'youtube':
-        return <Youtube className="h-4 w-4" />;
+        return <Youtube className="h-6 w-6 text-[#FF0000]" />;
       case 'instagram':
-        return <Instagram className="h-4 w-4" />;
+        return <Instagram className="h-6 w-6 text-[#E4405F]" />;
       case 'twitter':
-        return <Twitter className="h-4 w-4" />;
+        return <Twitter className="h-6 w-6 text-[#1DA1F2]" />;
       default:
         return null;
     }
@@ -62,18 +62,27 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
       </label>
       <Select value={selectedAccount} onValueChange={onSelect}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an account" />
+          <SelectValue placeholder="Select an account">
+            {selectedAccount && displayAccounts.map((account) => (
+              account.id === selectedAccount && (
+                <div key={account.id} className="flex items-center gap-3">
+                  {getPlatformIcon(account.platform)}
+                  <span className="font-medium">{account.account_name}</span>
+                </div>
+              )
+            ))}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {displayAccounts.map((account) => (
             <SelectItem 
               key={account.id} 
               value={account.id}
-              className="flex items-center gap-2"
+              className="flex items-center gap-3 py-2"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {getPlatformIcon(account.platform)}
-                <span>{account.account_name}</span>
+                <span className="font-medium">{account.account_name}</span>
                 {accounts.length === 0 && (
                   <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
                 )}
