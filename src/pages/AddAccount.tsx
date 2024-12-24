@@ -118,6 +118,7 @@ const AddAccount = () => {
             title="Facebook page"
             isConnected={!!facebookAccount}
             accountName={facebookAccount?.account_name}
+            accountId={facebookAccount?.id}
             onDisconnect={facebookAccount ? () => handleDisconnectFacebook(facebookAccount.id) : undefined}
           >
             <FacebookLoginButton
