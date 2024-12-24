@@ -1,11 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
+import { Command } from "cmdk";
 import {
   Popover,
   PopoverContent,
@@ -19,61 +12,41 @@ interface MentionSuggestionsProps {
   triggerRef: React.RefObject<HTMLSpanElement>;
 }
 
-const SUGGESTIONS = [
-  "@john_doe",
-  "@jane_smith",
-  "@social_media_expert",
-  "@content_creator",
-  "@marketing_guru"
+const demoMentions = [
+  "@john.doe",
+  "@jane.smith",
+  "@marketing.team",
+  "@sales.dept",
+  "@support.team",
 ];
 
 export const MentionSuggestions = ({
   isOpen,
   onClose,
   onSelect,
-  triggerRef
+  triggerRef,
 }: MentionSuggestionsProps) => {
-  const [mounted, setMounted] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  if (!mounted) return null;
-
-  const filteredSuggestions = SUGGESTIONS.filter(suggestion =>
-    suggestion.toLowerCase().includes(searchValue.toLowerCase())
-  );
-
   return (
-    <Popover open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Popover open={isOpen} onOpenChange={onClose}>
       <PopoverTrigger asChild>
-        <span ref={triggerRef} className="absolute" />
+        <span ref={triggerRef} className="fixed" />
       </PopoverTrigger>
-      <PopoverContent 
-        className="p-0" 
-        sideOffset={5}
-        align="start"
-      >
-        <Command value={searchValue} onValueChange={setSearchValue}>
-          <CommandInput placeholder="Search mentions..." />
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup>
-            {filteredSuggestions.map((suggestion) => (
-              <CommandItem
-                key={suggestion}
-                value={suggestion}
+      <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
+        <Command>
+          <Command.List>
+            {demoMentions.map((mention) => (
+              <Command.Item
+                key={mention}
                 onSelect={() => {
-                  onSelect(suggestion);
+                  onSelect(mention);
                   onClose();
                 }}
+                className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
               >
-                {suggestion}
-              </CommandItem>
+                {mention}
+              </Command.Item>
             ))}
-          </CommandGroup>
+          </Command.List>
         </Command>
       </PopoverContent>
     </Popover>
