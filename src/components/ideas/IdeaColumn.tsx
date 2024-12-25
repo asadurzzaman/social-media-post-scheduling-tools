@@ -1,9 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { IdeaCard } from "./IdeaCard";
-import { IdeaColumnHeader } from "./IdeaColumnHeader";
 
 interface IdeaColumnProps {
   column: {
@@ -23,10 +21,6 @@ interface IdeaColumnProps {
 export const IdeaColumn = ({
   column,
   ideas,
-  index,
-  onRename,
-  onDelete,
-  onMove,
   onCreateIdea,
   onUpdateIdea,
 }: IdeaColumnProps) => {

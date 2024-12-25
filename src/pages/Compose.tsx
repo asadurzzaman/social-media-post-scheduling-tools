@@ -6,18 +6,13 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { DragDropContext } from "react-beautiful-dnd";
-
-interface Column {
-  id: string;
-  title: string;
-  status: string;
-}
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { StrictMode } from "react";
 
 const Compose = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [ideas, setIdeas] = useState<any[]>([]);
-  const [columns, setColumns] = useState<Column[]>([
+  const [columns] = useState([
     { id: "1", title: "Unassigned", status: "unassigned" },
     { id: "2", title: "To Do", status: "todo" },
     { id: "3", title: "In Progress", status: "in-progress" },
@@ -37,34 +32,7 @@ const Compose = () => {
     setIdeas([...ideas, idea]);
   };
 
-  const handleRenameColumn = (column: Column) => {
-    setColumns(columns.map(col => 
-      col.id === column.id 
-        ? { ...col, title: column.title }
-        : col
-    ));
-    toast.success("Column renamed successfully");
-  };
-
-  const handleDeleteColumn = (columnId: string) => {
-    const updatedIdeas = ideas.map(idea => 
-      idea.status === columns.find(col => col.id === columnId)?.status
-        ? { ...idea, status: "unassigned" }
-        : idea
-    );
-    setIdeas(updatedIdeas);
-    setColumns(columns.filter(col => col.id !== columnId));
-    toast.success("Column deleted and ideas moved to Unassigned");
-  };
-
-  const moveColumn = (fromIndex: number, toIndex: number) => {
-    const newColumns = [...columns];
-    const [movedColumn] = newColumns.splice(fromIndex, 1);
-    newColumns.splice(toIndex, 0, movedColumn);
-    setColumns(newColumns);
-  };
-
-  const onDragEnd = (result: any) => {
+  const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
     if (!destination) {
@@ -123,23 +91,25 @@ const Compose = () => {
           </div>
         </div>
 
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="grid grid-cols-4 gap-4">
-            {columns.map((column, index) => (
-              <IdeaColumn
-                key={column.id}
-                column={column}
-                ideas={ideas}
-                index={index}
-                onRename={handleRenameColumn}
-                onDelete={handleDeleteColumn}
-                onMove={moveColumn}
-                onCreateIdea={() => setIsCreateDialogOpen(true)}
-                onUpdateIdea={handleUpdateIdea}
-              />
-            ))}
-          </div>
-        </DragDropContext>
+        <StrictMode>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="grid grid-cols-4 gap-4">
+              {columns.map((column, index) => (
+                <IdeaColumn
+                  key={column.id}
+                  column={column}
+                  ideas={ideas}
+                  index={index}
+                  onRename={() => {}}
+                  onDelete={() => {}}
+                  onMove={() => {}}
+                  onCreateIdea={() => setIsCreateDialogOpen(true)}
+                  onUpdateIdea={handleUpdateIdea}
+                />
+              ))}
+            </div>
+          </DragDropContext>
+        </StrictMode>
 
         <CreateIdeaDialog
           isOpen={isCreateDialogOpen}
