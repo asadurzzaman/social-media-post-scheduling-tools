@@ -91,47 +91,44 @@ const Compose = () => {
 
   return (
     <DashboardLayout>
-      <div className="h-screen flex flex-col">
-        <div className="flex-1 bg-gray-50/50 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Tags className="h-4 w-4 mr-2" />
-                Tags
-              </Button>
-              <Button variant="outline" size="sm">
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Board
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsCreateGroupDialogOpen(true)}>
-                <FolderPlus className="h-4 w-4 mr-2" />
-                New Group
-              </Button>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                New Idea
-              </Button>
-            </div>
+      <div className="space-y-6 bg-gray-50/50 p-6 rounded-lg border border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
           </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              <Tags className="h-4 w-4 mr-2" />
+              Tags
+            </Button>
+            <Button variant="outline" size="sm">
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Board
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsCreateGroupDialogOpen(true)}>
+              <FolderPlus className="h-4 w-4 mr-2" />
+              New Group
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              New Idea
+            </Button>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-4 gap-6 max-w-[1500px] mx-auto h-[calc(100vh-200px)]">
-            {columns.map((column, index) => (
-              <div key={column.id}>
-                <IdeaColumn
-                  column={column}
-                  ideas={ideas}
-                  index={index}
-                  onRename={handleRenameColumn}
-                  onDelete={handleDeleteColumn}
-                  onMove={moveColumn}
-                  onCreateIdea={() => setIsCreateDialogOpen(true)}
-                  onUpdateIdea={handleUpdateIdea}
-                />
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((column, index) => (
+            <IdeaColumn
+              key={column.id}
+              column={column}
+              ideas={ideas}
+              index={index}
+              onRename={handleRenameColumn}
+              onDelete={handleDeleteColumn}
+              onMove={moveColumn}
+              onCreateIdea={() => setIsCreateDialogOpen(true)}
+              onUpdateIdea={handleUpdateIdea}
+            />
+          ))}
         </div>
 
         <CreateIdeaDialog
