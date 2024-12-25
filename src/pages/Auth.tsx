@@ -25,11 +25,6 @@ const Auth = () => {
 
     checkSession();
 
-    // Show success message if coming from successful subscription
-    if (success === 'true') {
-      toast.success("Payment successful! Please create your account to continue.");
-    }
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -41,18 +36,26 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate, success]);
 
+  // If not coming from successful subscription and not signed in, redirect to pricing
+  useEffect(() => {
+    if (!success) {
+      navigate("/pricing");
+    }
+  }, [success, navigate]);
+
+  if (!success) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {success === 'true' ? 'Complete Your Registration' : 'Welcome to SocialManager'}
+            Complete Your Registration
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {success === 'true' 
-              ? "Create your account to access your subscription"
-              : "Sign in or create an account to get started"
-            }
+            Create your account to access your subscription
           </p>
         </div>
         <div className="mt-8">
@@ -71,6 +74,7 @@ const Auth = () => {
             }}
             providers={["facebook"]}
             redirectTo={window.location.origin}
+            view="sign_up"
           />
         </div>
       </div>

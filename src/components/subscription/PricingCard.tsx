@@ -4,6 +4,7 @@ import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface PricingCardProps {
   title: string;
@@ -15,11 +16,20 @@ interface PricingCardProps {
 
 export function PricingCard({ title, price, features, priceId, isCurrentPlan }: PricingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubscribe = async () => {
     try {
       setIsLoading(true);
       
+      // Check if user is already authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // If authenticated, redirect to dashboard
+        navigate("/dashboard");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });
