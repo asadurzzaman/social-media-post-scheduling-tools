@@ -5,5 +5,8 @@ enabled = true
 url = "https://czuhcymoqjgsmwzimlzd.supabase.co"
 
 [functions]
-[functions.publish-facebook-post]
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.create-checkout]
 verify_jwt = true
