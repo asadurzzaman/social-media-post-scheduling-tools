@@ -2,11 +2,12 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
 import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
-import { LayoutGrid, FolderPlus } from "lucide-react";
+import { LayoutGrid, FolderPlus, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
+import { GroupsSidebar } from "@/components/ideas/GroupsSidebar";
 
 interface Column {
   id: string;
@@ -111,20 +112,44 @@ const Compose = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-4">
-          {columns.map((column, index) => (
-            <IdeaColumn
-              key={column.id}
-              column={column}
-              ideas={ideas}
-              index={index}
-              onRename={handleRenameColumn}
-              onDelete={handleDeleteColumn}
-              onMove={moveColumn}
-              onCreateIdea={() => setIsCreateDialogOpen(true)}
-              onUpdateIdea={handleUpdateIdea}
-            />
-          ))}
+        <div className="grid grid-cols-5 gap-4">
+          <div className="col-span-4 grid grid-cols-4 gap-4">
+            {columns.map((column, index) => (
+              <IdeaColumn
+                key={column.id}
+                column={column}
+                ideas={ideas}
+                index={index}
+                onRename={handleRenameColumn}
+                onDelete={handleDeleteColumn}
+                onMove={moveColumn}
+                onCreateIdea={() => setIsCreateDialogOpen(true)}
+                onUpdateIdea={handleUpdateIdea}
+              />
+            ))}
+          </div>
+          
+          <div className="col-span-1 space-y-4">
+            {groups.map((group) => (
+              <div
+                key={group.id}
+                className="bg-background rounded-lg p-4 border border-gray-100"
+              >
+                <h3 className="font-semibold mb-2">{group.name}</h3>
+                <p className="text-sm text-muted-foreground">{group.description}</p>
+              </div>
+            ))}
+            
+            <button
+              onClick={() => setIsCreateGroupDialogOpen(true)}
+              className="w-full h-32 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 flex items-center justify-center transition-colors"
+            >
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Plus className="h-6 w-6" />
+                <span>Add New Group</span>
+              </div>
+            </button>
+          </div>
         </div>
 
         <CreateIdeaDialog
