@@ -22,7 +22,6 @@ import TermsOfService from "./pages/TermsOfService";
 import Pricing from "./pages/Pricing";
 import AuthCallback from "./pages/AuthCallback";
 
-// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
