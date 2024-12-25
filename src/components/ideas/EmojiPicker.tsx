@@ -20,13 +20,16 @@ export function EmojiPicker({ onEmojiSelect }: EmojiPickerProps) {
           <Smile className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start" side="right">
-        <Picker
+      <PopoverContent className="p-0 w-[352px]" side="right">
+        <Picker 
           data={data}
-          onEmojiSelect={(emoji: any) => onEmojiSelect(emoji)}
+          onEmojiSelect={onEmojiSelect}
           theme="light"
+          set="native"
           previewPosition="none"
           skinTonePosition="none"
+          navPosition="none"
+          perLine={8}
         />
       </PopoverContent>
     </Popover>

@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Wand2 } from "lucide-react";
 import {
   Select,
@@ -29,6 +29,7 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
   const [status, setStatus] = useState("unassigned");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleDrop = async (acceptedFiles: File[]) => {
     try {
@@ -91,17 +92,18 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
   };
 
   const handleEmojiSelect = (emoji: any) => {
-    const textArea = document.querySelector('textarea');
-    if (textArea) {
-      const start = textArea.selectionStart;
-      const end = textArea.selectionEnd;
+    if (textAreaRef.current) {
+      const start = textAreaRef.current.selectionStart;
+      const end = textAreaRef.current.selectionEnd;
       const newContent = content.substring(0, start) + emoji.native + content.substring(end);
       setContent(newContent);
       
       // Set cursor position after emoji
       setTimeout(() => {
-        textArea.selectionStart = textArea.selectionEnd = start + emoji.native.length;
-        textArea.focus();
+        if (textAreaRef.current) {
+          textAreaRef.current.selectionStart = textAreaRef.current.selectionEnd = start + emoji.native.length;
+          textAreaRef.current.focus();
+        }
       }, 0);
     } else {
       setContent(prev => prev + emoji.native);
@@ -141,6 +143,7 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
           
           <div className="relative">
             <Textarea
+              ref={textAreaRef}
               placeholder="Let it flow... or use the AI Assistant"
               value={content}
               onChange={(e) => setContent(e.target.value)}
