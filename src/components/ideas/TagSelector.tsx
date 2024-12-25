@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface TagSelectorProps {
   selectedTags: string[];
@@ -28,17 +29,32 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
   const handleTagSelect = (tag: string) => {
     if (!selectedTags.includes(tag)) {
       onTagsChange([...selectedTags, tag]);
+      toast.success(`Added tag: ${tag}`);
     }
     setSearchQuery("");
   };
 
   const handleTagRemove = (tagToRemove: string) => {
     onTagsChange(selectedTags.filter(tag => tag !== tagToRemove));
+    toast.success(`Removed tag: ${tagToRemove}`);
   };
 
   const handleCreateTag = () => {
-    if (searchQuery.trim() && !availableTags.includes(searchQuery.trim())) {
-      handleTagSelect(searchQuery.trim());
+    if (searchQuery.trim()) {
+      const newTag = searchQuery.trim();
+      if (!availableTags.includes(newTag) && !selectedTags.includes(newTag)) {
+        handleTagSelect(newTag);
+        setIsOpen(false);
+      } else {
+        toast.error("This tag already exists");
+      }
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCreateTag();
     }
   };
 
@@ -62,11 +78,16 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
                 placeholder="Search or create tag"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="flex-1"
               />
               {searchQuery && (
-                <Button size="sm" onClick={handleCreateTag}>
-                  <Plus className="h-4 w-4" />
+                <Button 
+                  size="icon"
+                  onClick={handleCreateTag}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 text-white" />
                 </Button>
               )}
             </div>
