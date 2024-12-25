@@ -47,22 +47,22 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   const handleTitleClick = () => {
     if (column.status !== 'unassigned') {
       setIsEditing(true);
+      setEditedTitle(column.title);
     }
   };
 
-  const handleTitleSave = () => {
+  const handleTitleBlur = () => {
     if (editedTitle.trim() !== '') {
       onRename({ ...column, title: editedTitle.trim() });
-      setIsEditing(false);
     } else {
-      setEditedTitle(column.title); // Reset to original if empty
-      setIsEditing(false);
+      setEditedTitle(column.title);
     }
+    setIsEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleTitleSave();
+      handleTitleBlur();
     } else if (e.key === 'Escape') {
       setEditedTitle(column.title);
       setIsEditing(false);
@@ -84,7 +84,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
             <Input
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
-              onBlur={handleTitleSave}
+              onBlur={handleTitleBlur}
               onKeyDown={handleKeyDown}
               className="h-7 w-40"
               autoFocus
