@@ -46,13 +46,24 @@ export const SocialAccountCard = ({
         });
       }
 
-      // Delete the social account from the database
-      const { error } = await supabase
+      // First, delete all posts associated with this social account
+      const { error: postsError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('social_account_id', accountId);
+
+      if (postsError) {
+        console.error('Error deleting associated posts:', postsError);
+        throw new Error('Failed to delete associated posts');
+      }
+
+      // Then delete the social account
+      const { error: accountError } = await supabase
         .from('social_accounts')
         .delete()
         .eq('id', accountId);
 
-      if (error) throw error;
+      if (accountError) throw accountError;
 
       toast.success(`${platform} account disconnected successfully`);
 
