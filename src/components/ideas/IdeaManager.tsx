@@ -177,7 +177,8 @@ export const IdeaManager = () => {
             onUpdateIdea={handleUpdateIdea}
             onDeleteIdea={handleDeleteIdea}
             onEditIdea={(idea) => {
-              setSelectedIdea(idea);
+              const ideaToEdit = ideas.find(i => i.id === idea.id);
+              setSelectedIdea(ideaToEdit);
               setIsCreateDialogOpen(true);
             }}
           />
