@@ -31,6 +31,12 @@ export function TopNav() {
               {item.label}
             </Link>
           ))}
+          <Link
+            to="/pricing"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            Pricing
+          </Link>
         </nav>
         <div className="ml-auto flex items-center space-x-4">
           <Button variant="default" className="hidden md:flex">
