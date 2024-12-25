@@ -92,18 +92,18 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
         </Button>
         {isEditable && onDelete && (
           <ContextMenu>
-            <ContextMenuTrigger>
+            <ContextMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-gray-100"
+                className="hover:bg-gray-200 transition-colors"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </ContextMenuTrigger>
             <ContextMenuContent>
               <ContextMenuItem
-                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                className="text-red-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                 onClick={onDelete}
               >
                 Delete Column
