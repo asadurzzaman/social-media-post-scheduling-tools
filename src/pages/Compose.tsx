@@ -119,16 +119,13 @@ const Compose = () => {
             ))}
           </div>
           
-          <div className="col-span-1 space-y-4">
-            {groups.map((group) => (
-              <div
-                key={group.id}
-                className="bg-background rounded-lg p-4 border border-gray-100"
-              >
-                <h3 className="font-semibold mb-2">{group.name}</h3>
-                <p className="text-sm text-muted-foreground">{group.description}</p>
-              </div>
-            ))}
+          <div className="col-span-1">
+            <GroupsSidebar
+              groups={groups}
+              selectedGroup={selectedGroup}
+              onGroupSelect={setSelectedGroup}
+              onCreateGroup={() => {}}
+            />
           </div>
         </div>
 
