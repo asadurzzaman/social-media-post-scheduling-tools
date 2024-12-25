@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, GripHorizontal } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ColumnHeader } from './ColumnHeader';
+import { IdeaCard } from './IdeaCard';
 
 interface IdeaColumnProps {
   column: {
@@ -66,36 +66,6 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
     setIsEditing(false);
   };
 
-  const handleIdeaTitleClick = (idea: any) => {
-    setEditingIdeaId(idea.id);
-    setEditingIdeaTitle(idea.title);
-    setEditingIdeaContent(idea.content);
-  };
-
-  const handleIdeaContentClick = (idea: any) => {
-    setEditingIdeaId(idea.id);
-    setEditingIdeaTitle(idea.title);
-    setEditingIdeaContent(idea.content);
-  };
-
-  const handleIdeaBlur = () => {
-    if (editingIdeaId && onUpdateIdea) {
-      const updates: any = {};
-      if (editingIdeaTitle.trim() !== '') {
-        updates.title = editingIdeaTitle.trim();
-      }
-      if (editingIdeaContent.trim() !== '') {
-        updates.content = editingIdeaContent.trim();
-      }
-      if (Object.keys(updates).length > 0) {
-        onUpdateIdea(editingIdeaId, updates);
-      }
-    }
-    setEditingIdeaId(null);
-    setEditingIdeaTitle("");
-    setEditingIdeaContent("");
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent, type: 'column' | 'idea') => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -116,96 +86,78 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
     }
   };
 
+  const handleIdeaBlur = () => {
+    if (editingIdeaId && onUpdateIdea) {
+      const updates: any = {};
+      if (editingIdeaTitle.trim() !== '') {
+        updates.title = editingIdeaTitle.trim();
+      }
+      if (editingIdeaContent.trim() !== '') {
+        updates.content = editingIdeaContent.trim();
+      }
+      if (Object.keys(updates).length > 0) {
+        onUpdateIdea(editingIdeaId, updates);
+      }
+    }
+    setEditingIdeaId(null);
+    setEditingIdeaTitle("");
+    setEditingIdeaContent("");
+  };
+
   return (
     <div 
-      className="bg-background rounded-lg p-4 space-y-4 border border-gray-100 cursor-move relative group"
+      className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-4 space-y-3 border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-move relative group min-h-[200px]"
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GripHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-          {isEditing ? (
-            <Input
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-              onBlur={handleTitleBlur}
-              onKeyDown={(e) => handleKeyDown(e, 'column')}
-              className="h-7 w-40"
-              autoFocus
-            />
-          ) : (
-            <h3 
-              className="font-semibold cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={handleTitleClick}
-            >
-              {column.title}
-            </h3>
-          )}
-          <span className="text-sm text-muted-foreground">
-            {columnIdeas.length}
-          </span>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={onCreateIdea}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
+      <ColumnHeader
+        title={column.title}
+        status={column.status}
+        itemCount={columnIdeas.length}
+        isEditing={isEditing}
+        editedTitle={editedTitle}
+        onTitleClick={handleTitleClick}
+        onTitleChange={setEditedTitle}
+        onTitleBlur={handleTitleBlur}
+        onKeyDown={(e) => handleKeyDown(e, 'column')}
+        onCreateIdea={onCreateIdea}
+      />
 
-      {columnIdeas.map((idea) => (
-        <div
-          key={idea.id}
-          className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
-        >
-          {editingIdeaId === idea.id ? (
-            <div className="space-y-2">
-              <Input
-                value={editingIdeaTitle}
-                onChange={(e) => setEditingIdeaTitle(e.target.value)}
-                onBlur={handleIdeaBlur}
-                onKeyDown={(e) => handleKeyDown(e, 'idea')}
-                className="h-7 mb-1"
-                autoFocus
-              />
-              <Textarea
-                value={editingIdeaContent}
-                onChange={(e) => setEditingIdeaContent(e.target.value)}
-                onBlur={handleIdeaBlur}
-                onKeyDown={(e) => handleKeyDown(e, 'idea')}
-                className="min-h-[60px] resize-none"
-              />
-            </div>
-          ) : (
-            <>
-              <h4 
-                className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
-                onClick={() => handleIdeaTitleClick(idea)}
-              >
-                {idea.title}
-              </h4>
-              <p 
-                className="text-sm text-muted-foreground line-clamp-2 mt-1 cursor-pointer hover:text-blue-600 transition-colors"
-                onClick={() => handleIdeaContentClick(idea)}
-              >
-                {idea.content}
-              </p>
-            </>
-          )}
-        </div>
-      ))}
+      <div className="space-y-3">
+        {columnIdeas.map((idea) => (
+          <IdeaCard
+            key={idea.id}
+            idea={idea}
+            isEditing={editingIdeaId === idea.id}
+            editingTitle={editingIdeaTitle}
+            editingContent={editingIdeaContent}
+            onTitleClick={() => {
+              setEditingIdeaId(idea.id);
+              setEditingIdeaTitle(idea.title);
+              setEditingIdeaContent(idea.content);
+            }}
+            onContentClick={() => {
+              setEditingIdeaId(idea.id);
+              setEditingIdeaTitle(idea.title);
+              setEditingIdeaContent(idea.content);
+            }}
+            onTitleChange={setEditingIdeaTitle}
+            onContentChange={setEditingIdeaContent}
+            onBlur={handleIdeaBlur}
+            onKeyDown={(e) => handleKeyDown(e, 'idea')}
+          />
+        ))}
+      </div>
 
       {columnIdeas.length === 0 && (
         <Button
           variant="ghost"
-          className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
+          className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary group"
           onClick={onCreateIdea}
         >
-          <Plus className="h-4 w-4 mr-2" /> New Idea
+          <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" /> New Idea
         </Button>
       )}
     </div>
