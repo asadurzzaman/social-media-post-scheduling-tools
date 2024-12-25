@@ -55,7 +55,11 @@ const Compose = () => {
                     {column.count}
                   </span>
                 </div>
-                <Button variant="ghost" size="icon">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => setIsCreateDialogOpen(true)}
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
