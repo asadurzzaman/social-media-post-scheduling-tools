@@ -91,8 +91,8 @@ const Compose = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col min-h-screen">
-        <div className="bg-gray-50/50 p-6 rounded-lg border border-gray-100">
+      <div className="flex flex-col h-screen">
+        <div className="bg-gray-50/50 p-6 flex-1">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
@@ -116,7 +116,7 @@ const Compose = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-4 gap-6 max-w-[1500px] mx-auto">
             {columns.map((column, index) => (
               <div key={column.id}>
                 <IdeaColumn

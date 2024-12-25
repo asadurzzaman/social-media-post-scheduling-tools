@@ -106,8 +106,9 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
 
   return (
     <div 
-      className="bg-white rounded-lg p-4 space-y-3 shadow-sm border border-gray-100
-                hover:shadow-md transition-all duration-200 cursor-move"
+      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100
+                hover:shadow-md transition-all duration-200 cursor-move
+                w-[350px] min-h-[calc(100vh-120px)] flex flex-col"
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -126,7 +127,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
         onCreateIdea={onCreateIdea}
       />
 
-      <div className="space-y-2">
+      <div className="flex-1 space-y-2">
         {columnIdeas.map((idea) => (
           <IdeaCard
             key={idea.id}
@@ -150,18 +151,18 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
             onKeyDown={(e) => handleKeyDown(e, 'idea')}
           />
         ))}
-      </div>
 
-      {columnIdeas.length === 0 && (
-        <Button
-          variant="ghost"
-          className="w-full h-20 border border-dashed border-gray-200 hover:border-primary/30 
+        {columnIdeas.length === 0 && (
+          <Button
+            variant="ghost"
+            className="w-full h-16 border border-dashed border-gray-200 hover:border-primary/30 
                      hover:bg-primary/5 hover:text-primary group"
-          onClick={onCreateIdea}
-        >
-          <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" /> New Idea
-        </Button>
-      )}
+            onClick={onCreateIdea}
+          >
+            <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" /> New Idea
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
