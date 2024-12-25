@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TagSelector } from "./TagSelector";
 
 interface CreateIdeaDialogProps {
   isOpen: boolean;
@@ -24,21 +23,18 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("unassigned");
-  const [tags, setTags] = useState<string[]>([]);
 
   const handleSave = () => {
     onSave({
       title,
       content,
       status,
-      tags,
       group_id: selectedGroup,
       createdAt: new Date().toISOString(),
     });
     setTitle("");
     setContent("");
     setStatus("unassigned");
-    setTags([]);
     onClose();
   };
 
@@ -49,23 +45,17 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
           <DialogTitle>Create Idea</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="flex items-center gap-4">
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
-                <SelectItem value="todo">To Do</SelectItem>
-                <SelectItem value="in-progress">In Progress</SelectItem>
-                <SelectItem value="done">Done</SelectItem>
-              </SelectContent>
-            </Select>
-            <TagSelector 
-              selectedTags={tags}
-              onTagsChange={setTags}
-            />
-          </div>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
+              <SelectItem value="todo">To Do</SelectItem>
+              <SelectItem value="in-progress">In Progress</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+            </SelectContent>
+          </Select>
           
           <Input
             placeholder="Give your idea a title"
