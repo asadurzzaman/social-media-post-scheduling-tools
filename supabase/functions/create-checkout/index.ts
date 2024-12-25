@@ -41,7 +41,6 @@ serve(async (req) => {
       cancel_url: `${req.headers.get('origin')}/pricing?success=false`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
-      collect_shipping_address: false,
     })
 
     console.log('Payment session created:', session.id)
