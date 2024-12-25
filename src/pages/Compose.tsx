@@ -2,18 +2,14 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
 import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
-import { Plus, Tags, LayoutGrid, FolderPlus, GripHorizontal } from "lucide-react";
+import { Tags, LayoutGrid, FolderPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { IdeaColumn } from "@/components/ideas/IdeaColumn";
+import { GroupsSidebar } from "@/components/ideas/GroupsSidebar";
 
 interface Column {
   id: string;
@@ -59,7 +55,7 @@ const Compose = () => {
     setIdeas([...ideas, idea]);
   };
 
-  const handleSaveGroup = async (group: any) => {
+  const handleSaveGroup = async () => {
     await fetchGroups();
   };
 
@@ -82,15 +78,12 @@ const Compose = () => {
   };
 
   const handleDeleteColumn = (columnId: string) => {
-    // Move ideas to unassigned before deleting
     const updatedIdeas = ideas.map(idea => 
       idea.status === columns.find(col => col.id === columnId)?.status
         ? { ...idea, status: "unassigned" }
         : idea
     );
     setIdeas(updatedIdeas);
-    
-    // Remove the column
     setColumns(columns.filter(col => col.id !== columnId));
     toast.success("Column deleted and ideas moved to Unassigned");
   };
@@ -123,120 +116,31 @@ const Compose = () => {
               New Group
             </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
               New Idea
             </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-5 gap-4">
-          {/* Groups sidebar */}
-          <div className="col-span-1 bg-background rounded-lg p-4 space-y-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Groups</h3>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setIsCreateGroupDialogOpen(true)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {groups.map((group) => (
-                <Button
-                  key={group.id}
-                  variant={selectedGroup === group.id ? "secondary" : "ghost"}
-                  className="w-full justify-start text-left"
-                  onClick={() => setSelectedGroup(group.id)}
-                >
-                  <span className="truncate">{group.name}</span>
-                </Button>
-              ))}
-              {groups.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No groups created yet
-                </p>
-              )}
-            </div>
-          </div>
+          <GroupsSidebar 
+            groups={groups}
+            selectedGroup={selectedGroup}
+            onGroupSelect={setSelectedGroup}
+            onCreateGroup={() => setIsCreateGroupDialogOpen(true)}
+          />
 
-          {/* Ideas board */}
           <div className="col-span-4 grid grid-cols-4 gap-4">
             {columns.map((column, index) => (
-              <ContextMenu key={column.id}>
-                <ContextMenuTrigger>
-                  <div 
-                    className="bg-background rounded-lg p-4 space-y-4 border border-gray-100 cursor-move relative group"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", index.toString());
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
-                      moveColumn(fromIndex, index);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GripHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <h3 className="font-semibold">{column.title}</h3>
-                        <span className="text-sm text-muted-foreground">
-                          {ideas.filter(i => i.status === column.status).length}
-                        </span>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setIsCreateDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {ideas
-                      .filter((idea) => idea.status === column.status)
-                      .map((idea, ideaIndex) => (
-                        <div
-                          key={ideaIndex}
-                          className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
-                        >
-                          <h4 className="font-medium">{idea.title}</h4>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                            {idea.content}
-                          </p>
-                        </div>
-                      ))}
-
-                    {ideas.filter(idea => idea.status === column.status).length === 0 && (
-                      <Button
-                        variant="ghost"
-                        className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
-                        onClick={() => setIsCreateDialogOpen(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" /> New Idea
-                      </Button>
-                    )}
-                  </div>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem onClick={() => handleRenameColumn(column)}>
-                    Rename
-                  </ContextMenuItem>
-                  {column.status !== "unassigned" && (
-                    <ContextMenuItem 
-                      className="text-red-600"
-                      onClick={() => handleDeleteColumn(column.id)}
-                    >
-                      Delete
-                    </ContextMenuItem>
-                  )}
-                </ContextMenuContent>
-              </ContextMenu>
+              <IdeaColumn
+                key={column.id}
+                column={column}
+                ideas={ideas}
+                index={index}
+                onRename={handleRenameColumn}
+                onDelete={handleDeleteColumn}
+                onMove={moveColumn}
+                onCreateIdea={() => setIsCreateDialogOpen(true)}
+              />
             ))}
           </div>
         </div>
