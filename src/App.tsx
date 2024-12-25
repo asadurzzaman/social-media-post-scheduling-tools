@@ -16,6 +16,7 @@ import Media from "./pages/Media";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Posts from "./pages/Posts";
+import Engage from "./pages/Engage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 
@@ -131,6 +132,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/engage"
+            element={
+              <ProtectedRoute>
+                <Engage />
               </ProtectedRoute>
             }
           />

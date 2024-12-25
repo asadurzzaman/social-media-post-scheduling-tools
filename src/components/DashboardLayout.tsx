@@ -3,12 +3,12 @@ import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { TopNav } from "@/components/TopNav";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -18,7 +18,7 @@ interface DashboardLayoutProps {
 }
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: UserPlus, label: "Add Account", path: "/add-account" },
   { icon: FilePlus, label: "Create Post", path: "/create-post" },
   { icon: Layers, label: "My Posts", path: "/posts" },
@@ -38,7 +38,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    // Check for saved theme preference
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
       setTheme(savedTheme);
@@ -133,7 +132,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </SidebarGroup>
           </SidebarContent>
         </Sidebar>
-        <main className="flex-1 p-6">{children}</main>
+        <div className="flex-1">
+          <TopNav />
+          <main className="p-6">{children}</main>
+        </div>
       </div>
     </SidebarProvider>
   );
