@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,15 +17,35 @@ export const CreateGroupDialog = ({ isOpen, onClose, onSave }: CreateGroupDialog
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      toast.error("You must be logged in to create a group");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
       const { data, error } = await supabase
         .from("idea_groups")
-        .insert([{ name, description }])
+        .insert({
+          name,
+          description,
+          user_id: userId
+        })
         .select()
         .single();
 
