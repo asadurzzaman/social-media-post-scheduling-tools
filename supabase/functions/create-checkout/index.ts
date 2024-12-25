@@ -36,7 +36,7 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: 'subscription',
       success_url: `${req.headers.get('origin')}/auth?success=true`,
       cancel_url: `${req.headers.get('origin')}/pricing?success=false`,
       allow_promotion_codes: true,
