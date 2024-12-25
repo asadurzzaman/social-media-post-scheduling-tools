@@ -97,7 +97,7 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
         </Button>
         {isEditable && onDelete && (
           <ContextMenu>
-            <ContextMenuTrigger asChild>
+            <ContextMenuTrigger>
               <Button
                 variant="ghost"
                 size="icon"
