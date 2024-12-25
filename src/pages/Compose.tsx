@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
-import { Plus, Share2, Tags, LayoutGrid } from "lucide-react";
+import { Plus, Tags, LayoutGrid } from "lucide-react";
 import { useState } from "react";
 
 const Compose = () => {
@@ -27,10 +27,6 @@ const Compose = () => {
             <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Feedback
-            </Button>
             <Button variant="outline" size="sm">
               <Tags className="h-4 w-4 mr-2" />
               Tags
