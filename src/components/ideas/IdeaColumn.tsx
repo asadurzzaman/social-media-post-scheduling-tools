@@ -54,6 +54,9 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
     if (editedTitle.trim() !== '') {
       onRename({ ...column, title: editedTitle.trim() });
       setIsEditing(false);
+    } else {
+      setEditedTitle(column.title); // Reset to original if empty
+      setIsEditing(false);
     }
   };
 
