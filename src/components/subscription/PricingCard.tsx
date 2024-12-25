@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface PricingCardProps {
   title: string;
@@ -15,10 +16,20 @@ interface PricingCardProps {
 
 export function PricingCard({ title, price, features, priceId, isCurrentPlan }: PricingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubscribe = async () => {
     try {
       setIsLoading(true);
+      
+      // First check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please sign in to subscribe');
+        navigate('/auth');
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });
@@ -58,11 +69,20 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
         </ul>
 
         <Button
-          className="w-full"
+          className="w-full bg-primary hover:bg-primary/90"
           onClick={handleSubscribe}
           disabled={isLoading || isCurrentPlan}
         >
-          {isCurrentPlan ? 'Current Plan' : isLoading ? 'Loading...' : 'Subscribe'}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : isCurrentPlan ? (
+            'Current Plan'
+          ) : (
+            'Subscribe'
+          )}
         </Button>
       </div>
     </Card>
