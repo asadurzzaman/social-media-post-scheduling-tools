@@ -21,7 +21,7 @@ const Compose = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 bg-gray-50/50 p-6 rounded-lg border border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
@@ -50,7 +50,7 @@ const Compose = () => {
           {columns.map((column) => (
             <div
               key={column.title}
-              className="bg-muted/20 rounded-lg p-4 space-y-4"
+              className="bg-background rounded-lg p-4 space-y-4 border border-gray-100"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ const Compose = () => {
                 .map((idea, index) => (
                   <div
                     key={index}
-                    className="bg-background rounded-lg p-4 shadow-sm border"
+                    className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
                   >
                     <h4 className="font-medium">{idea.title}</h4>
                     <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
@@ -88,7 +88,7 @@ const Compose = () => {
               ).length === 0 && (
                 <Button
                   variant="ghost"
-                  className="w-full h-24 border-2 border-dashed"
+                  className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
                   onClick={() => setIsCreateDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" /> New Idea
