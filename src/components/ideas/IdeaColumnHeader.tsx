@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { Plus, GripHorizontal } from 'lucide-react';
+import { Plus, GripHorizontal, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 interface IdeaColumnHeaderProps {
   title: string;
@@ -9,6 +15,7 @@ interface IdeaColumnHeaderProps {
   isEditable: boolean;
   onRename: (newTitle: string) => void;
   onCreateIdea: () => void;
+  onDelete?: () => void;
 }
 
 export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
@@ -17,6 +24,7 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
   isEditable,
   onRename,
   onCreateIdea,
+  onDelete,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -74,13 +82,36 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
           {ideaCount}
         </span>
       </div>
-      <Button 
-        variant="ghost" 
-        size="icon"
-        onClick={onCreateIdea}
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={onCreateIdea}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        {isEditable && onDelete && (
+          <ContextMenu>
+            <ContextMenuTrigger>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-gray-100"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+              <ContextMenuItem
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                onClick={onDelete}
+              >
+                Delete Column
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
+        )}
+      </div>
     </div>
   );
 };

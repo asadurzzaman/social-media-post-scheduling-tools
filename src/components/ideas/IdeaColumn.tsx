@@ -72,6 +72,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
         isEditable={!isUnassigned}
         onRename={(newTitle) => onRename({ ...column, title: newTitle })}
         onCreateIdea={onCreateIdea}
+        onDelete={!isUnassigned ? () => onDelete(column.id) : undefined}
       />
 
       <div className="flex-1 overflow-y-auto space-y-4">
