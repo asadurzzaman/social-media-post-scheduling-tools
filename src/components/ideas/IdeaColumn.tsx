@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, GripHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface IdeaColumnProps {
   column: {
@@ -32,6 +33,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   const [editedTitle, setEditedTitle] = useState(column.title);
   const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
   const [editingIdeaTitle, setEditingIdeaTitle] = useState("");
+  const [editingIdeaContent, setEditingIdeaContent] = useState("");
   const columnIdeas = ideas.filter((idea) => idea.status === column.status);
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -67,22 +69,40 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   const handleIdeaTitleClick = (idea: any) => {
     setEditingIdeaId(idea.id);
     setEditingIdeaTitle(idea.title);
+    setEditingIdeaContent(idea.content);
   };
 
-  const handleIdeaTitleBlur = () => {
-    if (editingIdeaId && editingIdeaTitle.trim() !== '' && onUpdateIdea) {
-      onUpdateIdea(editingIdeaId, { title: editingIdeaTitle.trim() });
+  const handleIdeaContentClick = (idea: any) => {
+    setEditingIdeaId(idea.id);
+    setEditingIdeaTitle(idea.title);
+    setEditingIdeaContent(idea.content);
+  };
+
+  const handleIdeaBlur = () => {
+    if (editingIdeaId && onUpdateIdea) {
+      const updates: any = {};
+      if (editingIdeaTitle.trim() !== '') {
+        updates.title = editingIdeaTitle.trim();
+      }
+      if (editingIdeaContent.trim() !== '') {
+        updates.content = editingIdeaContent.trim();
+      }
+      if (Object.keys(updates).length > 0) {
+        onUpdateIdea(editingIdeaId, updates);
+      }
     }
     setEditingIdeaId(null);
     setEditingIdeaTitle("");
+    setEditingIdeaContent("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, type: 'column' | 'idea') => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       if (type === 'column') {
         handleTitleBlur();
       } else {
-        handleIdeaTitleBlur();
+        handleIdeaBlur();
       }
     } else if (e.key === 'Escape') {
       if (type === 'column') {
@@ -91,6 +111,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
       } else {
         setEditingIdeaId(null);
         setEditingIdeaTitle("");
+        setEditingIdeaContent("");
       }
     }
   };
@@ -142,25 +163,39 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
           className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
         >
           {editingIdeaId === idea.id ? (
-            <Input
-              value={editingIdeaTitle}
-              onChange={(e) => setEditingIdeaTitle(e.target.value)}
-              onBlur={handleIdeaTitleBlur}
-              onKeyDown={(e) => handleKeyDown(e, 'idea')}
-              className="h-7 mb-1"
-              autoFocus
-            />
+            <div className="space-y-2">
+              <Input
+                value={editingIdeaTitle}
+                onChange={(e) => setEditingIdeaTitle(e.target.value)}
+                onBlur={handleIdeaBlur}
+                onKeyDown={(e) => handleKeyDown(e, 'idea')}
+                className="h-7 mb-1"
+                autoFocus
+              />
+              <Textarea
+                value={editingIdeaContent}
+                onChange={(e) => setEditingIdeaContent(e.target.value)}
+                onBlur={handleIdeaBlur}
+                onKeyDown={(e) => handleKeyDown(e, 'idea')}
+                className="min-h-[60px] resize-none"
+              />
+            </div>
           ) : (
-            <h4 
-              className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => handleIdeaTitleClick(idea)}
-            >
-              {idea.title}
-            </h4>
+            <>
+              <h4 
+                className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
+                onClick={() => handleIdeaTitleClick(idea)}
+              >
+                {idea.title}
+              </h4>
+              <p 
+                className="text-sm text-muted-foreground line-clamp-2 mt-1 cursor-pointer hover:text-blue-600 transition-colors"
+                onClick={() => handleIdeaContentClick(idea)}
+              >
+                {idea.content}
+              </p>
+            </>
           )}
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-            {idea.content}
-          </p>
         </div>
       ))}
 
