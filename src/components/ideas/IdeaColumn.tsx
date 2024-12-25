@@ -30,16 +30,29 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   onUpdateIdea,
 }) => {
   const columnIdeas = ideas.filter((idea) => idea.status === column.status);
+  const isUnassigned = column.status === 'unassigned';
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isUnassigned) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData("text/plain", index.toString());
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (isUnassigned) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    if (isUnassigned) {
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
     onMove(fromIndex, index);
@@ -47,8 +60,8 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
 
   return (
     <div 
-      className="bg-[#f2f4f9] rounded-lg p-4 space-y-4 cursor-move relative group"
-      draggable
+      className={`bg-[#f2f4f9] rounded-lg p-4 space-y-4 ${!isUnassigned ? 'cursor-move' : ''} relative group`}
+      draggable={!isUnassigned}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
@@ -56,7 +69,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
       <IdeaColumnHeader
         title={column.title}
         ideaCount={columnIdeas.length}
-        isEditable={column.status !== 'unassigned'}
+        isEditable={!isUnassigned}
         onRename={(newTitle) => onRename({ ...column, title: newTitle })}
         onCreateIdea={onCreateIdea}
       />
