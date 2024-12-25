@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { GroupsSidebar } from "@/components/ideas/GroupsSidebar";
 
 interface Column {
   id: string;
@@ -107,28 +106,19 @@ const Compose = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-4">
-          <GroupsSidebar 
-            groups={groups}
-            selectedGroup={selectedGroup}
-            onGroupSelect={setSelectedGroup}
-            onCreateGroup={() => setIsCreateGroupDialogOpen(true)}
-          />
-
-          <div className="col-span-4 grid grid-cols-4 gap-4">
-            {columns.map((column, index) => (
-              <IdeaColumn
-                key={column.id}
-                column={column}
-                ideas={ideas}
-                index={index}
-                onRename={handleRenameColumn}
-                onDelete={handleDeleteColumn}
-                onMove={moveColumn}
-                onCreateIdea={() => setIsCreateDialogOpen(true)}
-              />
-            ))}
-          </div>
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((column, index) => (
+            <IdeaColumn
+              key={column.id}
+              column={column}
+              ideas={ideas}
+              index={index}
+              onRename={handleRenameColumn}
+              onDelete={handleDeleteColumn}
+              onMove={moveColumn}
+              onCreateIdea={() => setIsCreateDialogOpen(true)}
+            />
+          ))}
         </div>
 
         <CreateIdeaDialog
