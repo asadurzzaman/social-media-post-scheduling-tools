@@ -9,6 +9,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      idea_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_time_analytics: {
         Row: {
           created_at: string
@@ -61,6 +96,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          group_id: string | null
           hashtags: string[] | null
           id: string
           image_url: string | null
@@ -74,6 +110,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          group_id?: string | null
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
@@ -87,6 +124,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          group_id?: string | null
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
@@ -98,6 +136,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "idea_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_social_account_id_fkey"
             columns: ["social_account_id"]

@@ -1,15 +1,22 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
-import { Plus, Tags, LayoutGrid } from "lucide-react";
+import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
+import { Plus, Tags, LayoutGrid, FolderPlus } from "lucide-react";
 import { useState } from "react";
 
 const Compose = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
   const [ideas, setIdeas] = useState<any[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
 
   const handleSaveIdea = (idea: any) => {
     setIdeas([...ideas, idea]);
+  };
+
+  const handleSaveGroup = (group: any) => {
+    setGroups([...groups, group]);
   };
 
   const columns = [
@@ -34,6 +41,10 @@ const Compose = () => {
             <Button variant="outline" size="sm">
               <LayoutGrid className="h-4 w-4 mr-2" />
               Board
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsCreateGroupDialogOpen(true)}>
+              <FolderPlus className="h-4 w-4 mr-2" />
+              New Group
             </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -102,6 +113,12 @@ const Compose = () => {
           isOpen={isCreateDialogOpen}
           onClose={() => setIsCreateDialogOpen(false)}
           onSave={handleSaveIdea}
+        />
+
+        <CreateGroupDialog
+          isOpen={isCreateGroupDialogOpen}
+          onClose={() => setIsCreateGroupDialogOpen(false)}
+          onSave={handleSaveGroup}
         />
       </div>
     </DashboardLayout>
