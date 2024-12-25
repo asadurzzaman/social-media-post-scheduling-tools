@@ -1,8 +1,7 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
-import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
-import { LayoutGrid, FolderPlus, Plus } from "lucide-react";
+import { LayoutGrid, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -17,7 +16,6 @@ interface Column {
 
 const Compose = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
   const [ideas, setIdeas] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
@@ -59,10 +57,6 @@ const Compose = () => {
     setIdeas([...ideas, idea]);
   };
 
-  const handleSaveGroup = async () => {
-    await fetchGroups();
-  };
-
   const handleRenameColumn = (column: Column) => {
     setColumns(columns.map(col => 
       col.id === column.id 
@@ -102,10 +96,6 @@ const Compose = () => {
               <LayoutGrid className="h-4 w-4 mr-2" />
               Board
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setIsCreateGroupDialogOpen(true)}>
-              <FolderPlus className="h-4 w-4 mr-2" />
-              New Group
-            </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               New Idea
             </Button>
@@ -139,16 +129,6 @@ const Compose = () => {
                 <p className="text-sm text-muted-foreground">{group.description}</p>
               </div>
             ))}
-            
-            <button
-              onClick={() => setIsCreateGroupDialogOpen(true)}
-              className="w-full h-32 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 flex items-center justify-center transition-colors"
-            >
-              <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                <Plus className="h-6 w-6" />
-                <span>Add New Group</span>
-              </div>
-            </button>
           </div>
         </div>
 
@@ -157,12 +137,6 @@ const Compose = () => {
           onClose={() => setIsCreateDialogOpen(false)}
           onSave={handleSaveIdea}
           selectedGroup={selectedGroup}
-        />
-
-        <CreateGroupDialog
-          isOpen={isCreateGroupDialogOpen}
-          onClose={() => setIsCreateGroupDialogOpen(false)}
-          onSave={handleSaveGroup}
         />
       </div>
     </DashboardLayout>
