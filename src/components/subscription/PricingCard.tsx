@@ -24,22 +24,24 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
       
       // Check if user is already authenticated
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // If authenticated, create checkout session
-        const { data, error } = await supabase.functions.invoke('create-checkout', {
-          body: { priceId }
-        });
-
-        if (error) throw error;
-        if (data.error) throw new Error(data.error);
-        if (!data.url) throw new Error('No checkout URL received');
-
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else {
-        // If not authenticated, redirect to auth page
-        navigate("/auth");
+      
+      if (!session) {
+        // If not authenticated, redirect to auth page with success parameter
+        navigate("/auth?success=true");
+        return;
       }
+
+      // If authenticated, create checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      if (!data.url) throw new Error('No checkout URL received');
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Failed to start payment process', {
