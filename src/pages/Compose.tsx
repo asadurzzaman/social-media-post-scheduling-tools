@@ -1,23 +1,35 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
-import { LayoutGrid, Plus, Share2, Tags } from "lucide-react";
-import { useState } from "react";
+import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
+import { Tags, LayoutGrid, FolderPlus } from "lucide-react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { DragDropContext, DropResult } from "react-beautiful-dnd";
-import { StrictMode } from "react";
+
+interface Column {
+  id: string;
+  title: string;
+  status: string;
+}
 
 const Compose = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
   const [ideas, setIdeas] = useState<any[]>([]);
-  const [columns] = useState([
+  const [groups, setGroups] = useState<any[]>([]);
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [columns, setColumns] = useState<Column[]>([
     { id: "1", title: "Unassigned", status: "unassigned" },
     { id: "2", title: "To Do", status: "todo" },
     { id: "3", title: "In Progress", status: "in-progress" },
     { id: "4", title: "Done", status: "done" },
   ]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   const handleUpdateIdea = (ideaId: string, updates: any) => {
     setIdeas(ideas.map(idea => 
@@ -28,45 +40,53 @@ const Compose = () => {
     toast.success("Idea updated successfully");
   };
 
-  const handleSaveIdea = (idea: any) => {
-    const newIdea = {
-      ...idea,
-      id: `idea-${Date.now()}`, // Generate a temporary ID
-    };
-    setIdeas([...ideas, newIdea]);
+  const fetchGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('idea_groups')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setGroups(data || []);
+    } catch (error) {
+      toast.error('Failed to fetch groups');
+    }
   };
 
-  const onDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+  const handleSaveIdea = (idea: any) => {
+    setIdeas([...ideas, idea]);
+  };
 
-    if (!destination) {
-      return;
-    }
+  const handleSaveGroup = async () => {
+    await fetchGroups();
+  };
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
+  const handleRenameColumn = (column: Column) => {
+    setColumns(columns.map(col => 
+      col.id === column.id 
+        ? { ...col, title: column.title }
+        : col
+    ));
+    toast.success("Column renamed successfully");
+  };
 
-    const idea = ideas.find(i => i.id === draggableId);
-    if (!idea) return;
-
-    const newStatus = columns.find(col => col.id === destination.droppableId)?.status;
-    if (!newStatus) return;
-
-    const updatedIdea = {
-      ...idea,
-      status: newStatus
-    };
-
-    const newIdeas = ideas.map(i => 
-      i.id === draggableId ? updatedIdea : i
+  const handleDeleteColumn = (columnId: string) => {
+    const updatedIdeas = ideas.map(idea => 
+      idea.status === columns.find(col => col.id === columnId)?.status
+        ? { ...idea, status: "unassigned" }
+        : idea
     );
+    setIdeas(updatedIdeas);
+    setColumns(columns.filter(col => col.id !== columnId));
+    toast.success("Column deleted and ideas moved to Unassigned");
+  };
 
-    setIdeas(newIdeas);
-    toast.success(`Idea moved to ${newStatus}`);
+  const moveColumn = (fromIndex: number, toIndex: number) => {
+    const newColumns = [...columns];
+    const [movedColumn] = newColumns.splice(fromIndex, 1);
+    newColumns.splice(toIndex, 0, movedColumn);
+    setColumns(newColumns);
   };
 
   return (
@@ -74,52 +94,54 @@ const Compose = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h2 className="text-3xl font-bold tracking-tight">Ideas</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Share2 className="h-4 w-4 mr-2" />
-              Share Feedback
-            </Button>
             <Button variant="outline" size="sm">
               <Tags className="h-4 w-4 mr-2" />
               Tags
             </Button>
-            <Button variant="secondary" size="sm">
+            <Button variant="outline" size="sm">
               <LayoutGrid className="h-4 w-4 mr-2" />
               Board
             </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsCreateGroupDialogOpen(true)}>
+              <FolderPlus className="h-4 w-4 mr-2" />
+              New Group
+            </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
               New Idea
             </Button>
           </div>
         </div>
 
-        <StrictMode>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className="grid grid-cols-4 gap-4">
-              {columns.map((column, index) => (
-                <IdeaColumn
-                  key={column.id}
-                  column={column}
-                  ideas={ideas}
-                  index={index}
-                  onRename={() => {}}
-                  onDelete={() => {}}
-                  onMove={() => {}}
-                  onCreateIdea={() => setIsCreateDialogOpen(true)}
-                  onUpdateIdea={handleUpdateIdea}
-                />
-              ))}
-            </div>
-          </DragDropContext>
-        </StrictMode>
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((column, index) => (
+            <IdeaColumn
+              key={column.id}
+              column={column}
+              ideas={ideas}
+              index={index}
+              onRename={handleRenameColumn}
+              onDelete={handleDeleteColumn}
+              onMove={moveColumn}
+              onCreateIdea={() => setIsCreateDialogOpen(true)}
+              onUpdateIdea={handleUpdateIdea}
+            />
+          ))}
+        </div>
 
         <CreateIdeaDialog
           isOpen={isCreateDialogOpen}
           onClose={() => setIsCreateDialogOpen(false)}
           onSave={handleSaveIdea}
+          selectedGroup={selectedGroup}
+        />
+
+        <CreateGroupDialog
+          isOpen={isCreateGroupDialogOpen}
+          onClose={() => setIsCreateGroupDialogOpen(false)}
+          onSave={handleSaveGroup}
         />
       </div>
     </DashboardLayout>

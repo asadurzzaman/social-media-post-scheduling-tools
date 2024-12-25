@@ -1,7 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Plus, MoreHorizontal } from "lucide-react";
-import { Droppable, Draggable } from "react-beautiful-dnd";
-import { IdeaCard } from "./IdeaCard";
+import React from 'react';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { IdeaColumnHeader } from './IdeaColumnHeader';
+import { IdeaCard } from './IdeaCard';
 
 interface IdeaColumnProps {
   column: {
@@ -15,89 +16,84 @@ interface IdeaColumnProps {
   onDelete: (columnId: string) => void;
   onMove: (fromIndex: number, toIndex: number) => void;
   onCreateIdea: () => void;
-  onUpdateIdea: (ideaId: string, updates: any) => void;
+  onUpdateIdea?: (ideaId: string, updates: any) => void;
 }
 
-export const IdeaColumn = ({
+export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   column,
   ideas,
+  index,
+  onRename,
+  onDelete,
+  onMove,
   onCreateIdea,
   onUpdateIdea,
-}: IdeaColumnProps) => {
+}) => {
   const columnIdeas = ideas.filter((idea) => idea.status === column.status);
+  const isUnassigned = column.status === 'unassigned';
+
+  const handleDragStart = (e: React.DragEvent) => {
+    if (isUnassigned) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (isUnassigned) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (isUnassigned) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
+    onMove(fromIndex, index);
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="bg-white rounded-t-lg p-3 border border-b-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium">{column.title}</h3>
-            <span className="text-sm text-muted-foreground">
-              {columnIdeas.length}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-8 w-8"
-              onClick={onCreateIdea}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-8 w-8"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div 
+      className={`bg-[#f2f4f9] rounded-lg p-4 space-y-4 ${!isUnassigned ? 'cursor-move' : ''} relative group h-[calc(100vh-12rem)] flex flex-col`}
+      draggable={!isUnassigned}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <IdeaColumnHeader
+        title={column.title}
+        ideaCount={columnIdeas.length}
+        isEditable={!isUnassigned}
+        onRename={(newTitle) => onRename({ ...column, title: newTitle })}
+        onCreateIdea={onCreateIdea}
+        onDelete={!isUnassigned ? () => onDelete(column.id) : undefined}
+      />
 
-      <Droppable droppableId={column.id}>
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className={`flex-1 p-2 space-y-2 min-h-[200px] bg-slate-50 rounded-b-lg border border-t-0 ${
-              snapshot.isDraggingOver ? "bg-slate-100" : ""
-            }`}
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {columnIdeas.map((idea) => (
+          <IdeaCard
+            key={idea.id}
+            idea={idea}
+            onUpdate={onUpdateIdea || (() => {})}
+          />
+        ))}
+
+        {columnIdeas.length === 0 && (
+          <Button
+            variant="ghost"
+            className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
+            onClick={onCreateIdea}
           >
-            {columnIdeas.map((idea, index) => (
-              <Draggable key={idea.id} draggableId={idea.id} index={index}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    style={{
-                      ...provided.draggableProps.style,
-                      opacity: snapshot.isDragging ? 0.8 : 1,
-                    }}
-                  >
-                    <IdeaCard idea={idea} onUpdate={onUpdateIdea} />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-            
-            {columnIdeas.length === 0 && (
-              <button
-                onClick={onCreateIdea}
-                className="w-full h-20 rounded-lg border-2 border-dashed border-slate-200 hover:border-slate-300 flex items-center justify-center transition-colors group"
-              >
-                <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground">
-                  <Plus className="h-4 w-4" />
-                  <span className="text-sm font-medium">New Idea</span>
-                </div>
-              </button>
-            )}
-          </div>
+            <Plus className="h-4 w-4 mr-2" /> New Idea
+          </Button>
         )}
-      </Droppable>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, GripHorizontal, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, GripHorizontal, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -7,7 +7,6 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-  ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 
 interface IdeaColumnHeaderProps {
@@ -56,11 +55,6 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
     }
   };
 
-  const handleRenameClick = () => {
-    setIsEditing(true);
-    setEditedTitle(title);
-  };
-
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -98,7 +92,7 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
         </Button>
         {isEditable && onDelete && (
           <ContextMenu>
-            <ContextMenuTrigger>
+            <ContextMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
@@ -107,26 +101,12 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </ContextMenuTrigger>
-            <ContextMenuContent className="w-[240px] p-2">
+            <ContextMenuContent>
               <ContextMenuItem
-                className="flex items-center gap-2 cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md"
-                onClick={handleRenameClick}
-              >
-                <Pencil className="h-4 w-4" />
-                <span>Rename</span>
-              </ContextMenuItem>
-              <ContextMenuSeparator className="my-2" />
-              <ContextMenuItem
-                className="flex items-center gap-2 text-red-600 cursor-pointer px-3 py-2 hover:bg-red-50 rounded-md"
+                className="text-red-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
                 onClick={onDelete}
               >
-                <Trash2 className="h-4 w-4" />
-                <div className="flex flex-col">
-                  <span>Delete</span>
-                  <span className="text-xs text-gray-500 font-normal">
-                    Delete group and move ideas to "Unassigned"
-                  </span>
-                </div>
+                Delete Column
               </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>
