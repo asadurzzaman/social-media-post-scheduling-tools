@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
-import { ImageIcon, Smile, Wand2 } from "lucide-react";
+import { Wand2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,12 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { EmojiPicker } from "./EmojiPicker";
+import { ImageUpload } from "./ImageUpload";
 
 interface CreateIdeaDialogProps {
   isOpen: boolean;
@@ -32,31 +30,25 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
-    },
-    onDrop: async (acceptedFiles) => {
-      try {
-        const newFiles = [...uploadedFiles, ...acceptedFiles];
-        setUploadedFiles(newFiles);
-        
-        const newPreviewUrls = acceptedFiles.map(file => URL.createObjectURL(file));
-        setPreviewUrls([...previewUrls, ...newPreviewUrls]);
-        
-        toast.success("Images uploaded successfully!");
-      } catch (error) {
-        console.error("Error uploading files:", error);
-        toast.error("Failed to upload images");
-      }
+  const handleDrop = async (acceptedFiles: File[]) => {
+    try {
+      const newFiles = [...uploadedFiles, ...acceptedFiles];
+      setUploadedFiles(newFiles);
+      
+      const newPreviewUrls = acceptedFiles.map(file => URL.createObjectURL(file));
+      setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+      
+      toast.success("Images uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      toast.error("Failed to upload images");
     }
-  });
+  };
 
   const handleSave = async () => {
     try {
       const imageUrls: string[] = [];
       
-      // Upload files to Supabase storage
       for (const file of uploadedFiles) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -99,7 +91,21 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
   };
 
   const handleEmojiSelect = (emoji: any) => {
-    setContent(prev => prev + emoji.native);
+    const textArea = document.querySelector('textarea');
+    if (textArea) {
+      const start = textArea.selectionStart;
+      const end = textArea.selectionEnd;
+      const newContent = content.substring(0, start) + emoji.native + content.substring(end);
+      setContent(newContent);
+      
+      // Set cursor position after emoji
+      setTimeout(() => {
+        textArea.selectionStart = textArea.selectionEnd = start + emoji.native.length;
+        textArea.focus();
+      }, 0);
+    } else {
+      setContent(prev => prev + emoji.native);
+    }
   };
 
   const removeImage = (index: number) => {
@@ -133,65 +139,26 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
             className="text-lg font-medium"
           />
           
-          <Textarea
-            placeholder="Let it flow... or use the AI Assistant"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[200px]"
+          <div className="relative">
+            <Textarea
+              placeholder="Let it flow... or use the AI Assistant"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[200px]"
+            />
+            <div className="absolute bottom-2 right-2 flex items-center gap-2">
+              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Wand2 className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          
+          <ImageUpload
+            onDrop={handleDrop}
+            previewUrls={previewUrls}
+            onRemoveImage={removeImage}
           />
-          
-          <div {...getRootProps()} className="cursor-pointer">
-            <div className="flex items-center gap-2 border rounded-lg p-4 border-dashed hover:border-primary transition-colors">
-              <input {...getInputProps()} />
-              <ImageIcon className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Drag & drop or <span className="text-primary">select a file</span>
-              </span>
-            </div>
-          </div>
-          
-          {previewUrls.length > 0 && (
-            <div className="grid grid-cols-3 gap-4">
-              {previewUrls.map((url, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-24 object-cover rounded-lg"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => removeImage(index)}
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <div className="flex items-center gap-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Smile className="h-5 w-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Picker
-                  data={data}
-                  onEmojiSelect={handleEmojiSelect}
-                  theme="light"
-                />
-              </PopoverContent>
-            </Popover>
-            <Button variant="ghost" className="gap-2">
-              <Wand2 className="h-5 w-5" />
-              AI Assistant
-            </Button>
-          </div>
         </div>
         
         <div className="flex justify-end gap-2">
