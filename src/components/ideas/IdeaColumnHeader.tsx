@@ -50,7 +50,9 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <GripHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {isEditable && (
+          <GripHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+        )}
         {isEditing ? (
           <Input
             value={editedTitle}
