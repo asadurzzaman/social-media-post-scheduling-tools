@@ -30,7 +30,7 @@ interface Post {
   social_account_id: string;
   timezone: string;
   user_id: string;
-  group_id?: string;
+  group_id?: string | null;  // Made optional and allow null
   social_accounts: {
     platform: string;
   };
@@ -97,6 +97,7 @@ const Posts = () => {
             social_account_id: draft.selectedAccount || '',
             timezone: draft.timezone || 'UTC',
             user_id: '',
+            group_id: null,  // Add group_id as null for drafts
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
