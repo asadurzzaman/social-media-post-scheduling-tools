@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
 import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
-import { Tags, LayoutGrid, FolderPlus } from "lucide-react";
+import { LayoutGrid, FolderPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -97,10 +97,6 @@ const Compose = () => {
             <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <Tags className="h-4 w-4 mr-2" />
-              Tags
-            </Button>
             <Button variant="outline" size="sm">
               <LayoutGrid className="h-4 w-4 mr-2" />
               Board
