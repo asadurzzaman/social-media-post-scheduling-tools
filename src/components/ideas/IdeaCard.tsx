@@ -17,14 +17,10 @@ interface IdeaCardProps {
 
 export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editingTitle, setEditingTitle] = useState(idea.title);
   const [editingContent, setEditingContent] = useState(idea.content);
 
   const handleBlur = () => {
     const updates: any = {};
-    if (editingTitle.trim() !== '') {
-      updates.title = editingTitle.trim();
-    }
     if (editingContent.trim() !== '') {
       updates.content = editingContent.trim();
     }
@@ -40,7 +36,6 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, on
       handleBlur();
     } else if (e.key === 'Escape') {
       setIsEditing(false);
-      setEditingTitle(idea.title);
       setEditingContent(idea.content);
     }
   };
@@ -62,14 +57,9 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, on
   if (isEditing) {
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 space-y-2">
-        <Input
-          value={editingTitle}
-          onChange={(e) => setEditingTitle(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="h-7 mb-1"
-          autoFocus
-        />
+        <h4 className="font-medium">
+          {idea.title}
+        </h4>
         <Textarea
           value={editingContent}
           onChange={(e) => setEditingContent(e.target.value)}
@@ -83,14 +73,14 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, on
 
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 group relative">
-      <div 
-        className="cursor-pointer"
-        onClick={() => setIsEditing(true)}
-      >
-        <h4 className="font-medium hover:text-blue-600 transition-colors">
+      <div>
+        <h4 className="font-medium">
           {idea.title}
         </h4>
-        <p className="text-sm text-muted-foreground line-clamp-2 mt-1 hover:text-blue-600 transition-colors">
+        <p 
+          className="text-sm text-muted-foreground line-clamp-2 mt-1 hover:text-blue-600 transition-colors cursor-pointer"
+          onClick={() => setIsEditing(true)}
+        >
           {idea.content}
         </p>
       </div>
