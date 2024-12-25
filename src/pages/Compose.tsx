@@ -18,6 +18,7 @@ const Compose = () => {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [selectedIdea, setSelectedIdea] = useState<any>(null);
   
   const [columns, setColumns] = useState<Column[]>([
     { id: "1", title: "Unassigned", status: "unassigned" },
@@ -96,25 +97,50 @@ const Compose = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('ideas')
-        .insert({
-          title: idea.title,
-          content: idea.content,
-          status: idea.status || 'unassigned',
-          group_id: selectedGroup,
-          image_urls: idea.imageUrls,
-          user_id: sessionData.session.user.id
-        })
-        .select()
-        .single();
+      if (idea.id) {
+        // Update existing idea
+        const { error } = await supabase
+          .from('ideas')
+          .update({
+            title: idea.title,
+            content: idea.content,
+            status: idea.status,
+            group_id: selectedGroup,
+            image_urls: idea.imageUrls,
+          })
+          .eq('id', idea.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      setIdeas([data, ...ideas]);
-      toast.success("Idea saved successfully");
+        setIdeas(ideas.map(i => 
+          i.id === idea.id 
+            ? { ...i, ...idea }
+            : i
+        ));
+      } else {
+        // Create new idea
+        const { data, error } = await supabase
+          .from('ideas')
+          .insert({
+            title: idea.title,
+            content: idea.content,
+            status: idea.status || 'unassigned',
+            group_id: selectedGroup,
+            image_urls: idea.imageUrls,
+            user_id: sessionData.session.user.id
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setIdeas([data, ...ideas]);
+      }
+
+      setSelectedIdea(null);
+      toast.success(`Idea ${idea.id ? 'updated' : 'saved'} successfully!`);
     } catch (error) {
-      toast.error('Failed to save idea');
+      console.error("Error saving idea:", error);
+      toast.error(`Failed to ${idea.id ? 'update' : 'save'} idea`);
     }
   };
 
@@ -192,15 +218,24 @@ const Compose = () => {
               onCreateIdea={() => setIsCreateDialogOpen(true)}
               onUpdateIdea={handleUpdateIdea}
               onDeleteIdea={handleDeleteIdea}
+              onEditIdea={(idea) => {
+                setSelectedIdea(idea);
+                setIsCreateDialogOpen(true);
+              }}
             />
           ))}
         </div>
 
         <CreateIdeaDialog
           isOpen={isCreateDialogOpen}
-          onClose={() => setIsCreateDialogOpen(false)}
+          onClose={() => {
+            setIsCreateDialogOpen(false);
+            setSelectedIdea(null);
+          }}
           onSave={handleSaveIdea}
           selectedGroup={selectedGroup}
+          initialIdea={selectedIdea}
+          mode={selectedIdea ? 'edit' : 'create'}
         />
 
         <CreateGroupDialog

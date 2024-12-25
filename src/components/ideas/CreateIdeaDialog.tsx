@@ -21,14 +21,23 @@ interface CreateIdeaDialogProps {
   onClose: () => void;
   onSave: (idea: any) => void;
   selectedGroup?: string | null;
+  initialIdea?: any;
+  mode?: 'create' | 'edit';
 }
 
-export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: CreateIdeaDialogProps) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [status, setStatus] = useState("unassigned");
+export function CreateIdeaDialog({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  selectedGroup,
+  initialIdea,
+  mode = 'create'
+}: CreateIdeaDialogProps) {
+  const [title, setTitle] = useState(initialIdea?.title || "");
+  const [content, setContent] = useState(initialIdea?.content || "");
+  const [status, setStatus] = useState(initialIdea?.status || "unassigned");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>(initialIdea?.image_urls || []);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleDrop = async (acceptedFiles: File[]) => {
@@ -68,12 +77,12 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
       }
       
       onSave({
+        ...(initialIdea || {}),
         title,
         content,
         status,
         group_id: selectedGroup,
-        createdAt: new Date().toISOString(),
-        imageUrls
+        imageUrls: [...previewUrls.filter(url => !url.startsWith('blob:')), ...imageUrls]
       });
       
       // Reset form
@@ -84,10 +93,10 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
       setPreviewUrls([]);
       onClose();
       
-      toast.success("Idea saved successfully!");
+      toast.success(`Idea ${mode === 'create' ? 'saved' : 'updated'} successfully!`);
     } catch (error) {
-      console.error("Error saving idea:", error);
-      toast.error("Failed to save idea");
+      console.error(`Error ${mode === 'create' ? 'saving' : 'updating'} idea:`, error);
+      toast.error(`Failed to ${mode === 'create' ? 'save' : 'update'} idea`);
     }
   };
 
@@ -98,7 +107,6 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
       const newContent = content.substring(0, start) + emoji.native + content.substring(end);
       setContent(newContent);
       
-      // Set cursor position after emoji
       setTimeout(() => {
         if (textAreaRef.current) {
           textAreaRef.current.selectionStart = textAreaRef.current.selectionEnd = start + emoji.native.length;
@@ -119,7 +127,7 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create Idea</DialogTitle>
+          <DialogTitle>{mode === 'create' ? 'Create' : 'Edit'} Idea</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <Select value={status} onValueChange={setStatus}>
@@ -169,7 +177,7 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
             Cancel
           </Button>
           <Button onClick={handleSave}>
-            Save Idea
+            {mode === 'create' ? 'Save' : 'Update'} Idea
           </Button>
         </div>
       </DialogContent>

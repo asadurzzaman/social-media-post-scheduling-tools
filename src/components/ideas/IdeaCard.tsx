@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface IdeaCardProps {
@@ -12,9 +12,10 @@ interface IdeaCardProps {
   };
   onUpdate: (ideaId: string, updates: any) => void;
   onDelete?: (ideaId: string) => void;
+  onEdit?: (idea: any) => void;
 }
 
-export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete }) => {
+export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(idea.title);
   const [editingContent, setEditingContent] = useState(idea.content);
@@ -48,6 +49,13 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete }) 
     e.stopPropagation();
     if (onDelete) {
       onDelete(idea.id);
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(idea);
     }
   };
 
@@ -86,16 +94,26 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete }) 
           {idea.content}
         </p>
       </div>
-      {onDelete && (
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={handleDelete}
+          onClick={handleEdit}
+          className="h-8 w-8"
         >
-          <Trash2 className="h-4 w-4 text-red-500" />
+          <Edit className="h-4 w-4 text-blue-500" />
         </Button>
-      )}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDelete}
+            className="h-8 w-8"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
