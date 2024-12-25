@@ -15,6 +15,7 @@ interface IdeaColumnProps {
   onDelete: (columnId: string) => void;
   onMove: (fromIndex: number, toIndex: number) => void;
   onCreateIdea: () => void;
+  onUpdateIdea?: (ideaId: string, updates: any) => void;
 }
 
 export const IdeaColumn: React.FC<IdeaColumnProps> = ({
@@ -25,9 +26,12 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   onDelete,
   onMove,
   onCreateIdea,
+  onUpdateIdea,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(column.title);
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [editingIdeaTitle, setEditingIdeaTitle] = useState("");
   const columnIdeas = ideas.filter((idea) => idea.status === column.status);
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -60,12 +64,34 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
     setIsEditing(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleIdeaTitleClick = (idea: any) => {
+    setEditingIdeaId(idea.id);
+    setEditingIdeaTitle(idea.title);
+  };
+
+  const handleIdeaTitleBlur = () => {
+    if (editingIdeaId && editingIdeaTitle.trim() !== '' && onUpdateIdea) {
+      onUpdateIdea(editingIdeaId, { title: editingIdeaTitle.trim() });
+    }
+    setEditingIdeaId(null);
+    setEditingIdeaTitle("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, type: 'column' | 'idea') => {
     if (e.key === 'Enter') {
-      handleTitleBlur();
+      if (type === 'column') {
+        handleTitleBlur();
+      } else {
+        handleIdeaTitleBlur();
+      }
     } else if (e.key === 'Escape') {
-      setEditedTitle(column.title);
-      setIsEditing(false);
+      if (type === 'column') {
+        setEditedTitle(column.title);
+        setIsEditing(false);
+      } else {
+        setEditingIdeaId(null);
+        setEditingIdeaTitle("");
+      }
     }
   };
 
@@ -85,7 +111,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
               onBlur={handleTitleBlur}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e) => handleKeyDown(e, 'column')}
               className="h-7 w-40"
               autoFocus
             />
@@ -110,12 +136,28 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
         </Button>
       </div>
 
-      {columnIdeas.map((idea, ideaIndex) => (
+      {columnIdeas.map((idea) => (
         <div
-          key={ideaIndex}
+          key={idea.id}
           className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
         >
-          <h4 className="font-medium">{idea.title}</h4>
+          {editingIdeaId === idea.id ? (
+            <Input
+              value={editingIdeaTitle}
+              onChange={(e) => setEditingIdeaTitle(e.target.value)}
+              onBlur={handleIdeaTitleBlur}
+              onKeyDown={(e) => handleKeyDown(e, 'idea')}
+              className="h-7 mb-1"
+              autoFocus
+            />
+          ) : (
+            <h4 
+              className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => handleIdeaTitleClick(idea)}
+            >
+              {idea.title}
+            </h4>
+          )}
           <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
             {idea.content}
           </p>

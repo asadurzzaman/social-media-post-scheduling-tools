@@ -31,6 +31,15 @@ const Compose = () => {
     fetchGroups();
   }, []);
 
+  const handleUpdateIdea = (ideaId: string, updates: any) => {
+    setIdeas(ideas.map(idea => 
+      idea.id === ideaId 
+        ? { ...idea, ...updates }
+        : idea
+    ));
+    toast.success("Idea updated successfully");
+  };
+
   const fetchGroups = async () => {
     try {
       const { data, error } = await supabase
@@ -117,6 +126,7 @@ const Compose = () => {
               onDelete={handleDeleteColumn}
               onMove={moveColumn}
               onCreateIdea={() => setIsCreateDialogOpen(true)}
+              onUpdateIdea={handleUpdateIdea}
             />
           ))}
         </div>
