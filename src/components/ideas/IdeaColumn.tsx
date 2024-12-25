@@ -60,7 +60,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
 
   return (
     <div 
-      className={`bg-[#f2f4f9] rounded-lg p-4 space-y-4 ${!isUnassigned ? 'cursor-move' : ''} relative group`}
+      className={`bg-[#f2f4f9] rounded-lg p-4 space-y-4 ${!isUnassigned ? 'cursor-move' : ''} relative group h-[calc(100vh-12rem)] flex flex-col`}
       draggable={!isUnassigned}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -74,23 +74,25 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
         onCreateIdea={onCreateIdea}
       />
 
-      {columnIdeas.map((idea) => (
-        <IdeaCard
-          key={idea.id}
-          idea={idea}
-          onUpdate={onUpdateIdea || (() => {})}
-        />
-      ))}
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {columnIdeas.map((idea) => (
+          <IdeaCard
+            key={idea.id}
+            idea={idea}
+            onUpdate={onUpdateIdea || (() => {})}
+          />
+        ))}
 
-      {columnIdeas.length === 0 && (
-        <Button
-          variant="ghost"
-          className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
-          onClick={onCreateIdea}
-        >
-          <Plus className="h-4 w-4 mr-2" /> New Idea
-        </Button>
-      )}
+        {columnIdeas.length === 0 && (
+          <Button
+            variant="ghost"
+            className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
+            onClick={onCreateIdea}
+          >
+            <Plus className="h-4 w-4 mr-2" /> New Idea
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
