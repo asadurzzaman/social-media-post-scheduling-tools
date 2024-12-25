@@ -22,26 +22,7 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
     try {
       setIsLoading(true);
       
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.info('Please create an account to subscribe', {
-          description: "You'll be redirected to sign up.",
-          action: {
-            label: "Sign up",
-            onClick: () => navigate('/auth')
-          },
-        });
-        navigate('/auth', { 
-          state: { 
-            returnTo: '/pricing',
-            priceId: priceId 
-          }
-        });
-        return;
-      }
-
-      // If authenticated, proceed with subscription
+      // Create checkout session directly without auth check
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });

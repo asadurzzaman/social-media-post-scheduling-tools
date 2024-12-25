@@ -1,35 +1,21 @@
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const returnTo = location.state?.returnTo || "/";
-  const priceId = location.state?.priceId;
+  const [searchParams] = useSearchParams();
+  const success = searchParams.get('success');
 
   useEffect(() => {
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          if (priceId) {
-            // If there's a priceId, continue with subscription
-            const { data, error } = await supabase.functions.invoke('create-checkout', {
-              body: { priceId }
-            });
-            
-            if (error) throw error;
-            if (data.error) throw new Error(data.error);
-            if (!data.url) throw new Error('No checkout URL received');
-            
-            window.location.href = data.url;
-          } else {
-            navigate(returnTo);
-          }
+          navigate("/dashboard");
         }
       } catch (error) {
         console.error("Session check error:", error);
@@ -39,47 +25,32 @@ const Auth = () => {
 
     checkSession();
 
+    // Show success message if coming from successful subscription
+    if (success === 'true') {
+      toast.success("Payment successful! Please create your account to continue.");
+    }
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        if (priceId) {
-          // If there's a priceId, continue with subscription
-          const { data, error } = await supabase.functions.invoke('create-checkout', {
-            body: { priceId }
-          });
-          
-          if (error) {
-            toast.error("Error starting subscription");
-            navigate(returnTo);
-            return;
-          }
-          
-          if (data.url) {
-            window.location.href = data.url;
-          } else {
-            toast.error("Error creating checkout session");
-            navigate(returnTo);
-          }
-        } else {
-          navigate(returnTo);
-        }
+        navigate("/dashboard");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, returnTo, priceId]);
+  }, [navigate, success]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {priceId ? 'Create an account to subscribe' : 'Welcome to SocialManager'}
+            {success === 'true' ? 'Complete Your Registration' : 'Welcome to SocialManager'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {priceId 
-              ? "You're just one step away from getting started"
+            {success === 'true' 
+              ? "Create your account to access your subscription"
               : "Sign in or create an account to get started"
             }
           </p>

@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@14.21.0'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,11 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    )
-
     // Get the price ID from the request
     const { priceId } = await req.json()
     
@@ -30,35 +24,12 @@ serve(async (req) => {
       throw new Error('Invalid price ID')
     }
 
-    // Get the session or user object
-    const authHeader = req.headers.get('Authorization')!
-    const token = authHeader.replace('Bearer ', '')
-    const { data } = await supabaseClient.auth.getUser(token)
-    const user = data.user
-    const email = user?.email
-
-    if (!email) {
-      throw new Error('No email found')
-    }
-
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     })
 
-    const customers = await stripe.customers.list({
-      email: email,
-      limit: 1
-    })
-
-    let customer_id = undefined
-    if (customers.data.length > 0) {
-      customer_id = customers.data[0].id
-    }
-
     console.log('Creating payment session...')
     const session = await stripe.checkout.sessions.create({
-      customer: customer_id,
-      customer_email: customer_id ? undefined : email,
       line_items: [
         {
           price: priceId,
@@ -66,8 +37,11 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/dashboard?success=true`,
-      cancel_url: `${req.headers.get('origin')}/dashboard?success=false`,
+      success_url: `${req.headers.get('origin')}/auth?success=true`,
+      cancel_url: `${req.headers.get('origin')}/pricing?success=false`,
+      allow_promotion_codes: true,
+      billing_address_collection: 'required',
+      customer_creation: 'always',
     })
 
     console.log('Payment session created:', session.id)
@@ -84,7 +58,7 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200, // Changed from 500 to 200 to avoid CORS issues
+        status: 200,
       }
     )
   }
