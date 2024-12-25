@@ -7,6 +7,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 
 interface IdeaColumnHeaderProps {
@@ -106,18 +107,17 @@ export const IdeaColumnHeader: React.FC<IdeaColumnHeaderProps> = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </ContextMenuTrigger>
-            <ContextMenuContent className="w-[200px]">
+            <ContextMenuContent className="w-[240px] p-2">
               <ContextMenuItem
-                className="flex items-center gap-2 cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer px-3 py-2 hover:bg-gray-100 rounded-md"
                 onClick={handleRenameClick}
               >
                 <Pencil className="h-4 w-4" />
-                <div>
-                  <span>Rename</span>
-                </div>
+                <span>Rename</span>
               </ContextMenuItem>
+              <ContextMenuSeparator className="my-2" />
               <ContextMenuItem
-                className="flex items-center gap-2 text-red-600 hover:text-red-600 hover:bg-red-50 cursor-pointer"
+                className="flex items-center gap-2 text-red-600 cursor-pointer px-3 py-2 hover:bg-red-50 rounded-md"
                 onClick={onDelete}
               >
                 <Trash2 className="h-4 w-4" />
