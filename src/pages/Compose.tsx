@@ -29,7 +29,11 @@ const Compose = () => {
   };
 
   const handleSaveIdea = (idea: any) => {
-    setIdeas([...ideas, idea]);
+    const newIdea = {
+      ...idea,
+      id: `idea-${Date.now()}`, // Generate a temporary ID
+    };
+    setIdeas([...ideas, newIdea]);
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -62,6 +66,7 @@ const Compose = () => {
     );
 
     setIdeas(newIdeas);
+    toast.success(`Idea moved to ${newStatus}`);
   };
 
   return (
