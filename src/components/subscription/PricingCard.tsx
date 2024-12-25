@@ -4,7 +4,6 @@ import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 interface PricingCardProps {
   title: string;
@@ -16,13 +15,11 @@ interface PricingCardProps {
 
 export function PricingCard({ title, price, features, priceId, isCurrentPlan }: PricingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSubscribe = async () => {
     try {
       setIsLoading(true);
       
-      // Create checkout session directly without auth check
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });
@@ -34,8 +31,8 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
       // Redirect to Stripe Checkout
       window.location.href = data.url;
     } catch (error) {
-      console.error('Subscription error:', error);
-      toast.error('Failed to start subscription process', {
+      console.error('Payment error:', error);
+      toast.error('Failed to start payment process', {
         description: error.message || 'Please try again later'
       });
     } finally {

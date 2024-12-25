@@ -36,12 +36,12 @@ serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: 'subscription',
+      mode: 'payment',
       success_url: `${req.headers.get('origin')}/auth?success=true`,
       cancel_url: `${req.headers.get('origin')}/pricing?success=false`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
-      customer_creation: 'always',
+      collect_shipping_address: false,
     })
 
     console.log('Payment session created:', session.id)
