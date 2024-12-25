@@ -16,7 +16,7 @@ export const GroupsSidebar: React.FC<GroupsSidebarProps> = ({
   onCreateGroup,
 }) => {
   return (
-    <div className="col-span-1 bg-background rounded-lg p-4 space-y-4 border border-gray-100">
+    <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold">Groups</h3>
         <Button 
