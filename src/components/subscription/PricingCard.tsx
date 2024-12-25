@@ -22,14 +22,26 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
     try {
       setIsLoading(true);
       
-      // First check if user is authenticated
+      // Check if user is authenticated
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Please sign in to subscribe');
-        navigate('/auth');
+        toast.info('Please create an account to subscribe', {
+          description: "You'll be redirected to sign up.",
+          action: {
+            label: "Sign up",
+            onClick: () => navigate('/auth')
+          },
+        });
+        navigate('/auth', { 
+          state: { 
+            returnTo: '/pricing',
+            priceId: priceId 
+          }
+        });
         return;
       }
 
+      // If authenticated, proceed with subscription
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { priceId }
       });
@@ -42,7 +54,9 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
       window.location.href = data.url;
     } catch (error) {
       console.error('Subscription error:', error);
-      toast.error(error.message || 'Failed to start subscription process');
+      toast.error('Failed to start subscription process', {
+        description: error.message || 'Please try again later'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -81,7 +95,7 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
           ) : isCurrentPlan ? (
             'Current Plan'
           ) : (
-            'Subscribe'
+            'Get Started'
           )}
         </Button>
       </div>
