@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Column {
   id: string;
@@ -117,7 +117,7 @@ const Compose = () => {
         </div>
 
         <div className="h-[calc(100vh-280px)] w-full">
-          <ScrollArea className="h-full" orientation="horizontal">
+          <ScrollArea className="h-full">
             <div className="grid grid-cols-4 gap-4 min-w-max p-1">
               {columns.map((column, index) => (
                 <div key={column.id} className="w-[300px]">
@@ -134,6 +134,7 @@ const Compose = () => {
                 </div>
               ))}
             </div>
+            <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </div>
 
