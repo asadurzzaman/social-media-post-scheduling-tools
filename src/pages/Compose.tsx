@@ -91,7 +91,7 @@ const Compose = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 bg-gray-50/50 p-6 rounded-lg border border-gray-100">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-3xl font-bold tracking-tight">Create Idea</h2>
