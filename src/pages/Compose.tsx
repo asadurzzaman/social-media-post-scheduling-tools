@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { GroupsSidebar } from "@/components/ideas/GroupsSidebar";
 
 interface Column {
   id: string;
@@ -17,18 +16,12 @@ interface Column {
 const Compose = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [ideas, setIdeas] = useState<any[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [columns, setColumns] = useState<Column[]>([
     { id: "1", title: "Unassigned", status: "unassigned" },
     { id: "2", title: "To Do", status: "todo" },
     { id: "3", title: "In Progress", status: "in-progress" },
     { id: "4", title: "Done", status: "done" },
   ]);
-
-  useEffect(() => {
-    fetchGroups();
-  }, []);
 
   const handleUpdateIdea = (ideaId: string, updates: any) => {
     setIdeas(ideas.map(idea => 
@@ -37,20 +30,6 @@ const Compose = () => {
         : idea
     ));
     toast.success("Idea updated successfully");
-  };
-
-  const fetchGroups = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('idea_groups')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setGroups(data || []);
-    } catch (error) {
-      toast.error('Failed to fetch groups');
-    }
   };
 
   const handleSaveIdea = (idea: any) => {
@@ -102,38 +81,26 @@ const Compose = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-4">
-          <div className="col-span-4 grid grid-cols-4 gap-4">
-            {columns.map((column, index) => (
-              <IdeaColumn
-                key={column.id}
-                column={column}
-                ideas={ideas}
-                index={index}
-                onRename={handleRenameColumn}
-                onDelete={handleDeleteColumn}
-                onMove={moveColumn}
-                onCreateIdea={() => setIsCreateDialogOpen(true)}
-                onUpdateIdea={handleUpdateIdea}
-              />
-            ))}
-          </div>
-          
-          <div className="col-span-1">
-            <GroupsSidebar
-              groups={groups}
-              selectedGroup={selectedGroup}
-              onGroupSelect={setSelectedGroup}
-              onCreateGroup={() => {}}
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((column, index) => (
+            <IdeaColumn
+              key={column.id}
+              column={column}
+              ideas={ideas}
+              index={index}
+              onRename={handleRenameColumn}
+              onDelete={handleDeleteColumn}
+              onMove={moveColumn}
+              onCreateIdea={() => setIsCreateDialogOpen(true)}
+              onUpdateIdea={handleUpdateIdea}
             />
-          </div>
+          ))}
         </div>
 
         <CreateIdeaDialog
           isOpen={isCreateDialogOpen}
           onClose={() => setIsCreateDialogOpen(false)}
           onSave={handleSaveIdea}
-          selectedGroup={selectedGroup}
         />
       </div>
     </DashboardLayout>
