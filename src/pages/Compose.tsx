@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Column {
   id: string;
@@ -116,26 +115,23 @@ const Compose = () => {
           </div>
         </div>
 
-        <div className="h-[calc(100vh-280px)] w-full">
-          <ScrollArea className="h-full">
-            <div className="grid grid-cols-4 gap-4 min-w-max p-1">
-              {columns.map((column, index) => (
-                <div key={column.id} className="w-[300px]">
-                  <IdeaColumn
-                    column={column}
-                    ideas={ideas}
-                    index={index}
-                    onRename={handleRenameColumn}
-                    onDelete={handleDeleteColumn}
-                    onMove={moveColumn}
-                    onCreateIdea={() => setIsCreateDialogOpen(true)}
-                    onUpdateIdea={handleUpdateIdea}
-                  />
-                </div>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+        <div className="h-[calc(100vh-280px)] w-full overflow-auto">
+          <div className="grid grid-cols-4 gap-4 p-1">
+            {columns.map((column, index) => (
+              <div key={column.id} className="w-[300px]">
+                <IdeaColumn
+                  column={column}
+                  ideas={ideas}
+                  index={index}
+                  onRename={handleRenameColumn}
+                  onDelete={handleDeleteColumn}
+                  onMove={moveColumn}
+                  onCreateIdea={() => setIsCreateDialogOpen(true)}
+                  onUpdateIdea={handleUpdateIdea}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <CreateIdeaDialog
