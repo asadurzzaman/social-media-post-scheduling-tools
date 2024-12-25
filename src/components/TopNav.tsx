@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { label: "Compose", path: "/create-post" },
+  { label: "Compose", path: "/compose" },
   { label: "Publish", path: "/posts" },
   { label: "Analyze", path: "/analytics" },
   { label: "Engage", path: "/engage" },
