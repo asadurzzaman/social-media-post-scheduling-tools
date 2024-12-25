@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
+import { useAuth } from "@supabase/auth-helpers-react";
 
 interface Column {
   id: string;
@@ -18,6 +19,8 @@ const Compose = () => {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const auth = useAuth();
+  
   const [columns, setColumns] = useState<Column[]>([
     { id: "1", title: "Unassigned", status: "unassigned" },
     { id: "2", title: "To Do", status: "todo" },
@@ -98,13 +101,14 @@ const Compose = () => {
     try {
       const { data, error } = await supabase
         .from('ideas')
-        .insert([{
+        .insert({
           title: idea.title,
           content: idea.content,
           status: idea.status || 'unassigned',
           group_id: selectedGroup,
-          image_urls: idea.imageUrls
-        }])
+          image_urls: idea.imageUrls,
+          user_id: auth?.user?.id
+        })
         .select()
         .single();
 
