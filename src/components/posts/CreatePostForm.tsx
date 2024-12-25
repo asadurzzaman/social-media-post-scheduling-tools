@@ -18,6 +18,11 @@ interface PollOption {
   text: string;
 }
 
+const defaultPollOptions = [
+  { id: crypto.randomUUID(), text: "" },
+  { id: crypto.randomUUID(), text: "" }
+];
+
 export const CreatePostForm = ({ 
   accounts, 
   userId, 
@@ -40,11 +45,20 @@ export const CreatePostForm = ({
           id: crypto.randomUUID(), 
           text 
         }))
-      : [
-          { id: crypto.randomUUID(), text: "" },
-          { id: crypto.randomUUID(), text: "" }
-        ]
+      : defaultPollOptions
   );
+
+  const resetForm = () => {
+    setContent("");
+    setSelectedAccount("");
+    setDate(undefined);
+    setPostType("text");
+    setUploadedFiles([]);
+    setPreviewUrls([]);
+    setPollOptions(defaultPollOptions);
+    setIsDraft(false);
+    localStorage.removeItem('postDraft');
+  };
 
   useEffect(() => {
     if (!initialPost) {
@@ -61,7 +75,6 @@ export const CreatePostForm = ({
     }
   }, [initialPost]);
 
-  // Save draft to localStorage when content changes
   useEffect(() => {
     if (!initialPost && (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text))) {
       const draft = {
@@ -92,18 +105,7 @@ export const CreatePostForm = ({
   };
 
   const clearDraft = () => {
-    localStorage.removeItem('postDraft');
-    setContent("");
-    setSelectedAccount("");
-    setDate(undefined);
-    setPostType("text");
-    setUploadedFiles([]);
-    setPreviewUrls([]);
-    setPollOptions([
-      { id: crypto.randomUUID(), text: "" },
-      { id: crypto.randomUUID(), text: "" }
-    ]);
-    setIsDraft(false);
+    resetForm();
     toast.success("Draft cleared successfully!");
   };
 
@@ -120,7 +122,7 @@ export const CreatePostForm = ({
       });
       
       toast.success("Post published successfully!");
-      clearDraft();
+      resetForm();
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
@@ -147,11 +149,11 @@ export const CreatePostForm = ({
         pollOptions,
         timezone,
         scheduledFor: date,
-        postId: initialPost?.id, // Pass the post ID if we're editing
+        postId: initialPost?.id,
       });
       
       toast.success(initialPost ? "Post updated successfully!" : "Post scheduled successfully!");
-      clearDraft();
+      resetForm();
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
