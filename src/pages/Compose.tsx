@@ -27,15 +27,57 @@ const Compose = () => {
 
   useEffect(() => {
     fetchGroups();
+    fetchIdeas();
   }, []);
 
-  const handleUpdateIdea = (ideaId: string, updates: any) => {
-    setIdeas(ideas.map(idea => 
-      idea.id === ideaId 
-        ? { ...idea, ...updates }
-        : idea
-    ));
-    toast.success("Idea updated successfully");
+  const fetchIdeas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setIdeas(data || []);
+    } catch (error) {
+      toast.error('Failed to fetch ideas');
+    }
+  };
+
+  const handleUpdateIdea = async (ideaId: string, updates: any) => {
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .update(updates)
+        .eq('id', ideaId);
+
+      if (error) throw error;
+
+      setIdeas(ideas.map(idea => 
+        idea.id === ideaId 
+          ? { ...idea, ...updates }
+          : idea
+      ));
+      toast.success("Idea updated successfully");
+    } catch (error) {
+      toast.error('Failed to update idea');
+    }
+  };
+
+  const handleDeleteIdea = async (ideaId: string) => {
+    try {
+      const { error } = await supabase
+        .from('ideas')
+        .delete()
+        .eq('id', ideaId);
+
+      if (error) throw error;
+
+      setIdeas(ideas.filter(idea => idea.id !== ideaId));
+      toast.success("Idea deleted successfully");
+    } catch (error) {
+      toast.error('Failed to delete idea');
+    }
   };
 
   const fetchGroups = async () => {
@@ -52,8 +94,27 @@ const Compose = () => {
     }
   };
 
-  const handleSaveIdea = (idea: any) => {
-    setIdeas([...ideas, idea]);
+  const handleSaveIdea = async (idea: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('ideas')
+        .insert([{
+          title: idea.title,
+          content: idea.content,
+          status: idea.status || 'unassigned',
+          group_id: selectedGroup,
+          image_urls: idea.imageUrls
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setIdeas([data, ...ideas]);
+      toast.success("Idea saved successfully");
+    } catch (error) {
+      toast.error('Failed to save idea');
+    }
   };
 
   const handleSaveGroup = async () => {
@@ -108,6 +169,7 @@ const Compose = () => {
               onMove={moveColumn}
               onCreateIdea={() => setIsCreateDialogOpen(true)}
               onUpdateIdea={handleUpdateIdea}
+              onDeleteIdea={handleDeleteIdea}
             />
           ))}
         </div>

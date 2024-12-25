@@ -44,6 +44,57 @@ export type Database = {
           },
         ]
       }
+      ideas: {
+        Row: {
+          content: string
+          created_at: string
+          group_id: string | null
+          id: string
+          image_urls: string[] | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          image_urls?: string[] | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          group_id?: string | null
+          id?: string
+          image_urls?: string[] | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ideas_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "idea_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ideas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_time_analytics: {
         Row: {
           created_at: string

@@ -17,6 +17,7 @@ interface IdeaColumnProps {
   onMove: (fromIndex: number, toIndex: number) => void;
   onCreateIdea: () => void;
   onUpdateIdea?: (ideaId: string, updates: any) => void;
+  onDeleteIdea?: (ideaId: string) => void;
 }
 
 export const IdeaColumn: React.FC<IdeaColumnProps> = ({
@@ -28,6 +29,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   onMove,
   onCreateIdea,
   onUpdateIdea,
+  onDeleteIdea,
 }) => {
   const columnIdeas = ideas.filter((idea) => idea.status === column.status);
   const isUnassigned = column.status === 'unassigned';
@@ -81,6 +83,7 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
             key={idea.id}
             idea={idea}
             onUpdate={onUpdateIdea || (() => {})}
+            onDelete={onDeleteIdea}
           />
         ))}
 

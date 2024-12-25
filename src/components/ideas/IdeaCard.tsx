@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface IdeaCardProps {
   idea: {
@@ -9,9 +11,10 @@ interface IdeaCardProps {
     content: string;
   };
   onUpdate: (ideaId: string, updates: any) => void;
+  onDelete?: (ideaId: string) => void;
 }
 
-export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate }) => {
+export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(idea.title);
   const [editingContent, setEditingContent] = useState(idea.content);
@@ -41,6 +44,13 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate }) => {
     }
   };
 
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(idea.id);
+    }
+  };
+
   if (isEditing) {
     return (
       <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 space-y-2">
@@ -64,16 +74,28 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate }) => {
   }
 
   return (
-    <div 
-      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
-      onClick={() => setIsEditing(true)}
-    >
-      <h4 className="font-medium cursor-pointer hover:text-blue-600 transition-colors">
-        {idea.title}
-      </h4>
-      <p className="text-sm text-muted-foreground line-clamp-2 mt-1 cursor-pointer hover:text-blue-600 transition-colors">
-        {idea.content}
-      </p>
+    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 group relative">
+      <div 
+        className="cursor-pointer"
+        onClick={() => setIsEditing(true)}
+      >
+        <h4 className="font-medium hover:text-blue-600 transition-colors">
+          {idea.title}
+        </h4>
+        <p className="text-sm text-muted-foreground line-clamp-2 mt-1 hover:text-blue-600 transition-colors">
+          {idea.content}
+        </p>
+      </div>
+      {onDelete && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={handleDelete}
+        >
+          <Trash2 className="h-4 w-4 text-red-500" />
+        </Button>
+      )}
     </div>
   );
 };
