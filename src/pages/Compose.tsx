@@ -1,7 +1,19 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { IdeaManager } from "@/components/ideas/IdeaManager";
+import { PricingSection } from "@/components/subscription/PricingSection";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Compose = () => {
+  const { data: subscription, isLoading } = useQuery({
+    queryKey: ['subscription'],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -11,7 +23,11 @@ const Compose = () => {
           </div>
         </div>
 
-        <IdeaManager />
+        {subscription?.subscribed ? (
+          <IdeaManager />
+        ) : (
+          <PricingSection />
+        )}
       </div>
     </DashboardLayout>
   );
