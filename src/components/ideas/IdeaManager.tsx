@@ -126,6 +126,7 @@ export const IdeaManager = () => {
       }
 
       setSelectedIdea(null);
+      setIsCreateDialogOpen(false);
       toast.success(`Idea ${idea.id ? 'updated' : 'saved'} successfully!`);
     } catch (error) {
       console.error("Error saving idea:", error);
@@ -169,7 +170,10 @@ export const IdeaManager = () => {
             onRename={handleRenameColumn}
             onDelete={handleDeleteColumn}
             onMove={moveColumn}
-            onCreateIdea={() => setIsCreateDialogOpen(true)}
+            onCreateIdea={() => {
+              setSelectedIdea(null);
+              setIsCreateDialogOpen(true);
+            }}
             onUpdateIdea={handleUpdateIdea}
             onDeleteIdea={handleDeleteIdea}
             onEditIdea={(idea) => {
