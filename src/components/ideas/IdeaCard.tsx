@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Trash2, Edit } from 'lucide-react';
+import React from 'react';
+import { Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface IdeaCardProps {
@@ -16,30 +14,6 @@ interface IdeaCardProps {
 }
 
 export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, onEdit }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingContent, setEditingContent] = useState(idea.content);
-
-  const handleBlur = () => {
-    const updates: any = {};
-    if (editingContent.trim() !== '') {
-      updates.content = editingContent.trim();
-    }
-    if (Object.keys(updates).length > 0) {
-      onUpdate(idea.id, updates);
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleBlur();
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setEditingContent(idea.content);
-    }
-  };
-
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) {
@@ -54,33 +28,13 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, on
     }
   };
 
-  if (isEditing) {
-    return (
-      <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 space-y-2">
-        <h4 className="font-medium">
-          {idea.title}
-        </h4>
-        <Textarea
-          value={editingContent}
-          onChange={(e) => setEditingContent(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="min-h-[60px] resize-none"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 group relative">
       <div>
         <h4 className="font-medium">
           {idea.title}
         </h4>
-        <p 
-          className="text-sm text-muted-foreground line-clamp-2 mt-1 hover:text-blue-600 transition-colors cursor-pointer"
-          onClick={() => setIsEditing(true)}
-        >
+        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
           {idea.content}
         </p>
       </div>
