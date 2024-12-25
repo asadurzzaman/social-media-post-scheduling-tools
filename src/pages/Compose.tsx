@@ -116,24 +116,26 @@ const Compose = () => {
           </div>
         </div>
 
-        <ScrollArea className="w-full" type="scroll">
-          <div className="grid grid-cols-4 gap-4 min-w-max p-1">
-            {columns.map((column, index) => (
-              <div key={column.id} className="w-[300px]">
-                <IdeaColumn
-                  column={column}
-                  ideas={ideas}
-                  index={index}
-                  onRename={handleRenameColumn}
-                  onDelete={handleDeleteColumn}
-                  onMove={moveColumn}
-                  onCreateIdea={() => setIsCreateDialogOpen(true)}
-                  onUpdateIdea={handleUpdateIdea}
-                />
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+        <div className="h-[calc(100vh-280px)] w-full">
+          <ScrollArea className="h-full" orientation="horizontal">
+            <div className="grid grid-cols-4 gap-4 min-w-max p-1">
+              {columns.map((column, index) => (
+                <div key={column.id} className="w-[300px]">
+                  <IdeaColumn
+                    column={column}
+                    ideas={ideas}
+                    index={index}
+                    onRename={handleRenameColumn}
+                    onDelete={handleDeleteColumn}
+                    onMove={moveColumn}
+                    onCreateIdea={() => setIsCreateDialogOpen(true)}
+                    onUpdateIdea={handleUpdateIdea}
+                  />
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
 
         <CreateIdeaDialog
           isOpen={isCreateDialogOpen}
