@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TagSelector } from "./TagSelector";
 
 interface CreateIdeaDialogProps {
   isOpen: boolean;
@@ -23,18 +24,21 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("unassigned");
+  const [tags, setTags] = useState<string[]>([]);
 
   const handleSave = () => {
     onSave({
       title,
       content,
       status,
+      tags,
       group_id: selectedGroup,
       createdAt: new Date().toISOString(),
     });
     setTitle("");
     setContent("");
     setStatus("unassigned");
+    setTags([]);
     onClose();
   };
 
@@ -57,9 +61,10 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: Cre
                 <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm">
-              Add Tags
-            </Button>
+            <TagSelector 
+              selectedTags={tags}
+              onTagsChange={setTags}
+            />
           </div>
           
           <Input
