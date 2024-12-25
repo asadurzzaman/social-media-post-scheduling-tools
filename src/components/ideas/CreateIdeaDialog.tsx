@@ -16,9 +16,10 @@ interface CreateIdeaDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (idea: any) => void;
+  selectedGroup?: string | null;
 }
 
-export function CreateIdeaDialog({ isOpen, onClose, onSave }: CreateIdeaDialogProps) {
+export function CreateIdeaDialog({ isOpen, onClose, onSave, selectedGroup }: CreateIdeaDialogProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("unassigned");
@@ -28,6 +29,7 @@ export function CreateIdeaDialog({ isOpen, onClose, onSave }: CreateIdeaDialogPr
       title,
       content,
       status,
+      group_id: selectedGroup,
       createdAt: new Date().toISOString(),
     });
     setTitle("");
