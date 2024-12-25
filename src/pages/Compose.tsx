@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
-import { useAuth } from "@supabase/auth-helpers-react";
 
 interface Column {
   id: string;
@@ -19,7 +18,6 @@ const Compose = () => {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const auth = useAuth();
   
   const [columns, setColumns] = useState<Column[]>([
     { id: "1", title: "Unassigned", status: "unassigned" },
@@ -35,9 +33,16 @@ const Compose = () => {
 
   const fetchIdeas = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        toast.error('Not authenticated');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('ideas')
         .select('*')
+        .eq('user_id', sessionData.session.user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -83,22 +88,14 @@ const Compose = () => {
     }
   };
 
-  const fetchGroups = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('idea_groups')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setGroups(data || []);
-    } catch (error) {
-      toast.error('Failed to fetch groups');
-    }
-  };
-
   const handleSaveIdea = async (idea: any) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        toast.error('Not authenticated');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('ideas')
         .insert({
@@ -107,7 +104,7 @@ const Compose = () => {
           status: idea.status || 'unassigned',
           group_id: selectedGroup,
           image_urls: idea.imageUrls,
-          user_id: auth?.user?.id
+          user_id: sessionData.session.user.id
         })
         .select()
         .single();
@@ -123,6 +120,27 @@ const Compose = () => {
 
   const handleSaveGroup = async () => {
     await fetchGroups();
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.user.id) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('idea_groups')
+        .select('*')
+        .eq('user_id', sessionData.session.user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setGroups(data || []);
+    } catch (error) {
+      toast.error('Failed to fetch groups');
+    }
   };
 
   const handleRenameColumn = (column: Column) => {
