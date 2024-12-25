@@ -1,8 +1,6 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { IdeaColumnHeader } from './IdeaColumnHeader';
-import { IdeaCard } from './IdeaCard';
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface IdeaColumnProps {
   column: {
@@ -16,10 +14,10 @@ interface IdeaColumnProps {
   onDelete: (columnId: string) => void;
   onMove: (fromIndex: number, toIndex: number) => void;
   onCreateIdea: () => void;
-  onUpdateIdea?: (ideaId: string, updates: any) => void;
+  onUpdateIdea: (ideaId: string, updates: any) => void;
 }
 
-export const IdeaColumn: React.FC<IdeaColumnProps> = ({
+export const IdeaColumn = ({
   column,
   ideas,
   index,
@@ -28,71 +26,34 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
   onMove,
   onCreateIdea,
   onUpdateIdea,
-}) => {
+}: IdeaColumnProps) => {
   const columnIdeas = ideas.filter((idea) => idea.status === column.status);
-  const isUnassigned = column.status === 'unassigned';
-
-  const handleDragStart = (e: React.DragEvent) => {
-    if (isUnassigned) {
-      e.preventDefault();
-      return;
-    }
-    e.dataTransfer.setData("text/plain", index.toString());
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (isUnassigned) {
-      e.preventDefault();
-      return;
-    }
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    if (isUnassigned) {
-      e.preventDefault();
-      return;
-    }
-    e.preventDefault();
-    const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
-    onMove(fromIndex, index);
-  };
 
   return (
-    <div 
-      className={`bg-[#f2f4f9] rounded-lg p-4 space-y-4 ${!isUnassigned ? 'cursor-move' : ''} relative group h-[calc(100vh-12rem)] flex flex-col`}
-      draggable={!isUnassigned}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      <IdeaColumnHeader
-        title={column.title}
-        ideaCount={columnIdeas.length}
-        isEditable={!isUnassigned}
-        onRename={(newTitle) => onRename({ ...column, title: newTitle })}
-        onCreateIdea={onCreateIdea}
-        onDelete={!isUnassigned ? () => onDelete(column.id) : undefined}
-      />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">{column.title}</h3>
+        <span className="text-sm text-muted-foreground">
+          {columnIdeas.length}
+        </span>
+      </div>
 
-      <div className="flex-1 overflow-y-auto space-y-4">
+      <div className="space-y-4">
         {columnIdeas.map((idea) => (
-          <IdeaCard
-            key={idea.id}
-            idea={idea}
-            onUpdate={onUpdateIdea || (() => {})}
-          />
+          <Card key={idea.id} className="p-4">
+            <p>{idea.content}</p>
+          </Card>
         ))}
 
-        {columnIdeas.length === 0 && (
-          <Button
-            variant="ghost"
-            className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
-            onClick={onCreateIdea}
-          >
-            <Plus className="h-4 w-4 mr-2" /> New Idea
-          </Button>
-        )}
+        <button
+          onClick={onCreateIdea}
+          className="w-full h-32 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 flex items-center justify-center transition-colors group"
+        >
+          <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-foreground">
+            <Plus className="h-6 w-6" />
+            <span>New Idea</span>
+          </div>
+        </button>
       </div>
     </div>
   );
