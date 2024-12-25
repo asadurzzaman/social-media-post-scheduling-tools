@@ -2,10 +2,24 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { CreateIdeaDialog } from "@/components/ideas/CreateIdeaDialog";
 import { CreateGroupDialog } from "@/components/ideas/CreateGroupDialog";
-import { Plus, Tags, LayoutGrid, FolderPlus } from "lucide-react";
+import { Plus, Tags, LayoutGrid, FolderPlus, GripHorizontal } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { 
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+interface Column {
+  id: string;
+  title: string;
+  status: string;
+}
 
 const Compose = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -13,6 +27,15 @@ const Compose = () => {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [columnToRename, setColumnToRename] = useState<Column | null>(null);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [columns, setColumns] = useState<Column[]>([
+    { id: "1", title: "Unassigned", status: "unassigned" },
+    { id: "2", title: "To Do", status: "todo" },
+    { id: "3", title: "In Progress", status: "in-progress" },
+    { id: "4", title: "Done", status: "done" },
+  ]);
 
   useEffect(() => {
     fetchGroups();
@@ -40,12 +63,44 @@ const Compose = () => {
     await fetchGroups();
   };
 
-  const columns = [
-    { title: "Unassigned", count: ideas.filter(i => i.status === "unassigned").length },
-    { title: "To Do", count: ideas.filter(i => i.status === "todo").length },
-    { title: "In Progress", count: ideas.filter(i => i.status === "in-progress").length },
-    { title: "Done", count: ideas.filter(i => i.status === "done").length },
-  ];
+  const handleRenameColumn = (column: Column) => {
+    setColumnToRename(column);
+    setNewColumnName(column.title);
+    setIsRenameDialogOpen(true);
+  };
+
+  const handleSaveColumnRename = () => {
+    if (columnToRename) {
+      setColumns(columns.map(col => 
+        col.id === columnToRename.id 
+          ? { ...col, title: newColumnName }
+          : col
+      ));
+      setIsRenameDialogOpen(false);
+      toast.success("Column renamed successfully");
+    }
+  };
+
+  const handleDeleteColumn = (columnId: string) => {
+    // Move ideas to unassigned before deleting
+    const updatedIdeas = ideas.map(idea => 
+      idea.status === columns.find(col => col.id === columnId)?.status
+        ? { ...idea, status: "unassigned" }
+        : idea
+    );
+    setIdeas(updatedIdeas);
+    
+    // Remove the column
+    setColumns(columns.filter(col => col.id !== columnId));
+    toast.success("Column deleted and ideas moved to Unassigned");
+  };
+
+  const moveColumn = (fromIndex: number, toIndex: number) => {
+    const newColumns = [...columns];
+    const [movedColumn] = newColumns.splice(fromIndex, 1);
+    newColumns.splice(toIndex, 0, movedColumn);
+    setColumns(newColumns);
+  };
 
   return (
     <DashboardLayout>
@@ -108,58 +163,80 @@ const Compose = () => {
 
           {/* Ideas board */}
           <div className="col-span-4 grid grid-cols-4 gap-4">
-            {columns.map((column) => (
-              <div
-                key={column.title}
-                className="bg-background rounded-lg p-4 space-y-4 border border-gray-100"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{column.title}</h3>
-                    <span className="text-sm text-muted-foreground">
-                      {column.count}
-                    </span>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => setIsCreateDialogOpen(true)}
+            {columns.map((column, index) => (
+              <ContextMenu key={column.id}>
+                <ContextMenuTrigger>
+                  <div 
+                    className="bg-background rounded-lg p-4 space-y-4 border border-gray-100 cursor-move relative group"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", index.toString());
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const fromIndex = parseInt(e.dataTransfer.getData("text/plain"));
+                      moveColumn(fromIndex, index);
+                    }}
                   >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {ideas
-                  .filter((idea) => {
-                    const status = idea.status || "unassigned";
-                    return status.toLowerCase().replace(" ", "-") === column.title.toLowerCase().replace(" ", "-");
-                  })
-                  .map((idea, index) => (
-                    <div
-                      key={index}
-                      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
-                    >
-                      <h4 className="font-medium">{idea.title}</h4>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                        {idea.content}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <GripHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <h3 className="font-semibold">{column.title}</h3>
+                        <span className="text-sm text-muted-foreground">
+                          {ideas.filter(i => i.status === column.status).length}
+                        </span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => setIsCreateDialogOpen(true)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
 
-                {ideas.filter(
-                  (idea) =>
-                    (idea.status || "unassigned").toLowerCase().replace(" ", "-") ===
-                    column.title.toLowerCase().replace(" ", "-")
-                ).length === 0 && (
-                  <Button
-                    variant="ghost"
-                    className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
-                    onClick={() => setIsCreateDialogOpen(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> New Idea
-                  </Button>
-                )}
-              </div>
+                    {ideas
+                      .filter((idea) => idea.status === column.status)
+                      .map((idea, ideaIndex) => (
+                        <div
+                          key={ideaIndex}
+                          className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+                        >
+                          <h4 className="font-medium">{idea.title}</h4>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                            {idea.content}
+                          </p>
+                        </div>
+                      ))}
+
+                    {ideas.filter(idea => idea.status === column.status).length === 0 && (
+                      <Button
+                        variant="ghost"
+                        className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-gray-300"
+                        onClick={() => setIsCreateDialogOpen(true)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> New Idea
+                      </Button>
+                    )}
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => handleRenameColumn(column)}>
+                    Rename
+                  </ContextMenuItem>
+                  {column.status !== "unassigned" && (
+                    <ContextMenuItem 
+                      className="text-red-600"
+                      onClick={() => handleDeleteColumn(column.id)}
+                    >
+                      Delete
+                    </ContextMenuItem>
+                  )}
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
           </div>
         </div>
@@ -176,6 +253,29 @@ const Compose = () => {
           onClose={() => setIsCreateGroupDialogOpen(false)}
           onSave={handleSaveGroup}
         />
+
+        <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename Column</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <Input
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                placeholder="Enter new name"
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveColumnRename}>
+                  Save
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
