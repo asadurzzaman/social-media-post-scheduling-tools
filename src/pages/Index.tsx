@@ -1,65 +1,116 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { AnalyticsCard } from "@/components/AnalyticsCard";
-import { Users, MessageSquare, Heart, BarChart2 } from "lucide-react";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { ActivityChart } from "@/components/dashboard/ActivityChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Users, MessageSquare, Star, Plus, Clock } from "lucide-react";
 
 const Index = () => {
-  const analyticsData = [
+  const stats = [
     {
-      title: "Total Followers",
-      value: "12,345",
-      icon: <Users className="h-4 w-4 text-primary" />,
-      trend: { value: 12, isPositive: true },
+      title: "Total Projects Handled",
+      value: "78",
+      icon: <Star className="h-4 w-4" />,
     },
     {
-      title: "Engagement Rate",
-      value: "4.2%",
-      icon: <Heart className="h-4 w-4 text-primary" />,
-      trend: { value: 0.5, isPositive: true },
+      title: "Contacts This Week",
+      value: "214",
+      icon: <Users className="h-4 w-4" />,
     },
     {
-      title: "Total Posts",
-      value: "286",
-      icon: <MessageSquare className="h-4 w-4 text-primary" />,
-      trend: { value: 8, isPositive: true },
+      title: "Total Unfinished Task",
+      value: "93",
+      icon: <Clock className="h-4 w-4" />,
     },
     {
-      title: "Avg. Reach",
-      value: "2,890",
-      icon: <BarChart2 className="h-4 w-4 text-primary" />,
-      trend: { value: 3, isPositive: false },
+      title: "Unread Messages",
+      value: "12",
+      icon: <MessageSquare className="h-4 w-4" />,
+    },
+  ];
+
+  const projects = [
+    {
+      title: "Build Database Design for Fasto Admin v2",
+      progress: 75,
+      users: ["user1.jpg", "user2.jpg", "user3.jpg"],
+      date: "Sep 20th 2020",
+    },
+    {
+      title: "Redesign Express Mobile App",
+      progress: 35,
+      users: ["user2.jpg", "user3.jpg"],
+      date: "Sep 20th 2020",
     },
   ];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
-            Your social media performance at a glance
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            <p className="text-muted-foreground">
+              Welcome back to your dashboard
+            </p>
+          </div>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> New Project
+          </Button>
         </div>
-        
+
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {analyticsData.map((data, index) => (
-            <AnalyticsCard key={index} {...data} />
+          {stats.map((stat, i) => (
+            <StatCard key={i} {...stat} />
           ))}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border bg-card p-6">
-            <h3 className="font-semibold mb-4">Recent Posts</h3>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">No posts yet</p>
-            </div>
-          </div>
-          
-          <div className="rounded-lg border bg-card p-6">
-            <h3 className="font-semibold mb-4">Upcoming Schedule</h3>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">No scheduled posts</p>
-            </div>
-          </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          <ActivityChart />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-base">
+                <span>Upcoming Projects</span>
+                <Button variant="ghost" size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {projects.map((project, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{project.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      {project.users.map((user, j) => (
+                        <Avatar key={j} className="h-6 w-6 border-2 border-background">
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </div>
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {project.progress}%
+                      </span>
+                      <div className="h-2 w-20 rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Clock className="mr-1 h-3 w-3" />
+                    {project.date}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>
