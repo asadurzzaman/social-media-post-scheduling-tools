@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "./IdeaColumn";
 import { CreateIdeaDialog } from "./CreateIdeaDialog";
+import { reorderIdeas } from "@/utils/sortUtils";
 
 export const IdeaManager = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -75,6 +76,22 @@ export const IdeaManager = () => {
       toast.success("Idea deleted successfully");
     } catch (error) {
       toast.error('Failed to delete idea');
+    }
+  };
+
+  const handleReorderIdeas = async (sourceIndex: number, destinationIndex: number) => {
+    try {
+      const newIdeas = reorderIdeas(ideas, sourceIndex, destinationIndex);
+      setIdeas(newIdeas);
+      
+      // Update the order in the database if needed
+      // This is optional - you can implement a position/order field in your ideas table
+      // and update it here if you want the order to persist
+      
+      toast.success("Ideas reordered successfully");
+    } catch (error) {
+      console.error("Error reordering ideas:", error);
+      toast.error("Failed to reorder ideas");
     }
   };
 
@@ -181,6 +198,7 @@ export const IdeaManager = () => {
               setSelectedIdea(ideaToEdit);
               setIsCreateDialogOpen(true);
             }}
+            onReorderIdeas={handleReorderIdeas}
           />
         ))}
       </div>

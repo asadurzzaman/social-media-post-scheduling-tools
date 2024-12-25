@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface IdeaCardProps {
@@ -8,12 +8,20 @@ interface IdeaCardProps {
     title: string;
     content: string;
   };
+  index: number;
   onUpdate: (ideaId: string, updates: any) => void;
   onDelete?: (ideaId: string) => void;
   onEdit?: (idea: any) => void;
+  isDragging?: boolean;
 }
 
-export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, onEdit }) => {
+export const IdeaCard: React.FC<IdeaCardProps> = ({ 
+  idea, 
+  onUpdate, 
+  onDelete, 
+  onEdit,
+  isDragging 
+}) => {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDelete) {
@@ -29,8 +37,15 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({ idea, onUpdate, onDelete, on
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 group relative">
-      <div>
+    <div 
+      className={`bg-white rounded-lg p-4 shadow-sm border border-gray-100 group relative ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+    >
+      <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+        <GripVertical className="h-4 w-4 text-gray-400" />
+      </div>
+      <div className="ml-6">
         <h4 className="font-medium">
           {idea.title}
         </h4>
