@@ -115,23 +115,21 @@ const Compose = () => {
           </div>
         </div>
 
-        <div className="h-[calc(100vh-280px)] w-full overflow-auto">
-          <div className="grid grid-cols-4 gap-4 p-1">
-            {columns.map((column, index) => (
-              <div key={column.id} className="w-[300px]">
-                <IdeaColumn
-                  column={column}
-                  ideas={ideas}
-                  index={index}
-                  onRename={handleRenameColumn}
-                  onDelete={handleDeleteColumn}
-                  onMove={moveColumn}
-                  onCreateIdea={() => setIsCreateDialogOpen(true)}
-                  onUpdateIdea={handleUpdateIdea}
-                />
-              </div>
-            ))}
-          </div>
+        <div className="grid grid-cols-4 gap-4 p-1">
+          {columns.map((column, index) => (
+            <div key={column.id} className="w-[300px]">
+              <IdeaColumn
+                column={column}
+                ideas={ideas}
+                index={index}
+                onRename={handleRenameColumn}
+                onDelete={handleDeleteColumn}
+                onMove={moveColumn}
+                onCreateIdea={() => setIsCreateDialogOpen(true)}
+                onUpdateIdea={handleUpdateIdea}
+              />
+            </div>
+          ))}
         </div>
 
         <CreateIdeaDialog
