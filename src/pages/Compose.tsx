@@ -6,8 +6,6 @@ import { Tags, LayoutGrid, FolderPlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { IdeaColumn } from "@/components/ideas/IdeaColumn";
 import { GroupsSidebar } from "@/components/ideas/GroupsSidebar";
 
@@ -23,9 +21,6 @@ const Compose = () => {
   const [ideas, setIdeas] = useState<any[]>([]);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [columnToRename, setColumnToRename] = useState<Column | null>(null);
-  const [newColumnName, setNewColumnName] = useState("");
   const [columns, setColumns] = useState<Column[]>([
     { id: "1", title: "Unassigned", status: "unassigned" },
     { id: "2", title: "To Do", status: "todo" },
@@ -60,21 +55,12 @@ const Compose = () => {
   };
 
   const handleRenameColumn = (column: Column) => {
-    setColumnToRename(column);
-    setNewColumnName(column.title);
-    setIsRenameDialogOpen(true);
-  };
-
-  const handleSaveColumnRename = () => {
-    if (columnToRename) {
-      setColumns(columns.map(col => 
-        col.id === columnToRename.id 
-          ? { ...col, title: newColumnName }
-          : col
-      ));
-      setIsRenameDialogOpen(false);
-      toast.success("Column renamed successfully");
-    }
+    setColumns(columns.map(col => 
+      col.id === column.id 
+        ? { ...col, title: column.title }
+        : col
+    ));
+    toast.success("Column renamed successfully");
   };
 
   const handleDeleteColumn = (columnId: string) => {
@@ -157,29 +143,6 @@ const Compose = () => {
           onClose={() => setIsCreateGroupDialogOpen(false)}
           onSave={handleSaveGroup}
         />
-
-        <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Rename Column</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Input
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-                placeholder="Enter new name"
-              />
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsRenameDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveColumnRename}>
-                  Save
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );
