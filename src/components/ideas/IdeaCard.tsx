@@ -32,7 +32,7 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
   onKeyDown,
 }) => {
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+    <div className="bg-gray-50/50 rounded-md p-3 hover:bg-gray-50 transition-colors">
       {isEditing ? (
         <div className="space-y-2">
           <Input

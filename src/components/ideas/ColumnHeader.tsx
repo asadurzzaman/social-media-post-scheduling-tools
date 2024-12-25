@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, GripHorizontal } from 'lucide-react';
+import React from 'react';
+import { Plus, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -31,7 +31,6 @@ export const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2">
-        <GripHorizontal className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
         {isEditing ? (
           <Input
             value={editedTitle}
@@ -42,25 +41,36 @@ export const ColumnHeader: React.FC<ColumnHeaderProps> = ({
             autoFocus
           />
         ) : (
-          <h3 
-            className="font-semibold cursor-pointer hover:text-primary transition-colors"
-            onClick={onTitleClick}
-          >
-            {title}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 
+              className="font-medium cursor-pointer hover:text-primary transition-colors"
+              onClick={onTitleClick}
+            >
+              {title}
+            </h3>
+            <span className="text-sm px-2 py-0.5 bg-gray-100 rounded-full text-gray-600">
+              {itemCount}
+            </span>
+          </div>
         )}
-        <span className="text-sm px-2 py-0.5 bg-gray-100 rounded-full text-gray-600">
-          {itemCount}
-        </span>
       </div>
-      <Button 
-        variant="ghost" 
-        size="icon"
-        onClick={onCreateIdea}
-        className="hover:bg-primary/10 hover:text-primary"
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={onCreateIdea}
+          className="h-8 w-8 hover:bg-gray-100"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="h-8 w-8 hover:bg-gray-100"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

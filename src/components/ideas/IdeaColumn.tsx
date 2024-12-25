@@ -106,7 +106,9 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
 
   return (
     <div 
-      className="bg-gray-50/80 backdrop-blur-sm rounded-xl p-4 space-y-3 border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-move relative group min-h-[200px]"
+      className="bg-white rounded-lg p-4 space-y-3 shadow-[0_2px_12px_0_rgba(0,0,0,0.08)] 
+                hover:shadow-[0_4px_16px_0_rgba(0,0,0,0.12)] transition-all duration-200 
+                cursor-move relative group min-h-[200px] w-[280px]"
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -154,7 +156,8 @@ export const IdeaColumn: React.FC<IdeaColumnProps> = ({
       {columnIdeas.length === 0 && (
         <Button
           variant="ghost"
-          className="w-full h-24 border-2 border-dashed border-gray-200 hover:border-primary/30 hover:bg-primary/5 hover:text-primary group"
+          className="w-full h-24 border border-dashed border-gray-200 hover:border-primary/30 
+                     hover:bg-primary/5 hover:text-primary group"
           onClick={onCreateIdea}
         >
           <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" /> New Idea
