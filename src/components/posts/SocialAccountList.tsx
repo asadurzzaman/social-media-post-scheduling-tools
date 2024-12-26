@@ -12,9 +12,9 @@ interface SocialAccount {
 }
 
 interface SocialAccountListProps {
-  accounts: SocialAccount[];
-  selectedAccounts: string[];
-  onSelect: (accountIds: string[]) => void;
+  accounts?: SocialAccount[];
+  selectedAccounts?: string[];
+  onSelect?: (accountIds: string[]) => void;
 }
 
 const demoAccounts = [
@@ -60,16 +60,15 @@ export const SocialAccountList = ({
     }
   };
 
-  const displayAccounts = Array.isArray(accounts) && accounts.length > 0 
-    ? accounts 
-    : demoAccounts;
+  const displayAccounts = accounts?.length > 0 ? accounts : demoAccounts;
 
   const handleSelect = (accountId: string) => {
     if (!onSelect) return;
     
-    const newSelectedAccounts = selectedAccounts.includes(accountId)
-      ? selectedAccounts.filter(id => id !== accountId)
-      : [...selectedAccounts, accountId];
+    const currentSelected = Array.isArray(selectedAccounts) ? selectedAccounts : [];
+    const newSelectedAccounts = currentSelected.includes(accountId)
+      ? currentSelected.filter(id => id !== accountId)
+      : [...currentSelected, accountId];
     
     onSelect(newSelectedAccounts);
   };
@@ -93,7 +92,7 @@ export const SocialAccountList = ({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
+        <PopoverContent className="w-full p-0" align="start" side="bottom">
           <Command>
             <CommandInput placeholder="Search accounts..." />
             <CommandEmpty>No accounts found.</CommandEmpty>
