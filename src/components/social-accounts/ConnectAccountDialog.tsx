@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
 import { toast } from "sonner";
 import { Instagram } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConnectAccountDialogProps {
   onSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
