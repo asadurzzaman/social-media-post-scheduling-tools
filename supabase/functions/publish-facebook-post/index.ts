@@ -26,15 +26,17 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    // Fetch the post details
+    // Fetch the post details with a join to get the latest token
     const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
         content,
         image_url,
         social_accounts!inner(
+          id,
           page_id,
-          page_access_token
+          page_access_token,
+          token_expires_at
         )
       `)
       .eq('id', postId)
@@ -45,13 +47,34 @@ serve(async (req) => {
       throw new Error('Failed to fetch post details');
     }
 
-    console.log('Post details:', { ...post, social_accounts: { ...post.social_accounts, page_access_token: '[REDACTED]' } });
+    console.log('Post details:', { 
+      ...post, 
+      social_accounts: { 
+        ...post.social_accounts, 
+        page_access_token: '[REDACTED]' 
+      } 
+    });
 
     const pageId = post.social_accounts.page_id;
     const pageAccessToken = post.social_accounts.page_access_token;
+    const tokenExpiresAt = post.social_accounts.token_expires_at;
 
     if (!pageId || !pageAccessToken) {
       throw new Error('Missing Facebook page credentials');
+    }
+
+    // Check if token is expired
+    if (tokenExpiresAt && new Date(tokenExpiresAt) < new Date()) {
+      // Mark account as requiring reconnection
+      await supabaseClient
+        .from('social_accounts')
+        .update({ 
+          requires_reconnect: true,
+          last_error: "Token expired"
+        })
+        .eq('id', post.social_accounts.id);
+
+      throw new Error('Facebook token has expired. Please reconnect your account.');
     }
 
     // Prepare the post data
@@ -66,7 +89,7 @@ serve(async (req) => {
       endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
     } else {
       // Clean and validate image URL
-      const imageUrl = post.image_url.split(',')[0].trim(); // Use the first image URL
+      const imageUrl = post.image_url.split(',')[0].trim();
       if (!imageUrl.startsWith('http')) {
         throw new Error('Invalid image URL format');
       }
@@ -85,14 +108,27 @@ serve(async (req) => {
       body: JSON.stringify(postData),
     });
 
+    const responseData = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Facebook API Error:', errorData);
-      throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
+      console.error('Facebook API Error:', responseData);
+      
+      // Check if it's a token expiration error
+      if (responseData.error?.code === 190) {
+        // Mark account as requiring reconnection
+        await supabaseClient
+          .from('social_accounts')
+          .update({ 
+            requires_reconnect: true,
+            last_error: responseData.error.message
+          })
+          .eq('id', post.social_accounts.id);
+      }
+      
+      throw new Error(`Facebook API Error: ${JSON.stringify(responseData)}`);
     }
 
-    const result = await response.json();
-    console.log('Facebook API response:', result);
+    console.log('Facebook API response:', responseData);
 
     // Update post status to published
     const { error: updateError } = await supabaseClient
@@ -106,7 +142,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, postId: result.id }),
+      JSON.stringify({ success: true, postId: responseData.id }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
