@@ -75,7 +75,7 @@ const AddAccount = () => {
     }
   };
 
-  const handleDisconnectFacebook = async (accountId: string) => {
+  const handleDisconnect = async (accountId: string) => {
     try {
       const { error } = await supabase
         .from('social_accounts')
@@ -93,6 +93,7 @@ const AddAccount = () => {
   };
 
   const facebookAccounts = socialAccounts?.filter(account => account.platform === 'facebook') || [];
+  const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
 
   return (
     <DashboardLayout>
@@ -103,7 +104,8 @@ const AddAccount = () => {
         </Dialog>
         <AccountsList 
           facebookAccounts={facebookAccounts}
-          onDisconnect={handleDisconnectFacebook}
+          instagramAccounts={instagramAccounts}
+          onDisconnect={handleDisconnect}
         />
       </div>
     </DashboardLayout>

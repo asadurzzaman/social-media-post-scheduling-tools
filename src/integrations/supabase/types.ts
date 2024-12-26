@@ -318,6 +318,8 @@ export type Database = {
           account_name: string
           created_at: string
           id: string
+          instagram_user_id: string | null
+          instagram_username: string | null
           last_error: string | null
           page_access_token: string | null
           page_id: string | null
@@ -331,6 +333,8 @@ export type Database = {
           account_name: string
           created_at?: string
           id?: string
+          instagram_user_id?: string | null
+          instagram_username?: string | null
           last_error?: string | null
           page_access_token?: string | null
           page_id?: string | null
@@ -344,6 +348,8 @@ export type Database = {
           account_name?: string
           created_at?: string
           id?: string
+          instagram_user_id?: string | null
+          instagram_username?: string | null
           last_error?: string | null
           page_access_token?: string | null
           page_id?: string | null
