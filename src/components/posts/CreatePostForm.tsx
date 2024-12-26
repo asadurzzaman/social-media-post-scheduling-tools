@@ -1,6 +1,6 @@
 import { PostType } from './PostTypeSelect';
 import { CreatePostFormContent } from "./CreatePostFormContent";
-import { usePostForm } from './usePostForm';
+import { usePostForm } from './hooks/usePostForm';
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -43,6 +43,7 @@ export const CreatePostForm = ({
       onTimezoneChange={form.setTimezone}
       onPublishNow={form.handlePublishNow}
       onSaveDraft={form.handleSaveDraft}
+      initialPost={initialPost}
     />
   );
 };
