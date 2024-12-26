@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Select,
@@ -8,6 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/posts/DatePicker";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface PostsHeaderProps {
   statusFilter: string;
@@ -16,6 +22,10 @@ interface PostsHeaderProps {
   setSortBy: (value: any) => void;
   onRefresh: () => void;
   isRefreshing: boolean;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+  onStartDateChange: (date: Date | undefined) => void;
+  onEndDateChange: (date: Date | undefined) => void;
 }
 
 export const PostsHeader = ({
@@ -25,6 +35,10 @@ export const PostsHeader = ({
   setSortBy,
   onRefresh,
   isRefreshing,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
 }: PostsHeaderProps) => {
   return (
     <div className="flex items-center justify-between">
@@ -35,6 +49,26 @@ export const PostsHeader = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Date Filter
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-4" align="end">
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium mb-2">Start Date</div>
+                <DatePicker date={startDate} onDateChange={onStartDateChange} />
+              </div>
+              <div>
+                <div className="text-sm font-medium mb-2">End Date</div>
+                <DatePicker date={endDate} onDateChange={onEndDateChange} />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />

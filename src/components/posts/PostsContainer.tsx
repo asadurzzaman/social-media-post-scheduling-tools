@@ -5,6 +5,7 @@ import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
 import { PostsHeader } from "./PostsHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { startOfDay, endOfDay, isWithinInterval } from "date-fns";
 
 type SortOption = 'newest' | 'oldest' | 'scheduled';
 
@@ -15,6 +16,8 @@ export const PostsContainer = () => {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [userId, setUserId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -54,6 +57,25 @@ export const PostsContainer = () => {
       
       let allPosts = data || [];
       
+      // Apply date filtering if dates are selected
+      if (startDate || endDate) {
+        allPosts = allPosts.filter(post => {
+          const postDate = new Date(post.scheduled_for);
+          
+          if (startDate && endDate) {
+            return isWithinInterval(postDate, {
+              start: startOfDay(startDate),
+              end: endOfDay(endDate)
+            });
+          } else if (startDate) {
+            return postDate >= startOfDay(startDate);
+          } else if (endDate) {
+            return postDate <= endOfDay(endDate);
+          }
+          return true;
+        });
+      }
+
       if (statusFilter === 'all' || statusFilter === 'draft') {
         const draftJson = localStorage.getItem('postDraft');
         if (draftJson) {
@@ -138,6 +160,10 @@ export const PostsContainer = () => {
         setSortBy={setSortBy}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
+        startDate={startDate}
+        endDate={endDate}
+        onStartDateChange={setStartDate}
+        onEndDateChange={setEndDate}
       />
 
       <PostList
