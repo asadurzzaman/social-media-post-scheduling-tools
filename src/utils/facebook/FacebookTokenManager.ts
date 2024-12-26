@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 export class FacebookTokenManager {
   static async getLongLivedToken(shortLivedToken: string, appId: string): Promise<string> {
     try {
+      console.log('Getting long-lived token...');
       const response = await fetch(
         `https://graph.facebook.com/v18.0/oauth/access_token?` +
         `grant_type=fb_exchange_token&` +
@@ -13,9 +14,11 @@ export class FacebookTokenManager {
       
       const data = await response.json();
       if (data.error) {
+        console.error('Error getting long-lived token:', data.error);
         throw new Error(data.error.message);
       }
       
+      console.log('Successfully obtained long-lived token');
       return data.access_token;
     } catch (error) {
       console.error('Error getting long-lived token:', error);
@@ -25,6 +28,7 @@ export class FacebookTokenManager {
 
   static async updateTokenInDatabase(accessToken: string, expiresIn: number) {
     try {
+      console.log('Updating token in database...');
       const expirationDate = new Date();
       expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
 
@@ -32,7 +36,8 @@ export class FacebookTokenManager {
         .from('social_accounts')
         .update({
           access_token: accessToken,
-          token_expires_at: expirationDate.toISOString()
+          token_expires_at: expirationDate.toISOString(),
+          page_access_token: accessToken // Update page access token as well
         })
         .eq('platform', 'facebook');
 
@@ -40,6 +45,7 @@ export class FacebookTokenManager {
         console.error('Error updating token in database:', error);
         throw error;
       }
+      console.log('Token updated successfully');
     } catch (error) {
       console.error('Failed to update token in database:', error);
       throw error;

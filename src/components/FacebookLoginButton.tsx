@@ -16,6 +16,18 @@ interface FacebookLoginButtonProps {
   onError: (error: string) => void;
 }
 
+// Type definition for Facebook login response
+interface FacebookLoginResponse {
+  status: 'connected' | 'not_authorized' | 'unknown';
+  authResponse?: {
+    accessToken: string;
+    expiresIn: number;
+    reauthorize_required_in?: number;
+    signedRequest: string;
+    userID: string;
+  };
+}
+
 const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   appId,
   onSuccess,
@@ -37,8 +49,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     try {
       // Force a new login attempt
       console.log('Initiating Facebook login...');
-      const loginResponse = await new Promise((resolve) => {
-        window.FB.login((response: any) => {
+      const loginResponse = await new Promise<FacebookLoginResponse>((resolve) => {
+        window.FB.login((response: FacebookLoginResponse) => {
           console.log('Login response:', response);
           resolve(response);
         }, {
