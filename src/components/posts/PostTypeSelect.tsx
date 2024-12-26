@@ -5,16 +5,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { FileText, Image, Film, Link2, BarChart2, History } from "lucide-react";
+import { FileText, Image, Film, Link2, BarChart2, History, Share2, MapPin, Tag, Calendar } from "lucide-react";
 
 export const POST_TYPES = [
   { value: "text", label: "Text Post", icon: FileText },
-  { value: "image", label: "Image", icon: Image },
-  { value: "carousel", label: "Image Carousel", icon: Image },
+  { value: "image", label: "Photo", icon: Image },
+  { value: "carousel", label: "Photo Album", icon: Image },
   { value: "video", label: "Video", icon: Film },
   { value: "link", label: "Link with Preview", icon: Link2 },
   { value: "poll", label: "Poll", icon: BarChart2 },
   { value: "story", label: "Story", icon: History },
+  { value: "share", label: "Share Post", icon: Share2 },
+  { value: "checkin", label: "Check-in", icon: MapPin },
+  { value: "milestone", label: "Milestone", icon: Calendar },
+  { value: "tagged", label: "Tagged Friends", icon: Tag },
 ] as const;
 
 export type PostType = typeof POST_TYPES[number]['value'];

@@ -17,7 +17,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the post ID from the request
     const { postId } = await req.json();
 
     if (!postId) {
@@ -26,12 +25,12 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    // Fetch the post details with a join to get the latest token
     const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
         content,
         image_url,
+        post_type,
         social_accounts!inner(
           id,
           page_id,
@@ -63,9 +62,7 @@ serve(async (req) => {
       throw new Error('Missing Facebook page credentials');
     }
 
-    // Check if token is expired
     if (tokenExpiresAt && new Date(tokenExpiresAt) < new Date()) {
-      // Mark account as requiring reconnection
       await supabaseClient
         .from('social_accounts')
         .update({ 
@@ -77,29 +74,62 @@ serve(async (req) => {
       throw new Error('Facebook token has expired. Please reconnect your account.');
     }
 
-    // Prepare the post data
-    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+    // Prepare the base endpoint and post data based on post type
+    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/`;
     let postData: Record<string, any> = {
-      message: post.content,
       access_token: pageAccessToken,
     };
 
-    // If there's no image, use the /feed endpoint instead
-    if (!post.image_url) {
-      endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
-    } else {
-      // Clean and validate image URL
-      const imageUrl = post.image_url.split(',')[0].trim();
-      if (!imageUrl.startsWith('http')) {
-        throw new Error('Invalid image URL format');
-      }
-      postData.url = imageUrl;
+    switch (post.post_type) {
+      case 'image':
+      case 'carousel':
+        endpoint += 'photos';
+        if (post.image_url) {
+          const imageUrl = post.image_url.split(',')[0].trim();
+          if (!imageUrl.startsWith('http')) {
+            throw new Error('Invalid image URL format');
+          }
+          postData.url = imageUrl;
+          postData.message = post.content;
+        }
+        break;
+
+      case 'video':
+        endpoint += 'videos';
+        if (post.image_url) {
+          const videoUrl = post.image_url.split(',')[0].trim();
+          if (!videoUrl.startsWith('http')) {
+            throw new Error('Invalid video URL format');
+          }
+          postData.file_url = videoUrl;
+          postData.description = post.content;
+        }
+        break;
+
+      case 'link':
+        endpoint += 'feed';
+        const urlMatch = post.content.match(/https?:\/\/[^\s]+/);
+        if (urlMatch) {
+          postData.link = urlMatch[0];
+          postData.message = post.content.replace(urlMatch[0], '').trim();
+        }
+        break;
+
+      case 'story':
+        endpoint += 'stories';
+        if (post.image_url) {
+          postData.file_url = post.image_url;
+        }
+        break;
+
+      default:
+        endpoint += 'feed';
+        postData.message = post.content;
     }
 
     console.log('Making Facebook API request to:', endpoint);
     console.log('Post data:', { ...postData, access_token: '[REDACTED]' });
 
-    // Make the Facebook API request
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -113,9 +143,7 @@ serve(async (req) => {
     if (!response.ok) {
       console.error('Facebook API Error:', responseData);
       
-      // Check if it's a token expiration error
       if (responseData.error?.code === 190) {
-        // Mark account as requiring reconnection
         await supabaseClient
           .from('social_accounts')
           .update({ 
@@ -130,7 +158,6 @@ serve(async (req) => {
 
     console.log('Facebook API response:', responseData);
 
-    // Update post status to published
     const { error: updateError } = await supabaseClient
       .from('posts')
       .update({ status: 'published' })
