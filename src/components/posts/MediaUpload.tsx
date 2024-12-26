@@ -35,7 +35,6 @@ export const MediaUpload = ({
       case 'carousel':
         return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
       case 'text':
-      case 'link':
       case 'poll':
       case 'story':
         return {};
@@ -52,7 +51,7 @@ export const MediaUpload = ({
     multiple: postType === 'carousel'
   });
 
-  if (postType === 'text' || postType === 'link' || postType === 'poll') {
+  if (postType === 'text' || postType === 'poll') {
     return null;
   }
 
