@@ -18,7 +18,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
     try {
       // Instagram OAuth URL construction
       const redirectUri = `${window.location.origin}/instagram-callback.html`;
-      const scope = 'basic'; // Basic Display API scope
+      // Updated scopes for Instagram Graph API
+      const scope = 'instagram_basic,instagram_content_publish';
       
       const { data: { instagram_app_id }, error: secretError } = await supabase.functions.invoke('get-instagram-credentials');
       
