@@ -97,12 +97,13 @@ export const CreatePostFormContent = ({
 
       <div className="space-y-2">
         <label htmlFor="content" className="text-sm font-medium">
-          Post Content <span className="text-red-500">*</span>
+          Post Content {postType === 'text' && <span className="text-red-500">*</span>}
         </label>
         <RichTextEditor
           value={content}
           onChange={setContent}
           maxLength={2200}
+          required={postType === 'text'}
         />
       </div>
 

@@ -6,12 +6,14 @@ interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   maxLength?: number;
+  required?: boolean;
 }
 
 export const RichTextEditor = ({ 
   value, 
   onChange, 
-  maxLength = 2200
+  maxLength = 2200,
+  required = false
 }: RichTextEditorProps) => {
   const [showMentions, setShowMentions] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
@@ -88,6 +90,7 @@ export const RichTextEditor = ({
             value={value}
             onChange={handleChange}
             onKeyUp={handleKeyUp}
+            required={required}
             className={cn(
               "w-full h-[200px] p-3 resize-none focus:outline-none",
               "placeholder:text-muted-foreground"
