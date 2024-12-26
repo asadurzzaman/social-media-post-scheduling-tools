@@ -35,9 +35,25 @@ export const CreatePostForm = ({
   const [selectedAccount, setSelectedAccount] = useState(initialPost?.social_account_id || "");
   const [date, setDate] = useState<Date | undefined>(initialPost ? new Date(initialPost.scheduled_for) : initialDate);
   const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
-  const [postType, setPostType] = useState<PostType>("text");
+  const [postType, setPostType] = useState<PostType>(() => {
+    if (initialPost) {
+      if (initialPost.poll_options?.length > 0) return "poll";
+      if (initialPost.image_url) {
+        // Determine if it's a video or image based on file extension
+        const isVideo = initialPost.image_url.match(/\.(mp4|mov)$/i);
+        return isVideo ? "video" : "image";
+      }
+      return "text";
+    }
+    return "text";
+  });
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>(initialPost?.image_url ? [initialPost.image_url] : []);
+  const [previewUrls, setPreviewUrls] = useState<string[]>(() => {
+    if (initialPost?.image_url) {
+      return [initialPost.image_url];
+    }
+    return [];
+  });
   const [isDraft, setIsDraft] = useState(false);
   const [pollOptions, setPollOptions] = useState<PollOption[]>(
     initialPost?.poll_options?.length > 0
