@@ -5,7 +5,7 @@ import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
 import { PostsHeader } from "./PostsHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfDay, endOfDay, isWithinInterval } from "date-fns";
+import { startOfDay, endOfDay, isWithinInterval, addDays } from "date-fns";
 
 type SortOption = 'newest' | 'oldest' | 'scheduled';
 
@@ -18,6 +18,7 @@ export const PostsContainer = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [shouldApplyFilter, setShouldApplyFilter] = useState(false);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -30,7 +31,7 @@ export const PostsContainer = () => {
   }, []);
 
   const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ['posts', statusFilter, sortBy],
+    queryKey: ['posts', statusFilter, sortBy, shouldApplyFilter],
     queryFn: async () => {
       let query = supabase
         .from('posts')
@@ -57,8 +58,8 @@ export const PostsContainer = () => {
       
       let allPosts = data || [];
       
-      // Apply date filtering if dates are selected
-      if (startDate || endDate) {
+      // Apply date filtering if dates are selected and filter should be applied
+      if (shouldApplyFilter && (startDate || endDate)) {
         allPosts = allPosts.filter(post => {
           const postDate = new Date(post.scheduled_for);
           
@@ -151,6 +152,19 @@ export const PostsContainer = () => {
     setIsRefreshing(false);
   };
 
+  const handleShowUpcoming = () => {
+    const today = new Date();
+    setStartDate(today);
+    setEndDate(addDays(today, 1));
+    setShouldApplyFilter(true);
+    toast.success("Showing upcoming posts for today and tomorrow");
+  };
+
+  const handleApplyDateFilter = () => {
+    setShouldApplyFilter(true);
+    toast.success("Date filter applied");
+  };
+
   return (
     <div className="space-y-6">
       <PostsHeader
@@ -162,8 +176,16 @@ export const PostsContainer = () => {
         isRefreshing={isRefreshing}
         startDate={startDate}
         endDate={endDate}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
+        onStartDateChange={(date) => {
+          setStartDate(date);
+          setShouldApplyFilter(false);
+        }}
+        onEndDateChange={(date) => {
+          setEndDate(date);
+          setShouldApplyFilter(false);
+        }}
+        onShowUpcoming={handleShowUpcoming}
+        onApplyDateFilter={handleApplyDateFilter}
       />
 
       <PostList

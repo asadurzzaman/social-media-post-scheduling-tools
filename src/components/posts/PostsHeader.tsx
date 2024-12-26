@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, Calendar } from "lucide-react";
+import { Plus, RefreshCw, Calendar, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Select,
@@ -26,6 +26,8 @@ interface PostsHeaderProps {
   endDate: Date | undefined;
   onStartDateChange: (date: Date | undefined) => void;
   onEndDateChange: (date: Date | undefined) => void;
+  onShowUpcoming: () => void;
+  onApplyDateFilter: () => void;
 }
 
 export const PostsHeader = ({
@@ -39,6 +41,8 @@ export const PostsHeader = ({
   endDate,
   onStartDateChange,
   onEndDateChange,
+  onShowUpcoming,
+  onApplyDateFilter,
 }: PostsHeaderProps) => {
   return (
     <div className="flex items-center justify-between">
@@ -49,6 +53,15 @@ export const PostsHeader = ({
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onShowUpcoming}
+          className="gap-2"
+        >
+          <Clock className="h-4 w-4" />
+          Upcoming Posts
+        </Button>
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="gap-2">
@@ -66,6 +79,13 @@ export const PostsHeader = ({
                 <div className="text-sm font-medium mb-2">End Date</div>
                 <DatePicker date={endDate} onDateChange={onEndDateChange} />
               </div>
+              <Button 
+                className="w-full mt-2" 
+                onClick={onApplyDateFilter}
+                disabled={!startDate && !endDate}
+              >
+                Apply Filter
+              </Button>
             </div>
           </PopoverContent>
         </Popover>
