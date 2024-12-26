@@ -1,6 +1,9 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
 
 interface SocialAccount {
   id: string;
@@ -10,8 +13,8 @@ interface SocialAccount {
 
 interface SocialAccountListProps {
   accounts: SocialAccount[];
-  selectedAccount: string;
-  onSelect: (accountId: string) => void;
+  selectedAccounts: string[];
+  onSelect: (accountIds: string[]) => void;
 }
 
 const demoAccounts = [
@@ -37,7 +40,7 @@ const demoAccounts = [
   }
 ];
 
-export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: SocialAccountListProps) => {
+export const SocialAccountList = ({ accounts, selectedAccounts, onSelect }: SocialAccountListProps) => {
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'linkedin':
@@ -55,42 +58,63 @@ export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: Socia
 
   const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
 
+  const handleSelect = (accountId: string) => {
+    if (selectedAccounts.includes(accountId)) {
+      onSelect(selectedAccounts.filter(id => id !== accountId));
+    } else {
+      onSelect([...selectedAccounts, accountId]);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">
-        Select Social Media Account <span className="text-red-500">*</span>
+        Select Social Media Accounts <span className="text-red-500">*</span>
       </label>
-      <Select value={selectedAccount} onValueChange={onSelect}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an account">
-            {selectedAccount && displayAccounts.map((account) => (
-              account.id === selectedAccount && (
-                <div key={account.id} className="flex items-center gap-3">
-                  {getPlatformIcon(account.platform)}
-                  <span className="font-medium">{account.account_name}</span>
-                </div>
-              )
-            ))}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {displayAccounts.map((account) => (
-            <SelectItem 
-              key={account.id} 
-              value={account.id}
-              className="flex items-center gap-3 py-2"
-            >
-              <div className="flex items-center gap-3">
-                {getPlatformIcon(account.platform)}
-                <span className="font-medium">{account.account_name}</span>
-                {accounts.length === 0 && (
-                  <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className="w-full justify-between"
+          >
+            {selectedAccounts.length === 0 ? (
+              "Select accounts..."
+            ) : (
+              `${selectedAccounts.length} account${selectedAccounts.length === 1 ? '' : 's'} selected`
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0">
+          <Command>
+            <CommandInput placeholder="Search accounts..." />
+            <CommandEmpty>No accounts found.</CommandEmpty>
+            <CommandGroup>
+              {displayAccounts.map((account) => (
+                <CommandItem
+                  key={account.id}
+                  value={account.id}
+                  onSelect={() => handleSelect(account.id)}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    {getPlatformIcon(account.platform)}
+                    <span className="font-medium">{account.account_name}</span>
+                    {accounts.length === 0 && (
+                      <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
+                    )}
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        selectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </Command>
+        </PopoverContent>
+      </Popover>
       {accounts.length === 0 && (
         <p className="text-sm text-muted-foreground">
           These are demo accounts. Connect your social media accounts to start posting.
