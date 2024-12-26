@@ -26,7 +26,7 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    // Fetch the post details
+    // Fetch the post details and social account info
     const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
@@ -34,7 +34,8 @@ serve(async (req) => {
         image_url,
         social_accounts!inner(
           page_id,
-          page_access_token
+          page_access_token,
+          token_expires_at
         )
       `)
       .eq('id', postId)
@@ -45,13 +46,25 @@ serve(async (req) => {
       throw new Error('Failed to fetch post details');
     }
 
-    console.log('Post details:', { ...post, social_accounts: { ...post.social_accounts, page_access_token: '[REDACTED]' } });
+    console.log('Post details:', { 
+      ...post, 
+      social_accounts: { 
+        ...post.social_accounts, 
+        page_access_token: '[REDACTED]' 
+      } 
+    });
 
     const pageId = post.social_accounts.page_id;
     const pageAccessToken = post.social_accounts.page_access_token;
+    const tokenExpiresAt = post.social_accounts.token_expires_at;
 
     if (!pageId || !pageAccessToken) {
       throw new Error('Missing Facebook page credentials');
+    }
+
+    // Check if token is expired
+    if (tokenExpiresAt && new Date(tokenExpiresAt) < new Date()) {
+      throw new Error('Facebook access token has expired. Please reconnect your Facebook account.');
     }
 
     // Prepare the post data
