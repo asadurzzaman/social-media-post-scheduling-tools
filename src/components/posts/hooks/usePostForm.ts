@@ -5,20 +5,6 @@ import { usePostFormState } from "./usePostFormState";
 import { PostFormState } from "../types/PostFormTypes";
 import { useUser } from "@/hooks/useUser";
 
-const resetForm = (formState: PostFormState, setters: any) => {
-  setters.setContent("");
-  setters.setSelectedAccount("");
-  setters.setDate(undefined);
-  setters.setPostType("text");
-  setters.setUploadedFiles([]);
-  setters.setPreviewUrls([]);
-  setters.setPollOptions([
-    { id: crypto.randomUUID(), text: "" },
-    { id: crypto.randomUUID(), text: "" }
-  ]);
-  localStorage.removeItem('postDraft');
-};
-
 export const usePostForm = (
   initialPost?: any,
   initialDate?: Date,
@@ -46,7 +32,17 @@ export const usePostForm = (
       });
       
       toast.success("Post published successfully!");
-      resetForm(formState, setters);
+      setters.setContent("");
+      setters.setSelectedAccount("");
+      setters.setDate(undefined);
+      setters.setPostType("text");
+      setters.setUploadedFiles([]);
+      setters.setPreviewUrls([]);
+      setters.setPollOptions([
+        { id: crypto.randomUUID(), text: "" },
+        { id: crypto.randomUUID(), text: "" }
+      ]);
+      localStorage.removeItem('postDraft');
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
@@ -91,7 +87,17 @@ export const usePostForm = (
       });
       
       toast.success(initialPost ? "Post updated successfully!" : "Post scheduled successfully!");
-      resetForm(formState, setters);
+      setters.setContent("");
+      setters.setSelectedAccount("");
+      setters.setDate(undefined);
+      setters.setPostType("text");
+      setters.setUploadedFiles([]);
+      setters.setPreviewUrls([]);
+      setters.setPollOptions([
+        { id: crypto.randomUUID(), text: "" },
+        { id: crypto.randomUUID(), text: "" }
+      ]);
+      localStorage.removeItem('postDraft');
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
@@ -119,11 +125,23 @@ export const usePostForm = (
       pollOptions: formState.postType === 'poll' ? formState.pollOptions : undefined
     };
     localStorage.setItem('postDraft', JSON.stringify(draft));
+    setters.setIsDraft(true);
     toast.success("Draft saved successfully!");
   };
 
   const clearDraft = () => {
-    resetForm(formState, setters);
+    setters.setContent("");
+    setters.setSelectedAccount("");
+    setters.setDate(undefined);
+    setters.setPostType("text");
+    setters.setUploadedFiles([]);
+    setters.setPreviewUrls([]);
+    setters.setPollOptions([
+      { id: crypto.randomUUID(), text: "" },
+      { id: crypto.randomUUID(), text: "" }
+    ]);
+    localStorage.removeItem('postDraft');
+    setters.setIsDraft(false);
     toast.success("Draft cleared successfully!");
   };
 

@@ -8,8 +8,8 @@ const defaultPollOptions = [
 ];
 
 export const usePostFormState = (initialPost?: any, initialDate?: Date) => {
-  const [content, setContent] = useState(initialPost?.content || "");
-  const [selectedAccount, setSelectedAccount] = useState(initialPost?.social_account_id || "");
+  const [content, setContent] = useState<string>(initialPost?.content || "");
+  const [selectedAccount, setSelectedAccount] = useState<string>(initialPost?.social_account_id || "");
   const [date, setDate] = useState<Date | undefined>(
     initialPost ? new Date(initialPost.scheduled_for) : initialDate
   );
@@ -93,6 +93,7 @@ export const usePostFormState = (initialPost?: any, initialDate?: Date) => {
       setUploadedFiles,
       setPreviewUrls,
       setPollOptions,
+      setIsDraft,
     }
   };
 };
