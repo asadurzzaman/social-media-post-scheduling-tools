@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { FacebookAPI } from "./facebook-api.ts";
-import { Database } from "./database.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +12,12 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get the post ID from the request
     const { postId } = await req.json();
 
     if (!postId) {
@@ -21,56 +26,84 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    const post = await Database.getPostDetails(postId);
-    const { page_id, page_access_token, token_expires_at, user_id } = post.social_accounts;
+    // Fetch the post details
+    const { data: post, error: postError } = await supabaseClient
+      .from('posts')
+      .select(`
+        content,
+        image_url,
+        social_accounts!inner(
+          page_id,
+          page_access_token
+        )
+      `)
+      .eq('id', postId)
+      .single();
 
-    if (!page_id || !page_access_token) {
+    if (postError || !post) {
+      console.error('Failed to fetch post:', postError);
+      throw new Error('Failed to fetch post details');
+    }
+
+    console.log('Post details:', { ...post, social_accounts: { ...post.social_accounts, page_access_token: '[REDACTED]' } });
+
+    const pageId = post.social_accounts.page_id;
+    const pageAccessToken = post.social_accounts.page_access_token;
+
+    if (!pageId || !pageAccessToken) {
       throw new Error('Missing Facebook page credentials');
     }
 
-    // Check if token is expired
-    if (token_expires_at && new Date(token_expires_at) < new Date()) {
-      await Database.markAccountForReconnection(
-        user_id, 
-        page_id, 
-        'Facebook token expired. Please reconnect your account.'
-      );
-      throw new Error('TOKEN_EXPIRED');
-    }
+    // Prepare the post data
+    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+    let postData: Record<string, any> = {
+      message: post.content,
+      access_token: pageAccessToken,
+    };
 
-    let result;
-    if (post.image_url) {
-      const imageUrls = post.image_url.split(',');
-      
-      if (imageUrls.length > 1) {
-        result = await FacebookAPI.publishCarousel(
-          page_id,
-          imageUrls,
-          post.content,
-          page_access_token
-        );
-      } else {
-        const fileExtension = imageUrls[0].split('.').pop()?.toLowerCase();
-        const isVideo = fileExtension === 'mp4' || fileExtension === 'mov';
-        
-        result = await FacebookAPI.publishSingleMedia(
-          page_id,
-          imageUrls[0].trim(),
-          post.content,
-          page_access_token,
-          isVideo
-        );
-      }
+    // If there's no image, use the /feed endpoint instead
+    if (!post.image_url) {
+      endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
     } else {
-      result = await FacebookAPI.publishTextOrPoll(
-        page_id,
-        post.content,
-        page_access_token,
-        post.poll_options
-      );
+      // Clean and validate image URL
+      const imageUrl = post.image_url.split(',')[0].trim(); // Use the first image URL
+      if (!imageUrl.startsWith('http')) {
+        throw new Error('Invalid image URL format');
+      }
+      postData.url = imageUrl;
     }
 
-    await Database.updatePostStatus(postId, 'published');
+    console.log('Making Facebook API request to:', endpoint);
+    console.log('Post data:', { ...postData, access_token: '[REDACTED]' });
+
+    // Make the Facebook API request
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(postData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Facebook API Error:', errorData);
+      throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
+    }
+
+    const result = await response.json();
+    console.log('Facebook API response:', result);
+
+    // Update post status to published
+    const { error: updateError } = await supabaseClient
+      .from('posts')
+      .update({ status: 'published' })
+      .eq('id', postId);
+
+    if (updateError) {
+      console.error('Failed to update post status:', updateError);
+      throw new Error('Failed to update post status');
+    }
 
     return new Response(
       JSON.stringify({ success: true, postId: result.id }),
@@ -81,20 +114,6 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in edge function:', error);
-    
-    if (error.message === 'TOKEN_EXPIRED') {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Facebook token has expired. Please reconnect your Facebook account.',
-          code: 'TOKEN_EXPIRED'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401,
-        }
-      );
-    }
-    
     return new Response(
       JSON.stringify({ 
         error: error.message,
