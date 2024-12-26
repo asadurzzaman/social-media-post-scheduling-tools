@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { publishPost } from "@/utils/postPublisher";
 import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/integrations/supabase/client";
+import { ReconnectFacebookDialog } from "../social-accounts/ReconnectFacebookDialog";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -64,6 +65,7 @@ export const CreatePostForm = ({
         }))
       : defaultPollOptions
   );
+  const [showReconnectDialog, setShowReconnectDialog] = useState(false);
 
   const resetForm = () => {
     setContent("");
@@ -139,6 +141,16 @@ export const CreatePostForm = ({
     navigate('/add-account');
   };
 
+  const handlePublishError = async (error: any) => {
+    console.error("Error publishing post:", error);
+    
+    if (error.message?.includes("Facebook token has expired")) {
+      setShowReconnectDialog(true);
+    } else {
+      toast.error(error.message || "Failed to publish post");
+    }
+  };
+
   const handlePublishNow = async () => {
     if (!userId) {
       toast.error("You must be logged in to publish a post");
@@ -161,14 +173,7 @@ export const CreatePostForm = ({
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
-      console.error("Error publishing post:", error);
-      
-      // Check if it's a token expiration error
-      if (error.message?.includes("Error validating access token: Session has expired")) {
-        await handleTokenExpiration(selectedAccount);
-      } else {
-        toast.error(error.message || "Failed to publish post");
-      }
+      handlePublishError(error);
     }
   };
 
@@ -203,42 +208,42 @@ export const CreatePostForm = ({
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
-      console.error("Error scheduling post:", error);
-      
-      // Check if it's a token expiration error
-      if (error.message?.includes("Error validating access token: Session has expired")) {
-        await handleTokenExpiration(selectedAccount);
-      } else {
-        toast.error(error.message || "Failed to schedule post");
-      }
+      handlePublishError(error);
     }
   };
 
   return (
-    <CreatePostFormContent
-      accounts={accounts}
-      content={content}
-      setContent={setContent}
-      selectedAccount={selectedAccount}
-      setSelectedAccount={setSelectedAccount}
-      date={date}
-      setDate={setDate}
-      postType={postType}
-      setPostType={setPostType}
-      uploadedFiles={uploadedFiles}
-      setUploadedFiles={setUploadedFiles}
-      previewUrls={previewUrls}
-      setPreviewUrls={setPreviewUrls}
-      isDraft={isDraft}
-      onSubmit={handleSubmit}
-      clearDraft={clearDraft}
-      pollOptions={pollOptions}
-      setPollOptions={setPollOptions}
-      timezone={timezone}
-      onTimezoneChange={setTimezone}
-      onPublishNow={handlePublishNow}
-      onSaveDraft={handleSaveDraft}
-      initialPost={initialPost}
-    />
+    <>
+      <CreatePostFormContent
+        accounts={accounts}
+        content={content}
+        setContent={setContent}
+        selectedAccount={selectedAccount}
+        setSelectedAccount={setSelectedAccount}
+        date={date}
+        setDate={setDate}
+        postType={postType}
+        setPostType={setPostType}
+        uploadedFiles={uploadedFiles}
+        setUploadedFiles={setUploadedFiles}
+        previewUrls={previewUrls}
+        setPreviewUrls={setPreviewUrls}
+        isDraft={isDraft}
+        onSubmit={handleSubmit}
+        clearDraft={clearDraft}
+        pollOptions={pollOptions}
+        setPollOptions={setPollOptions}
+        timezone={timezone}
+        onTimezoneChange={setTimezone}
+        onPublishNow={handlePublishNow}
+        onSaveDraft={handleSaveDraft}
+        initialPost={initialPost}
+      />
+      <ReconnectFacebookDialog
+        isOpen={showReconnectDialog}
+        onClose={() => setShowReconnectDialog(false)}
+        accountId={selectedAccount}
+      />
+    </>
   );
 };
