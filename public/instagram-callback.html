@@ -11,6 +11,8 @@
     const error = urlParams.get('error');
     const error_description = urlParams.get('error_description');
     
+    console.log('Received response:', { code, error, error_description });
+    
     if (code) {
       // Send the code back to the parent window
       window.opener.postMessage(

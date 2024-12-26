@@ -7,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -22,12 +21,7 @@ serve(async (req) => {
       throw new Error('Instagram credentials not configured')
     }
 
-    console.log('Exchanging code for token with params:', {
-      client_id: instagramAppId,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-      code,
-    });
+    console.log('Exchanging code for token...');
 
     // Exchange the code for an access token
     const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
@@ -50,9 +44,21 @@ serve(async (req) => {
 
     console.log('Token response:', tokenData);
 
+    // Get long-lived access token
+    const longLivedTokenResponse = await fetch(
+      `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${instagramAppSecret}&access_token=${tokenData.access_token}`
+    );
+
+    const longLivedTokenData = await longLivedTokenResponse.json();
+
+    if (longLivedTokenData.error) {
+      console.error('Error getting long-lived token:', longLivedTokenData);
+      throw new Error('Failed to get long-lived token');
+    }
+
     // Get user details using the access token
     const userResponse = await fetch(
-      `https://graph.instagram.com/me?fields=id,username&access_token=${tokenData.access_token}`
+      `https://graph.instagram.com/me?fields=id,username&access_token=${longLivedTokenData.access_token}`
     )
     
     const userData = await userResponse.json()
@@ -66,7 +72,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        accessToken: tokenData.access_token,
+        accessToken: longLivedTokenData.access_token,
         userId: userData.id,
         username: userData.username
       }),
