@@ -61,14 +61,14 @@ export const SocialAccountList = ({
   };
 
   const displayAccounts = accounts?.length > 0 ? accounts : demoAccounts;
+  const currentSelectedAccounts = Array.isArray(selectedAccounts) ? selectedAccounts : [];
 
   const handleSelect = (accountId: string) => {
     if (!onSelect) return;
     
-    const currentSelected = Array.isArray(selectedAccounts) ? selectedAccounts : [];
-    const newSelectedAccounts = currentSelected.includes(accountId)
-      ? currentSelected.filter(id => id !== accountId)
-      : [...currentSelected, accountId];
+    const newSelectedAccounts = currentSelectedAccounts.includes(accountId)
+      ? currentSelectedAccounts.filter(id => id !== accountId)
+      : [...currentSelectedAccounts, accountId];
     
     onSelect(newSelectedAccounts);
   };
@@ -85,10 +85,10 @@ export const SocialAccountList = ({
             role="combobox"
             className="w-full justify-between"
           >
-            {selectedAccounts.length === 0 ? (
+            {currentSelectedAccounts.length === 0 ? (
               "Select accounts..."
             ) : (
-              `${selectedAccounts.length} account${selectedAccounts.length === 1 ? '' : 's'} selected`
+              `${currentSelectedAccounts.length} account${currentSelectedAccounts.length === 1 ? '' : 's'} selected`
             )}
           </Button>
         </PopoverTrigger>
@@ -102,6 +102,7 @@ export const SocialAccountList = ({
                   key={account.id}
                   value={account.id}
                   onSelect={() => handleSelect(account.id)}
+                  className="flex items-center gap-3 px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
                 >
                   <div className="flex items-center gap-3 w-full">
                     {getPlatformIcon(account.platform)}
@@ -112,7 +113,7 @@ export const SocialAccountList = ({
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
+                        currentSelectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
                       )}
                     />
                   </div>
