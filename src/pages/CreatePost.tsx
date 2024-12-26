@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 const CreatePost = () => {
   const [userId, setUserId] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -33,12 +34,9 @@ const CreatePost = () => {
 
   const handleSuccess = () => {
     toast.success("Post created successfully!");
-    // Reset form by forcing a remount of CreatePostForm
-    setKey(prev => prev + 1);
+    // Force a complete remount of the form component
+    setFormKey(prev => prev + 1);
   };
-
-  // Add a key state to force remount of CreatePostForm
-  const [key, setKey] = useState(0);
 
   return (
     <DashboardLayout>
@@ -54,7 +52,7 @@ const CreatePost = () => {
           </div>
         ) : (
           <CreatePostForm 
-            key={key}
+            key={formKey}
             accounts={accounts || []} 
             userId={userId} 
             onSuccess={handleSuccess}
