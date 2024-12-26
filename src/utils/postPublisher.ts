@@ -91,10 +91,20 @@ export const publishPost = async ({
 
     if (error) throw error;
 
-    // If it's an immediate publish, trigger the edge function
+    // If it's an immediate publish, trigger the appropriate edge function based on platform
     if (!scheduledFor) {
+      const { data: account } = await supabase
+        .from('social_accounts')
+        .select('platform')
+        .eq('id', selectedAccount)
+        .single();
+
+      if (!account) throw new Error('Social account not found');
+
+      const functionName = `publish-${account.platform}-post`;
+      
       const { error: publishError } = await supabase.functions.invoke(
-        'publish-facebook-post',
+        functionName,
         {
           body: { postId: post.id }
         }
