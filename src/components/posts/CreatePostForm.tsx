@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { CreatePostFormContent } from "./CreatePostFormContent";
 import { useNavigate } from "react-router-dom";
 import { publishPost } from "@/utils/postPublisher";
+import { useUser } from "@/hooks/useUser";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -25,12 +27,12 @@ const defaultPollOptions = [
 
 export const CreatePostForm = ({ 
   accounts, 
-  userId, 
   initialDate,
   initialPost,
   onSuccess 
 }: CreatePostFormProps) => {
   const navigate = useNavigate();
+  const { userId } = useUser();
   const [content, setContent] = useState(initialPost?.content || "");
   const [selectedAccount, setSelectedAccount] = useState(initialPost?.social_account_id || "");
   const [date, setDate] = useState<Date | undefined>(initialPost ? new Date(initialPost.scheduled_for) : initialDate);
@@ -39,7 +41,6 @@ export const CreatePostForm = ({
     if (initialPost) {
       if (initialPost.poll_options?.length > 0) return "poll";
       if (initialPost.image_url) {
-        // Determine if it's a video or image based on file extension
         const isVideo = initialPost.image_url.match(/\.(mp4|mov)$/i);
         return isVideo ? "video" : "image";
       }
@@ -125,12 +126,30 @@ export const CreatePostForm = ({
     toast.success("Draft cleared successfully!");
   };
 
+  const handleTokenExpiration = async (accountId: string) => {
+    await supabase
+      .from('social_accounts')
+      .update({ 
+        requires_reconnect: true,
+        last_error: "Token expired"
+      })
+      .eq('id', accountId);
+    
+    toast.error("Facebook session expired. Please reconnect your account.");
+    navigate('/add-account');
+  };
+
   const handlePublishNow = async () => {
+    if (!userId) {
+      toast.error("You must be logged in to publish a post");
+      return;
+    }
+
     try {
       await publishPost({
         content,
         selectedAccount,
-        userId: userId!,
+        userId,
         postType,
         uploadedFiles,
         pollOptions,
@@ -143,13 +162,24 @@ export const CreatePostForm = ({
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
       console.error("Error publishing post:", error);
-      toast.error(error.message || "Failed to publish post");
+      
+      // Check if it's a token expiration error
+      if (error.message?.includes("Error validating access token: Session has expired")) {
+        await handleTokenExpiration(selectedAccount);
+      } else {
+        toast.error(error.message || "Failed to publish post");
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!userId) {
+      toast.error("You must be logged in to schedule a post");
+      return;
+    }
+
     if (!date) {
       toast.error("Please select a date and time");
       return;
@@ -159,7 +189,7 @@ export const CreatePostForm = ({
       await publishPost({
         content,
         selectedAccount,
-        userId: userId!,
+        userId,
         postType,
         uploadedFiles,
         pollOptions,
@@ -174,7 +204,13 @@ export const CreatePostForm = ({
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
       console.error("Error scheduling post:", error);
-      toast.error(error.message || "Failed to schedule post");
+      
+      // Check if it's a token expiration error
+      if (error.message?.includes("Error validating access token: Session has expired")) {
+        await handleTokenExpiration(selectedAccount);
+      } else {
+        toast.error(error.message || "Failed to schedule post");
+      }
     }
   };
 
@@ -202,6 +238,7 @@ export const CreatePostForm = ({
       onTimezoneChange={setTimezone}
       onPublishNow={handlePublishNow}
       onSaveDraft={handleSaveDraft}
+      initialPost={initialPost}
     />
   );
 };
