@@ -26,17 +26,26 @@ export const MentionSuggestions = ({
   onSelect,
   triggerRef,
 }: MentionSuggestionsProps) => {
+  // Ensure we have valid mentions to iterate over
+  const mentions = demoMentions || [];
+
   return (
     <Popover open={isOpen} onOpenChange={onClose}>
       <PopoverTrigger asChild>
         <span ref={triggerRef} className="fixed" />
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
+      <PopoverContent 
+        className="p-0 w-[200px]" 
+        sideOffset={5}
+        align="start"
+        side="bottom"
+      >
         <Command>
           <Command.List>
-            {demoMentions.map((mention) => (
+            {mentions.map((mention) => (
               <Command.Item
                 key={mention}
+                value={mention}
                 onSelect={() => {
                   onSelect(mention);
                   onClose();
