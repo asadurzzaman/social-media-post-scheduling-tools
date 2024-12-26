@@ -20,6 +20,7 @@ import Engage from "./pages/Engage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Pricing from "./pages/Pricing";
+import Settings from "./pages/Settings";
 import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient({
@@ -96,6 +97,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />
