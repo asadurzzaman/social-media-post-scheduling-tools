@@ -32,6 +32,7 @@ serve(async (req) => {
       .select(`
         content,
         image_url,
+        poll_options,
         social_accounts!inner(
           page_id,
           page_access_token,
@@ -67,23 +68,64 @@ serve(async (req) => {
       throw new Error('Facebook access token has expired. Please reconnect your Facebook account.');
     }
 
-    // Prepare the post data
-    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
     let postData: Record<string, any> = {
       message: post.content,
       access_token: pageAccessToken,
     };
 
-    // If there's no image, use the /feed endpoint instead
-    if (!post.image_url) {
-      endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
-    } else {
-      // Clean and validate image URL
-      const imageUrl = post.image_url.split(',')[0].trim(); // Use the first image URL
-      if (!imageUrl.startsWith('http')) {
-        throw new Error('Invalid image URL format');
+    // Handle different post types based on the content
+    if (post.image_url) {
+      const imageUrls = post.image_url.split(',');
+      
+      if (imageUrls.length > 1) {
+        // Handle carousel post
+        endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+        const mediaIds = [];
+        
+        // Upload each image and get media IDs
+        for (const imageUrl of imageUrls) {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: imageUrl.trim(),
+              access_token: pageAccessToken,
+              published: false
+            })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Facebook API Error:', errorData);
+            throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
+          }
+          
+          const result = await response.json();
+          mediaIds.push(result.id);
+        }
+        
+        // Create carousel post with all media IDs
+        endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
+        postData.attached_media = mediaIds.map(id => ({ media_fbid: id }));
+      } else {
+        // Single image/video post
+        const fileExtension = imageUrls[0].split('.').pop()?.toLowerCase();
+        const isVideo = fileExtension === 'mp4' || fileExtension === 'mov';
+        
+        if (isVideo) {
+          endpoint = `https://graph.facebook.com/v18.0/${pageId}/videos`;
+        } else {
+          endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+        }
+        postData.url = imageUrls[0].trim();
       }
-      postData.url = imageUrl;
+    } else if (post.poll_options && post.poll_options.length > 0) {
+      // Handle poll post
+      postData.polling = {
+        options: post.poll_options,
+        duration: 86400 // 24 hours in seconds
+      };
     }
 
     console.log('Making Facebook API request to:', endpoint);
