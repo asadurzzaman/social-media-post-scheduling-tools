@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostForm } from "@/components/posts/CreatePostForm";
+import { toast } from "sonner";
 
 const CreatePost = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -30,6 +31,15 @@ const CreatePost = () => {
     },
   });
 
+  const handleSuccess = () => {
+    toast.success("Post created successfully!");
+    // Reset form by forcing a remount of CreatePostForm
+    setKey(prev => prev + 1);
+  };
+
+  // Add a key state to force remount of CreatePostForm
+  const [key, setKey] = useState(0);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -43,7 +53,12 @@ const CreatePost = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <CreatePostForm accounts={accounts || []} userId={userId} />
+          <CreatePostForm 
+            key={key}
+            accounts={accounts || []} 
+            userId={userId} 
+            onSuccess={handleSuccess}
+          />
         )}
       </div>
     </DashboardLayout>
