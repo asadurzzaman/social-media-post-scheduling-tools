@@ -42,8 +42,10 @@ export function TopNav() {
           <Button variant="default" className="hidden md:flex">
             Start a 14-day free trial
           </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> New
+          <Button asChild>
+            <Link to="/create-post">
+              <Plus className="mr-2 h-4 w-4" /> Create Post
+            </Link>
           </Button>
         </div>
       </div>
