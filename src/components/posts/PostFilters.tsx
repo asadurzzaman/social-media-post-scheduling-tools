@@ -44,7 +44,7 @@ export const PostFilters = ({
   onApplyDateFilter,
 }: PostFiltersProps) => {
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-4">
+    <div className="flex flex-wrap items-start justify-start gap-2 mt-4">
       <Button
         variant="outline"
         size="sm"
@@ -61,7 +61,7 @@ export const PostFilters = ({
             Date Filter
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-4" align="end">
+        <PopoverContent className="w-auto p-4" align="start">
           <div className="space-y-4">
             <div>
               <div className="text-sm font-medium mb-2">Start Date</div>
