@@ -32,9 +32,7 @@ export const CreatePostForm = ({
 }: CreatePostFormProps) => {
   const navigate = useNavigate();
   const [content, setContent] = useState(initialPost?.content || "");
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(
-    initialPost ? [initialPost.social_account_id] : []
-  );
+  const [selectedAccount, setSelectedAccount] = useState(initialPost?.social_account_id || "");
   const [date, setDate] = useState<Date | undefined>(initialPost ? new Date(initialPost.scheduled_for) : initialDate);
   const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
   const [postType, setPostType] = useState<PostType>("text");
@@ -52,7 +50,7 @@ export const CreatePostForm = ({
 
   const resetForm = () => {
     setContent("");
-    setSelectedAccounts([]);
+    setSelectedAccount("");
     setDate(undefined);
     setPostType("text");
     setUploadedFiles([]);
@@ -69,7 +67,7 @@ export const CreatePostForm = ({
         const draft = JSON.parse(savedDraft);
         setContent(draft.content || "");
         setPostType(draft.postType || "text");
-        setSelectedAccounts(draft.selectedAccounts || []);
+        setSelectedAccount(draft.selectedAccount || "");
         if (draft.date) setDate(new Date(draft.date));
         if (draft.timezone) setTimezone(draft.timezone);
         if (draft.pollOptions) setPollOptions(draft.pollOptions);
@@ -78,11 +76,11 @@ export const CreatePostForm = ({
   }, [initialPost]);
 
   useEffect(() => {
-    if (!initialPost && (content || selectedAccounts.length > 0 || date || postType !== "text" || pollOptions.some(opt => opt.text))) {
+    if (!initialPost && (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text))) {
       const draft = {
         content,
         postType,
-        selectedAccounts,
+        selectedAccount,
         date: date?.toISOString(),
         timezone,
         pollOptions: postType === 'poll' ? pollOptions : undefined
@@ -90,13 +88,13 @@ export const CreatePostForm = ({
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccounts, date, timezone, pollOptions, initialPost]);
+  }, [content, postType, selectedAccount, date, timezone, pollOptions, initialPost]);
 
   const handleSaveDraft = () => {
     const draft = {
       content,
       postType,
-      selectedAccounts,
+      selectedAccount,
       date: date?.toISOString(),
       timezone,
       pollOptions: postType === 'poll' ? pollOptions : undefined
@@ -112,32 +110,24 @@ export const CreatePostForm = ({
   };
 
   const handlePublishNow = async () => {
-    if (selectedAccounts.length === 0) {
-      toast.error("Please select at least one social media account");
-      return;
-    }
-
     try {
-      // Publish to each selected account
-      for (const accountId of selectedAccounts) {
-        await publishPost({
-          content,
-          selectedAccount: accountId,
-          userId: userId!,
-          postType,
-          uploadedFiles,
-          pollOptions,
-          timezone,
-        });
-      }
+      await publishPost({
+        content,
+        selectedAccount,
+        userId: userId!,
+        postType,
+        uploadedFiles,
+        pollOptions,
+        timezone,
+      });
       
-      toast.success("Posts published successfully!");
+      toast.success("Post published successfully!");
       resetForm();
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
-      console.error("Error publishing posts:", error);
-      toast.error(error.message || "Failed to publish posts");
+      console.error("Error publishing post:", error);
+      toast.error(error.message || "Failed to publish post");
     }
   };
 
@@ -149,34 +139,26 @@ export const CreatePostForm = ({
       return;
     }
 
-    if (selectedAccounts.length === 0) {
-      toast.error("Please select at least one social media account");
-      return;
-    }
-
     try {
-      // Schedule for each selected account
-      for (const accountId of selectedAccounts) {
-        await publishPost({
-          content,
-          selectedAccount: accountId,
-          userId: userId!,
-          postType,
-          uploadedFiles,
-          pollOptions,
-          timezone,
-          scheduledFor: date,
-          postId: initialPost?.id,
-        });
-      }
+      await publishPost({
+        content,
+        selectedAccount,
+        userId: userId!,
+        postType,
+        uploadedFiles,
+        pollOptions,
+        timezone,
+        scheduledFor: date,
+        postId: initialPost?.id,
+      });
       
-      toast.success(initialPost ? "Posts updated successfully!" : "Posts scheduled successfully!");
+      toast.success(initialPost ? "Post updated successfully!" : "Post scheduled successfully!");
       resetForm();
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
-      console.error("Error scheduling posts:", error);
-      toast.error(error.message || "Failed to schedule posts");
+      console.error("Error scheduling post:", error);
+      toast.error(error.message || "Failed to schedule post");
     }
   };
 
@@ -185,8 +167,8 @@ export const CreatePostForm = ({
       accounts={accounts}
       content={content}
       setContent={setContent}
-      selectedAccounts={selectedAccounts}
-      setSelectedAccounts={setSelectedAccounts}
+      selectedAccount={selectedAccount}
+      setSelectedAccount={setSelectedAccount}
       date={date}
       setDate={setDate}
       postType={postType}
