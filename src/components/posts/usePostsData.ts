@@ -80,11 +80,12 @@ export const usePostsData = (
             scheduled_for: draft.date || new Date().toISOString(),
             hashtags: [],
             image_url: null,
-            poll_options: [],
+            poll_options: draft.pollOptions || [],
             social_account_id: draft.selectedAccount || '',
             timezone: draft.timezone || 'UTC',
             user_id: '',
             group_id: null,
+            post_type: draft.postType || 'text',
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
