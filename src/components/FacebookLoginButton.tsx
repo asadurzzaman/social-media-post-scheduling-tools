@@ -47,6 +47,13 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           xfbml: true,
           version: 'v18.0'
         });
+        
+        // Disable impression logging to prevent errors
+        if (window.FB.Event && window.FB.Event.subscribe) {
+          window.FB.Event.subscribe('edge.create', () => {});
+          window.FB.Event.subscribe('edge.remove', () => {});
+        }
+        
         console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
       };
@@ -73,13 +80,12 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
     loadFacebookSDK();
 
-    // Cleanup function to ensure proper SDK cleanup
+    // Cleanup function
     return () => {
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
         existingScript.remove();
       }
-      // Clear FB instance
       delete window.FB;
       delete window.fbAsyncInit;
     };
@@ -119,7 +125,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      // Force a new login attempt instead of checking status first
+      // Force a new login attempt
       console.log('Initiating Facebook login...');
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
