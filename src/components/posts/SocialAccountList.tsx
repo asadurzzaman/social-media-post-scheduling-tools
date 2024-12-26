@@ -40,7 +40,11 @@ const demoAccounts = [
   }
 ];
 
-export const SocialAccountList = ({ accounts, selectedAccounts, onSelect }: SocialAccountListProps) => {
+export const SocialAccountList = ({ 
+  accounts = [], // Provide default empty array
+  selectedAccounts = [], // Provide default empty array
+  onSelect 
+}: SocialAccountListProps) => {
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'linkedin':
@@ -56,9 +60,14 @@ export const SocialAccountList = ({ accounts, selectedAccounts, onSelect }: Soci
     }
   };
 
-  const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
+  // Ensure we have an array to work with
+  const displayAccounts = Array.isArray(accounts) && accounts.length > 0 
+    ? accounts 
+    : demoAccounts;
 
   const handleSelect = (accountId: string) => {
+    if (!onSelect) return;
+    
     if (selectedAccounts.includes(accountId)) {
       onSelect(selectedAccounts.filter(id => id !== accountId));
     } else {
