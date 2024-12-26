@@ -4,11 +4,17 @@ export class FacebookErrorHandler {
   }
 
   static isAuthError(error: any): boolean {
-    return error.code === 190 || error.code === 102;
+    return error.code === 190 || error.code === 102 || error.error_subcode === 463;
+  }
+
+  static isTokenExpiredError(error: any): boolean {
+    return error.code === 190 && error.error_subcode === 463;
   }
 
   static async handleError(error: any): Promise<void> {
-    if (FacebookErrorHandler.isRateLimitError(error)) {
+    if (FacebookErrorHandler.isTokenExpiredError(error)) {
+      throw new Error('Your Facebook session has expired. Please reconnect your Facebook account.');
+    } else if (FacebookErrorHandler.isRateLimitError(error)) {
       const retryAfter = error.headers?.['retry-after'] || 60;
       await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
     } else if (FacebookErrorHandler.isAuthError(error)) {

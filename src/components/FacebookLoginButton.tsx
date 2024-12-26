@@ -48,12 +48,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           version: 'v18.0'
         });
         
-        // Disable impression logging to prevent errors
-        if (window.FB.Event && window.FB.Event.subscribe) {
-          window.FB.Event.subscribe('edge.create', () => {});
-          window.FB.Event.subscribe('edge.remove', () => {});
-        }
-        
         console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
       };
@@ -80,7 +74,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
     loadFacebookSDK();
 
-    // Cleanup function
     return () => {
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
@@ -90,6 +83,28 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       delete window.fbAsyncInit;
     };
   }, [appId]);
+
+  const getLongLivedToken = async (shortLivedToken: string): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/v18.0/oauth/access_token?` +
+        `grant_type=fb_exchange_token&` +
+        `client_id=${appId}&` +
+        `client_secret=${process.env.FACEBOOK_APP_SECRET}&` +
+        `fb_exchange_token=${shortLivedToken}`
+      );
+      
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+      
+      return data.access_token;
+    } catch (error) {
+      console.error('Error getting long-lived token:', error);
+      throw error;
+    }
+  };
 
   const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
     try {
@@ -139,14 +154,19 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       });
 
       if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-        console.log('Login successful, updating token in database');
+        console.log('Login successful, getting long-lived token');
+        
+        // Get a long-lived token
+        const longLivedToken = await getLongLivedToken(loginResponse.authResponse.accessToken);
+        
+        // Update the token in the database with the long-lived token
         await updateTokenInDatabase(
-          loginResponse.authResponse.accessToken,
-          loginResponse.authResponse.expiresIn
+          longLivedToken,
+          loginResponse.authResponse.expiresIn * 60 * 24 // Convert to days
         );
         
         onSuccess({
-          accessToken: loginResponse.authResponse.accessToken,
+          accessToken: longLivedToken,
           userId: loginResponse.authResponse.userID
         });
       } else {
