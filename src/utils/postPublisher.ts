@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { PostType } from "@/components/posts/PostTypeSelect";
 
 interface PollOption {
@@ -16,7 +15,7 @@ interface PublishPostParams {
   pollOptions: PollOption[];
   timezone: string;
   scheduledFor?: Date;
-  postId?: string; // Added this parameter for editing existing posts
+  postId?: string;
 }
 
 export const publishPost = async ({
@@ -30,12 +29,11 @@ export const publishPost = async ({
   scheduledFor,
   postId,
 }: PublishPostParams) => {
-  // Validate required fields with specific error messages
   if (!selectedAccount) {
     throw new Error("Please select a social media account");
   }
 
-  if (!content) {
+  if (!content && postType === 'text') {
     throw new Error("Please add a caption for your post");
   }
 
@@ -75,19 +73,23 @@ export const publishPost = async ({
   // Set initial status based on whether it's immediate or scheduled
   const initialStatus = scheduledFor ? 'scheduled' : 'pending';
 
+  const postData = {
+    content,
+    social_account_id: selectedAccount,
+    image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+    user_id: userId,
+    scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
+    status: initialStatus,
+    timezone,
+    poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null,
+    post_type: postType
+  };
+
   // If postId exists, update the existing post
   if (postId) {
     const { error } = await supabase
       .from("posts")
-      .update({
-        content,
-        social_account_id: selectedAccount,
-        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
-        status: initialStatus,
-        timezone,
-        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
-      })
+      .update(postData)
       .eq('id', postId);
 
     if (error) throw error;
@@ -95,16 +97,7 @@ export const publishPost = async ({
     // Insert new post
     const { data: post, error } = await supabase
       .from("posts")
-      .insert({
-        content,
-        social_account_id: selectedAccount,
-        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-        user_id: userId,
-        scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
-        status: initialStatus,
-        timezone,
-        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
-      })
+      .insert(postData)
       .select()
       .single();
 

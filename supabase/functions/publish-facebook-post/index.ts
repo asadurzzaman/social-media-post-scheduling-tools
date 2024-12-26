@@ -75,20 +75,26 @@ serve(async (req) => {
       throw new Error('Facebook token has expired. Please reconnect your account.');
     }
 
-    // Prepare the base endpoint and post data based on post type
     let endpoint = `https://graph.facebook.com/v18.0/${pageId}/`;
     let postData: Record<string, any> = {
       access_token: pageAccessToken,
     };
 
+    // Handle different post types
     switch (post.post_type) {
       case 'image':
+        endpoint += 'photos';
+        if (post.image_url) {
+          postData.url = post.image_url.split(',')[0];
+          postData.message = post.content;
+        }
+        break;
+
       case 'carousel':
         endpoint += 'photos';
         if (post.image_url) {
           const imageUrls = post.image_url.split(',');
-          if (post.post_type === 'carousel' && imageUrls.length > 1) {
-            // Handle carousel post
+          if (imageUrls.length > 1) {
             const attachments = await Promise.all(imageUrls.map(async (url) => {
               const response = await fetch(`${endpoint}?access_token=${pageAccessToken}`, {
                 method: 'POST',
@@ -105,7 +111,6 @@ serve(async (req) => {
               attached_media: attachments,
             };
           } else {
-            // Single image post
             postData.url = imageUrls[0];
             postData.message = post.content;
           }
@@ -125,41 +130,6 @@ serve(async (req) => {
         postData.question = post.content;
         if (post.poll_options) {
           postData.options = post.poll_options;
-        }
-        break;
-
-      case 'story':
-        endpoint += 'stories';
-        if (post.image_url) {
-          postData.file_url = post.image_url;
-        }
-        break;
-
-      case 'link':
-        endpoint += 'feed';
-        const urlMatch = post.content.match(/https?:\/\/[^\s]+/);
-        if (urlMatch) {
-          postData.link = urlMatch[0];
-          postData.message = post.content.replace(urlMatch[0], '').trim();
-        }
-        break;
-
-      case 'checkin':
-        endpoint += 'feed';
-        postData.message = post.content;
-        postData.place = post.location_id; // Requires location_id to be passed
-        break;
-
-      case 'milestone':
-        endpoint += 'milestones';
-        postData.title = post.content;
-        break;
-
-      case 'tagged':
-        endpoint += 'feed';
-        postData.message = post.content;
-        if (post.tagged_users) {
-          postData.tags = post.tagged_users;
         }
         break;
 
