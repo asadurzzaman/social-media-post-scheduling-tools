@@ -7,52 +7,57 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { code, redirectUri } = await req.json()
+    
+    const instagramAppId = Deno.env.get('INSTAGRAM_APP_ID')
+    const instagramAppSecret = Deno.env.get('INSTAGRAM_APP_SECRET')
+    
+    if (!instagramAppId || !instagramAppSecret) {
+      throw new Error('Instagram credentials not configured')
+    }
 
-    // Exchange the authorization code for an access token
+    // Exchange the code for an access token
     const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
       method: 'POST',
       body: new URLSearchParams({
-        client_id: Deno.env.get('FACEBOOK_APP_ID') || '',
-        client_secret: Deno.env.get('FACEBOOK_APP_SECRET') || '',
+        client_id: instagramAppId,
+        client_secret: instagramAppSecret,
         grant_type: 'authorization_code',
         redirect_uri: redirectUri,
-        code,
+        code: code,
       }),
     })
 
     const tokenData = await tokenResponse.json()
-
+    
     if (tokenData.error) {
-      throw new Error(tokenData.error.message)
+      console.error('Error exchanging code for token:', tokenData)
+      throw new Error(tokenData.error_message || 'Failed to exchange code for token')
     }
 
-    // Get long-lived access token
-    const longLivedTokenResponse = await fetch(
-      `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${
-        Deno.env.get('FACEBOOK_APP_SECRET')
-      }&access_token=${tokenData.access_token}`
-    )
-
-    const longLivedTokenData = await longLivedTokenResponse.json()
-
-    // Get user profile information
+    // Get user details using the access token
     const userResponse = await fetch(
-      `https://graph.instagram.com/me?fields=id,username&access_token=${longLivedTokenData.access_token}`
+      `https://graph.instagram.com/me?fields=id,username&access_token=${tokenData.access_token}`
     )
-
+    
     const userData = await userResponse.json()
+    
+    if (userData.error) {
+      console.error('Error fetching user data:', userData)
+      throw new Error(userData.error.message || 'Failed to fetch user data')
+    }
 
     return new Response(
       JSON.stringify({
-        accessToken: longLivedTokenData.access_token,
+        accessToken: tokenData.access_token,
         userId: userData.id,
-        username: userData.username,
+        username: userData.username
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -60,6 +65,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
+    console.error('Instagram auth error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {

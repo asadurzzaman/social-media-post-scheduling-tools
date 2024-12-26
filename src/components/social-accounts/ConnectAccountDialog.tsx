@@ -18,8 +18,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
     try {
       // Instagram OAuth URL construction
       const redirectUri = `${window.location.origin}/instagram-callback.html`;
-      // Updated scope to match Instagram Basic Display API requirements
-      const scope = 'basic';
+      const scope = 'basic'; // Basic Display API scope
       
       const { data: { instagram_app_id }, error: secretError } = await supabase.functions.invoke('get-instagram-credentials');
       
@@ -52,13 +51,34 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
             return;
           }
           
-          if (data.accessToken) {
-            onSuccess({
-              accessToken: data.accessToken,
-              userId: data.userId
-            });
-            popup?.close();
+          // Save the Instagram account in Supabase
+          const { data: session } = await supabase.auth.getSession();
+          if (!session?.session?.user) {
+            toast.error('No active session found');
+            return;
           }
+
+          const { error: insertError } = await supabase
+            .from('social_accounts')
+            .insert({
+              user_id: session.session.user.id,
+              platform: 'instagram',
+              account_name: data.username,
+              access_token: data.accessToken,
+              instagram_user_id: data.userId,
+              instagram_username: data.username,
+              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() // 60 days
+            });
+
+          if (insertError) {
+            console.error('Error saving Instagram account:', insertError);
+            toast.error('Failed to save Instagram account');
+            return;
+          }
+
+          toast.success('Instagram account connected successfully!');
+          popup?.close();
+          onSuccess({ accessToken: data.accessToken, userId: data.userId });
         } else if (event.data.type === 'instagram_auth_error') {
           console.error('Instagram auth error:', event.data.error);
           toast.error('Failed to connect Instagram account');
