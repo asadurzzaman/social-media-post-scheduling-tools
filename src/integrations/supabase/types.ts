@@ -152,6 +152,7 @@ export type Database = {
           id: string
           image_url: string | null
           poll_options: string[] | null
+          post_type: string
           scheduled_for: string
           social_account_id: string
           status: string | null
@@ -166,6 +167,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           poll_options?: string[] | null
+          post_type?: string
           scheduled_for: string
           social_account_id: string
           status?: string | null
@@ -180,6 +182,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           poll_options?: string[] | null
+          post_type?: string
           scheduled_for?: string
           social_account_id?: string
           status?: string | null

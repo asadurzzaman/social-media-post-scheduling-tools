@@ -37,7 +37,14 @@ export const PostTypeSelect = ({ value, onChange }: PostTypeSelectProps) => {
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select post type">
-            {POST_TYPES.find(type => type.value === value)?.label}
+            <div className="flex items-center gap-2">
+              {POST_TYPES.find(type => type.value === value)?.icon && (
+                <span className="inline-block w-4 h-4">
+                  {React.createElement(POST_TYPES.find(type => type.value === value)?.icon || FileText)}
+                </span>
+              )}
+              {POST_TYPES.find(type => type.value === value)?.label}
+            </div>
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

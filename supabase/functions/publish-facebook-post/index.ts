@@ -31,6 +31,7 @@ serve(async (req) => {
         content,
         image_url,
         post_type,
+        poll_options,
         social_accounts!inner(
           id,
           page_id,
@@ -85,24 +86,52 @@ serve(async (req) => {
       case 'carousel':
         endpoint += 'photos';
         if (post.image_url) {
-          const imageUrl = post.image_url.split(',')[0].trim();
-          if (!imageUrl.startsWith('http')) {
-            throw new Error('Invalid image URL format');
+          const imageUrls = post.image_url.split(',');
+          if (post.post_type === 'carousel' && imageUrls.length > 1) {
+            // Handle carousel post
+            const attachments = await Promise.all(imageUrls.map(async (url) => {
+              const response = await fetch(`${endpoint}?access_token=${pageAccessToken}`, {
+                method: 'POST',
+                body: JSON.stringify({ url }),
+              });
+              const data = await response.json();
+              return { media_fbid: data.id };
+            }));
+            
+            endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
+            postData = {
+              access_token: pageAccessToken,
+              message: post.content,
+              attached_media: attachments,
+            };
+          } else {
+            // Single image post
+            postData.url = imageUrls[0];
+            postData.message = post.content;
           }
-          postData.url = imageUrl;
-          postData.message = post.content;
         }
         break;
 
       case 'video':
         endpoint += 'videos';
         if (post.image_url) {
-          const videoUrl = post.image_url.split(',')[0].trim();
-          if (!videoUrl.startsWith('http')) {
-            throw new Error('Invalid video URL format');
-          }
-          postData.file_url = videoUrl;
+          postData.file_url = post.image_url;
           postData.description = post.content;
+        }
+        break;
+
+      case 'poll':
+        endpoint += 'questions';
+        postData.question = post.content;
+        if (post.poll_options) {
+          postData.options = post.poll_options;
+        }
+        break;
+
+      case 'story':
+        endpoint += 'stories';
+        if (post.image_url) {
+          postData.file_url = post.image_url;
         }
         break;
 
@@ -115,10 +144,22 @@ serve(async (req) => {
         }
         break;
 
-      case 'story':
-        endpoint += 'stories';
-        if (post.image_url) {
-          postData.file_url = post.image_url;
+      case 'checkin':
+        endpoint += 'feed';
+        postData.message = post.content;
+        postData.place = post.location_id; // Requires location_id to be passed
+        break;
+
+      case 'milestone':
+        endpoint += 'milestones';
+        postData.title = post.content;
+        break;
+
+      case 'tagged':
+        endpoint += 'feed';
+        postData.message = post.content;
+        if (post.tagged_users) {
+          postData.tags = post.tagged_users;
         }
         break;
 
