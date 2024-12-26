@@ -128,26 +128,35 @@ export const CreatePostForm = ({
     toast.success("Draft cleared successfully!");
   };
 
-  const handleTokenExpiration = async (accountId: string) => {
-    await supabase
-      .from('social_accounts')
-      .update({ 
-        requires_reconnect: true,
-        last_error: "Token expired"
-      })
-      .eq('id', accountId);
-    
-    toast.error("Facebook session expired. Please reconnect your account.");
-    navigate('/add-account');
+  const handleReconnectSuccess = () => {
+    setShowReconnectDialog(false);
+    toast.success("Facebook account reconnected successfully!");
+    // Retry the last action (publish/schedule)
+    if (date) {
+      handleSubmit(new Event('submit') as any);
+    } else {
+      handlePublishNow();
+    }
   };
 
   const handlePublishError = async (error: any) => {
     console.error("Error publishing post:", error);
     
-    if (error.message?.includes("Facebook token has expired")) {
+    const errorBody = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
+    const errorMessage = errorBody?.error || error.message;
+    
+    if (errorMessage?.includes("Facebook token has expired")) {
+      await supabase
+        .from('social_accounts')
+        .update({ 
+          requires_reconnect: true,
+          last_error: errorMessage
+        })
+        .eq('id', selectedAccount);
+      
       setShowReconnectDialog(true);
     } else {
-      toast.error(error.message || "Failed to publish post");
+      toast.error(errorMessage || "Failed to publish post");
     }
   };
 
@@ -243,6 +252,7 @@ export const CreatePostForm = ({
         isOpen={showReconnectDialog}
         onClose={() => setShowReconnectDialog(false)}
         accountId={selectedAccount}
+        onSuccess={handleReconnectSuccess}
       />
     </>
   );

@@ -8,25 +8,24 @@ import {
 } from "@/components/ui/dialog";
 import FacebookLoginButton from '../FacebookLoginButton';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 
 interface ReconnectFacebookDialogProps {
   isOpen: boolean;
   onClose: () => void;
   accountId: string;
+  onSuccess?: () => void;
 }
 
 export const ReconnectFacebookDialog = ({
   isOpen,
   onClose,
   accountId,
+  onSuccess,
 }: ReconnectFacebookDialogProps) => {
-  const navigate = useNavigate();
-
   const handleSuccess = () => {
     toast.success('Facebook account reconnected successfully');
+    onSuccess?.();
     onClose();
-    navigate('/posts');
   };
 
   const handleError = (error: string) => {
