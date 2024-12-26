@@ -1,18 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { PostType } from "@/components/posts/PostTypeSelect";
 
-interface PollOption {
-  id: string;
-  text: string;
-}
-
 interface PublishPostParams {
   content: string;
   selectedAccount: string;
   userId: string;
   postType: PostType;
   uploadedFiles: File[];
-  pollOptions: PollOption[];
   timezone: string;
   scheduledFor?: Date;
   postId?: string;
@@ -24,7 +18,6 @@ export const publishPost = async ({
   userId,
   postType,
   uploadedFiles,
-  pollOptions,
   timezone,
   scheduledFor,
   postId,
@@ -41,12 +34,8 @@ export const publishPost = async ({
     throw new Error("You must be logged in to publish a post");
   }
 
-  if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
-    throw new Error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
-  }
-
-  if (postType === 'poll' && !pollOptions.every(opt => opt.text.trim())) {
-    throw new Error("Please fill in all poll options");
+  if (["image", "video"].includes(postType) && uploadedFiles.length === 0) {
+    throw new Error(`Please upload 1 ${postType}`);
   }
 
   let imageUrls: string[] = [];
@@ -76,12 +65,11 @@ export const publishPost = async ({
   const postData = {
     content,
     social_account_id: selectedAccount,
-    image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+    image_url: imageUrls.length > 0 ? imageUrls[0] : null,
     user_id: userId,
     scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
     status: initialStatus,
     timezone,
-    poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null,
     post_type: postType
   };
 
