@@ -217,6 +217,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          post_platform_selection: boolean | null
           timezone: string | null
         }
         Insert: {
@@ -225,6 +226,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          post_platform_selection?: boolean | null
           timezone?: string | null
         }
         Update: {
@@ -233,6 +235,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          post_platform_selection?: boolean | null
           timezone?: string | null
         }
         Relationships: []
