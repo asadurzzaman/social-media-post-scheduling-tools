@@ -22,6 +22,13 @@ serve(async (req) => {
       throw new Error('Instagram credentials not configured')
     }
 
+    console.log('Exchanging code for token with params:', {
+      client_id: instagramAppId,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+      code,
+    });
+
     // Exchange the code for an access token
     const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
       method: 'POST',
@@ -41,6 +48,8 @@ serve(async (req) => {
       throw new Error(tokenData.error_message || 'Failed to exchange code for token')
     }
 
+    console.log('Token response:', tokenData);
+
     // Get user details using the access token
     const userResponse = await fetch(
       `https://graph.instagram.com/me?fields=id,username&access_token=${tokenData.access_token}`
@@ -52,6 +61,8 @@ serve(async (req) => {
       console.error('Error fetching user data:', userData)
       throw new Error(userData.error.message || 'Failed to fetch user data')
     }
+
+    console.log('User data:', userData);
 
     return new Response(
       JSON.stringify({

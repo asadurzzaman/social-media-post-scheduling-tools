@@ -18,8 +18,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
     try {
       // Instagram OAuth URL construction
       const redirectUri = `${window.location.origin}/instagram-callback.html`;
-      // Updated scopes for Instagram Graph API
-      const scope = 'instagram_basic,instagram_content_publish';
+      // Updated scope format for Instagram Graph API
+      const scope = 'basic'; // Using just 'basic' scope as per Instagram Basic Display API
       
       const { data: { instagram_app_id }, error: secretError } = await supabase.functions.invoke('get-instagram-credentials');
       
@@ -31,6 +31,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
 
       const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagram_app_id}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
       
+      console.log('Opening Instagram auth URL:', authUrl); // Debug log
+      
       // Open Instagram auth in a popup
       const popup = window.open(authUrl, 'Instagram Login', 'width=600,height=700');
       
@@ -40,6 +42,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         
         if (event.data.type === 'instagram_auth') {
           const { code } = event.data;
+          console.log('Received Instagram auth code:', code); // Debug log
           
           // Exchange the code for an access token using your backend
           const { data, error } = await supabase.functions.invoke('instagram-auth', {
