@@ -2,7 +2,7 @@ import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/c
 import { Button } from "@/components/ui/button";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
 import { toast } from "sonner";
-import { Instagram } from "lucide-react";
+import { Instagram, Linkedin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ConnectAccountDialogProps {
@@ -17,7 +17,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleInstagramLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/instagram-callback.html`;
-      // Updated scope for Instagram Graph API
       const scope = 'instagram_basic,instagram_content_publish';
       
       const { data: { instagram_app_id }, error: secretError } = await supabase.functions.invoke('get-instagram-credentials');
@@ -90,6 +89,76 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
     }
   };
 
+  const handleLinkedInLogin = async () => {
+    try {
+      const redirectUri = `${window.location.origin}/linkedin-callback.html`;
+      const scope = 'r_liteprofile w_member_social';
+      
+      const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
+      
+      if (secretError) {
+        console.error('Error fetching LinkedIn credentials:', secretError);
+        toast.error('Failed to initialize LinkedIn login');
+        return;
+      }
+
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${redirectUri}&scope=${scope}`;
+      
+      const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
+      
+      window.addEventListener('message', async (event) => {
+        if (event.origin !== window.location.origin) return;
+        
+        if (event.data.type === 'linkedin_auth') {
+          const { code } = event.data;
+          
+          const { data, error } = await supabase.functions.invoke('linkedin-auth', {
+            body: { code, redirectUri }
+          });
+          
+          if (error) {
+            console.error('LinkedIn auth error:', error);
+            toast.error('Failed to connect LinkedIn account');
+            return;
+          }
+          
+          const { data: session } = await supabase.auth.getSession();
+          if (!session?.session?.user) {
+            toast.error('No active session found');
+            return;
+          }
+
+          const { error: insertError } = await supabase
+            .from('social_accounts')
+            .insert({
+              user_id: session.session.user.id,
+              platform: 'linkedin',
+              account_name: data.username,
+              access_token: data.accessToken,
+              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+            });
+
+          if (insertError) {
+            console.error('Error saving LinkedIn account:', insertError);
+            toast.error('Failed to save LinkedIn account');
+            return;
+          }
+
+          toast.success('LinkedIn account connected successfully!');
+          popup?.close();
+          onSuccess({ accessToken: data.accessToken, userId: data.userId });
+        } else if (event.data.type === 'linkedin_auth_error') {
+          console.error('LinkedIn auth error:', event.data.error);
+          toast.error('Failed to connect LinkedIn account');
+          popup?.close();
+        }
+      });
+    } catch (error) {
+      console.error('LinkedIn login error:', error);
+      toast.error('Failed to initiate LinkedIn login');
+    }
+  };
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -112,7 +181,14 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           <Instagram className="w-5 h-5 text-pink-600" />
           Connect Instagram
         </Button>
-        <Button className="w-full" variant="outline" disabled>LinkedIn (Coming soon)</Button>
+        <Button 
+          className="w-full flex items-center justify-center gap-2" 
+          variant="outline" 
+          onClick={handleLinkedInLogin}
+        >
+          <Linkedin className="w-5 h-5 text-[#0A66C2]" />
+          Connect LinkedIn
+        </Button>
         <Button className="w-full" variant="outline" disabled>X/Twitter (Coming soon)</Button>
         <Button className="w-full" variant="outline" disabled>TikTok (Coming soon)</Button>
       </div>

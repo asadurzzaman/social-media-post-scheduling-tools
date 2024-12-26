@@ -1,0 +1,7 @@
+project_id = "czuhcymoqjgsmwzimlzd"
+
+[linkedin-auth]
+verify_jwt = false
+
+[get-linkedin-credentials]
+verify_jwt = false
