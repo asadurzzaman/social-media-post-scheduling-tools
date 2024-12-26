@@ -12,7 +12,8 @@ export class FacebookErrorHandler {
     const errorObj = error.error || error;
     return (
       (errorObj.code === 190 && errorObj.error_subcode === 463) ||
-      (errorObj.error && errorObj.error.code === 190 && errorObj.error.error_subcode === 463)
+      (errorObj.error && errorObj.error.code === 190 && errorObj.error.error_subcode === 463) ||
+      error.code === 'TOKEN_EXPIRED'
     );
   }
 
