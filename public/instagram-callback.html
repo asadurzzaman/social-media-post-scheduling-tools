@@ -9,6 +9,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const error = urlParams.get('error');
+    const error_description = urlParams.get('error_description');
     
     if (code) {
       // Send the code back to the parent window
@@ -16,9 +17,12 @@
         { type: 'instagram_auth', code },
         window.opener.origin
       );
-    } else if (error) {
+    } else if (error || error_description) {
       window.opener.postMessage(
-        { type: 'instagram_auth_error', error },
+        { 
+          type: 'instagram_auth_error', 
+          error: error_description || error || 'Authentication failed'
+        },
         window.opener.origin
       );
     }

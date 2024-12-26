@@ -17,15 +17,21 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleInstagramLogin = async () => {
     try {
       // Instagram OAuth URL construction
-      const instagramClientId = '1294294115054311'; // Using the same app ID as Facebook since Instagram uses Facebook's app
-      const redirectUri = `${window.location.origin}/auth/instagram/callback`;
-      // Updated scope to use the correct Instagram Basic Display API permissions
+      const redirectUri = `${window.location.origin}/instagram-callback.html`;
       const scope = 'user_profile,user_media';
       
-      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagramClientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+      const { data: { instagram_app_id }, error: secretError } = await supabase.functions.invoke('get-instagram-credentials');
+      
+      if (secretError) {
+        console.error('Error fetching Instagram credentials:', secretError);
+        toast.error('Failed to initialize Instagram login');
+        return;
+      }
+
+      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagram_app_id}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
       
       // Open Instagram auth in a popup
-      window.open(authUrl, 'Instagram Login', 'width=600,height=700');
+      const popup = window.open(authUrl, 'Instagram Login', 'width=600,height=700');
       
       // Listen for the callback message from the popup
       window.addEventListener('message', async (event) => {
@@ -40,6 +46,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           });
           
           if (error) {
+            console.error('Instagram auth error:', error);
             toast.error('Failed to connect Instagram account');
             return;
           }
@@ -49,7 +56,12 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
               accessToken: data.accessToken,
               userId: data.userId
             });
+            popup?.close();
           }
+        } else if (event.data.type === 'instagram_auth_error') {
+          console.error('Instagram auth error:', event.data.error);
+          toast.error('Failed to connect Instagram account');
+          popup?.close();
         }
       });
     } catch (error) {
