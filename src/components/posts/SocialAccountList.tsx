@@ -41,8 +41,8 @@ const demoAccounts = [
 ];
 
 export const SocialAccountList = ({ 
-  accounts = [], // Provide default empty array
-  selectedAccounts = [], // Provide default empty array
+  accounts = [], 
+  selectedAccounts = [], 
   onSelect 
 }: SocialAccountListProps) => {
   const getPlatformIcon = (platform: string) => {
@@ -60,7 +60,6 @@ export const SocialAccountList = ({
     }
   };
 
-  // Ensure we have an array to work with
   const displayAccounts = Array.isArray(accounts) && accounts.length > 0 
     ? accounts 
     : demoAccounts;
@@ -68,11 +67,11 @@ export const SocialAccountList = ({
   const handleSelect = (accountId: string) => {
     if (!onSelect) return;
     
-    if (selectedAccounts.includes(accountId)) {
-      onSelect(selectedAccounts.filter(id => id !== accountId));
-    } else {
-      onSelect([...selectedAccounts, accountId]);
-    }
+    const newSelectedAccounts = selectedAccounts.includes(accountId)
+      ? selectedAccounts.filter(id => id !== accountId)
+      : [...selectedAccounts, accountId];
+    
+    onSelect(newSelectedAccounts);
   };
 
   return (
@@ -94,7 +93,7 @@ export const SocialAccountList = ({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-full p-0" align="start">
           <Command>
             <CommandInput placeholder="Search accounts..." />
             <CommandEmpty>No accounts found.</CommandEmpty>
