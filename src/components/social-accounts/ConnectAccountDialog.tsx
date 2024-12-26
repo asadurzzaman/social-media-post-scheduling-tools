@@ -20,7 +20,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
       const instagramClientId = '1294294115054311'; // Using the same app ID as Facebook since Instagram uses Facebook's app
       const redirectUri = `${window.location.origin}/auth/instagram/callback`;
       // Updated scope to use the correct Instagram Basic Display API permissions
-      const scope = 'basic';
+      const scope = 'user_profile,user_media';
       
       const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagramClientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
       
