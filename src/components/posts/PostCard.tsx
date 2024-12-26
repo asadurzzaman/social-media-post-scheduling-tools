@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PostStatus, PostStatusBadge } from "./PostStatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PostPreviewDialog } from "./PostPreviewDialog";
 
 interface PostCardProps {
@@ -25,8 +25,41 @@ interface PostCardProps {
 
 export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
   const [showPreview, setShowPreview] = useState(false);
+  const [countdown, setCountdown] = useState<string>("");
   const hasMedia = post.image_url;
   const isVideo = post.image_url?.includes('.mp4') || post.image_url?.includes('.mov');
+
+  useEffect(() => {
+    if (post.status !== 'scheduled') return;
+
+    const calculateCountdown = () => {
+      const now = new Date();
+      const scheduledDate = new Date(post.scheduled_for);
+      const diff = scheduledDate.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setCountdown("Publishing soon...");
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (days > 0) {
+        setCountdown(`${days}d ${hours}h ${minutes}m`);
+      } else if (hours > 0) {
+        setCountdown(`${hours}h ${minutes}m`);
+      } else {
+        setCountdown(`${minutes}m`);
+      }
+    };
+
+    calculateCountdown();
+    const timer = setInterval(calculateCountdown, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, [post.scheduled_for, post.status]);
 
   return (
     <>
@@ -88,12 +121,19 @@ export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
         </div>
 
         <CardContent className="flex-1 flex flex-col p-6">
-          {/* Schedule Time */}
-          <div className="flex items-center gap-2 text-white/60 mb-3">
-            <Clock className="h-4 w-4" />
-            <span className="text-sm">
-              {format(new Date(post.scheduled_for), 'PPP p')}
-            </span>
+          {/* Schedule Time and Countdown */}
+          <div className="flex flex-col gap-1 text-white/60 mb-3">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm">
+                {format(new Date(post.scheduled_for), 'PPP p')}
+              </span>
+            </div>
+            {post.status === 'scheduled' && countdown && (
+              <div className="text-sm text-blue-400 font-medium ml-6">
+                Posts in {countdown}
+              </div>
+            )}
           </div>
 
           {/* Content */}
