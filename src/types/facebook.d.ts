@@ -1,4 +1,4 @@
-interface FacebookLoginStatus {
+export interface FacebookLoginStatus {
   status: 'connected' | 'not_authorized' | 'unknown';
   authResponse: {
     accessToken: string;
@@ -11,13 +11,13 @@ interface FacebookLoginStatus {
   } | null;
 }
 
-interface FacebookLoginOptions {
+export interface FacebookLoginOptions {
   scope?: string;
   return_scopes?: boolean;
   auth_type?: string;
 }
 
-interface FacebookSDKInterface {
+export interface FacebookSDKInterface {
   init(options: {
     appId: string;
     cookie?: boolean;
@@ -38,5 +38,3 @@ declare global {
     fbAsyncInit: () => void;
   }
 }
-
-export {};
