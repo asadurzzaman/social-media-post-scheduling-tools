@@ -24,18 +24,18 @@ serve(async (req) => {
     console.log('Code:', code)
     console.log('Redirect URI:', redirectUri)
     console.log('State:', state)
-    
+
     // Exchange code for access token
     const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
-    const tokenBody = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      client_id: clientId,
-      client_secret: clientSecret,
-    })
+    const tokenBody = new URLSearchParams()
+    tokenBody.append('grant_type', 'authorization_code')
+    tokenBody.append('code', code)
+    tokenBody.append('redirect_uri', redirectUri)
+    tokenBody.append('client_id', clientId)
+    tokenBody.append('client_secret', clientSecret)
 
     console.log('Requesting access token from:', tokenUrl)
+    console.log('Token request body:', tokenBody.toString())
     
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
