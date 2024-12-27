@@ -50,42 +50,15 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Get user profile using v2/me endpoint with specific fields
-    console.log('LinkedIn Auth - Fetching profile...')
-    const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/me?projection=(id,firstName,lastName)', 
-      {
-        headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
-          'X-Restli-Protocol-Version': '2.0.0',
-          'Accept': 'application/json',
-        },
-      }
-    )
-
-    if (!profileResponse.ok) {
-      console.error('LinkedIn Auth - Profile fetch failed:', await profileResponse.text())
-      throw new Error('Failed to fetch LinkedIn profile')
-    }
-
-    const profileData = await profileResponse.json()
-    console.log('LinkedIn Auth - Profile response status:', profileResponse.status)
-    console.log('LinkedIn Auth - Profile data:', JSON.stringify(profileData))
-
-    if (!profileData.id) {
-      console.error('LinkedIn Auth - Invalid profile data:', profileData)
-      throw new Error('Invalid LinkedIn profile data')
-    }
-
-    // Extract first and last name from the nested structure
-    const firstName = profileData.firstName?.localized?.['en_US'] || '';
-    const lastName = profileData.lastName?.localized?.['en_US'] || '';
+    // Since we don't have r_liteprofile scope, we'll use a generic profile name
+    const timestamp = new Date().getTime()
+    const genericUsername = `LinkedIn User ${timestamp}`
 
     return new Response(
       JSON.stringify({
         accessToken: tokenData.access_token,
-        userId: profileData.id,
-        username: `${firstName} ${lastName}`.trim(),
+        userId: timestamp.toString(), // Use timestamp as a unique identifier
+        username: genericUsername,
         expiresIn: tokenData.expires_in,
       }),
       {

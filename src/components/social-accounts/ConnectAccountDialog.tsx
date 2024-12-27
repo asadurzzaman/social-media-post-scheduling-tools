@@ -46,64 +46,11 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
     }
   };
 
-  const handleInstagramLogin = async () => {
-    try {
-      const redirectUri = `${window.location.origin}/instagram-callback.html`;
-      const scope = 'instagram_basic,instagram_content_publish';
-      
-      const { data: { instagram_app_id }, error: secretError } = await supabase.functions.invoke('get-instagram-credentials');
-      
-      if (secretError) {
-        console.error('Error fetching Instagram credentials:', secretError);
-        toast.error('Failed to initialize Instagram login');
-        return;
-      }
-
-      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagram_app_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code`;
-      
-      console.log('Opening Instagram auth URL:', authUrl);
-      
-      const popup = window.open(authUrl, 'Instagram Login', 'width=600,height=700');
-      
-      const handleMessage = async (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
-        
-        if (event.data.type === 'instagram_auth') {
-          const { code } = event.data;
-          console.log('Received Instagram auth code:', code);
-          
-          const { data, error } = await supabase.functions.invoke('instagram-auth', {
-            body: { code, redirectUri }
-          });
-          
-          if (error) {
-            console.error('Instagram auth error:', error);
-            toast.error('Failed to connect Instagram account');
-            return;
-          }
-          
-          window.removeEventListener('message', handleMessage);
-          popup?.close();
-          onSuccess({ accessToken: data.accessToken, userId: data.userId });
-        } else if (event.data.type === 'instagram_auth_error') {
-          console.error('Instagram auth error:', event.data.error);
-          toast.error('Failed to connect Instagram account');
-          window.removeEventListener('message', handleMessage);
-          popup?.close();
-        }
-      };
-
-      window.addEventListener('message', handleMessage);
-    } catch (error) {
-      console.error('Instagram login error:', error);
-      toast.error('Failed to initiate Instagram login');
-    }
-  };
-
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      const scope = 'r_liteprofile w_member_social';
+      // Only use w_member_social scope which should be enabled by default
+      const scope = 'w_member_social';
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
       
