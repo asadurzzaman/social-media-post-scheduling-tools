@@ -20,26 +20,34 @@ serve(async (req) => {
       throw new Error('LinkedIn credentials not configured')
     }
 
-    console.log('Exchanging code for access token...')
+    console.log('Starting LinkedIn authentication...')
     console.log('Code:', code)
     console.log('Redirect URI:', redirectUri)
+    console.log('State:', state)
     
     // Exchange code for access token
-    const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+    const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
+    const tokenBody = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: redirectUri,
+      client_id: clientId,
+      client_secret: clientSecret,
+    })
+
+    console.log('Requesting access token from:', tokenUrl)
+    
+    const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-        client_id: clientId,
-        client_secret: clientSecret,
-      }).toString(),
+      body: tokenBody.toString(),
     })
 
     const tokenData = await tokenResponse.json()
+    console.log('Token response status:', tokenResponse.status)
     console.log('Token response:', JSON.stringify(tokenData))
 
     if (!tokenResponse.ok) {
@@ -54,10 +62,12 @@ serve(async (req) => {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
         'Accept': 'application/json',
+        'cache-control': 'no-cache',
       },
     })
 
     const profileData = await profileResponse.json()
+    console.log('Profile response status:', profileResponse.status)
     console.log('Profile response:', JSON.stringify(profileData))
 
     if (!profileResponse.ok) {
