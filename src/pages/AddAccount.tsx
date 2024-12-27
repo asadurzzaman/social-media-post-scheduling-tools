@@ -23,56 +23,9 @@ const AddAccount = () => {
     },
   });
 
-  const handleFacebookSuccess = async ({ accessToken, userId }: { accessToken: string; userId: string }) => {
-    try {
-      // Get Facebook Pages
-      const pagesResponse = await fetch(
-        `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`
-      );
-      const pagesData = await pagesResponse.json();
-
-      if (pagesData.error) {
-        toast.error("Error fetching Facebook pages: " + pagesData.error.message);
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("No active session found");
-        return;
-      }
-
-      if (pagesData.data && pagesData.data.length > 0) {
-        // Insert all pages as separate accounts
-        for (const page of pagesData.data) {
-          const { error: insertError } = await supabase
-            .from('social_accounts')
-            .insert({
-              user_id: session.user.id,
-              platform: 'facebook',
-              account_name: page.name,
-              access_token: accessToken,
-              page_id: page.id,
-              page_access_token: page.access_token,
-              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-            });
-
-          if (insertError) {
-            console.error("Error saving account:", insertError);
-            toast.error(`Failed to save Facebook page: ${page.name}`);
-          }
-        }
-
-        toast.success(`Successfully connected ${pagesData.data.length} Facebook page(s)!`);
-        setIsDialogOpen(false);
-        refetchAccounts();
-      } else {
-        toast.error("No Facebook pages found. Please make sure you have a Facebook page.");
-      }
-    } catch (error) {
-      console.error("Error processing Facebook connection:", error);
-      toast.error("Failed to connect Facebook account");
-    }
+  const handleSuccess = () => {
+    setIsDialogOpen(false);
+    refetchAccounts();
   };
 
   const handleDisconnect = async (accountId: string) => {
@@ -101,7 +54,7 @@ const AddAccount = () => {
       <div className="space-y-6">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <AccountsHeader onOpenDialog={() => setIsDialogOpen(true)} />
-          <ConnectAccountDialog onSuccess={handleFacebookSuccess} />
+          <ConnectAccountDialog onSuccess={handleSuccess} />
         </Dialog>
         <AccountsList 
           facebookAccounts={facebookAccounts}
