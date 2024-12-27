@@ -39,7 +39,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
               user_id: session.user.id,
               platform: 'facebook',
               account_name: page.name,
-              access_token: page.access_token, // Use page access token instead of user access token
+              access_token: page.access_token,
               page_id: page.id,
               page_access_token: page.access_token,
               token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
@@ -48,6 +48,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           if (insertError) {
             console.error("Error saving account:", insertError);
             toast.error(`Failed to save Facebook page: ${page.name}`);
+            return;
           }
         }
 
@@ -107,8 +108,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           
           window.removeEventListener('message', handleMessage);
           popup?.close();
-
-          // Call the general onSuccess callback after LinkedIn connection
           onSuccess();
         }
       };
