@@ -27,15 +27,15 @@ serve(async (req) => {
 
     // Exchange code for access token
     const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
-    const tokenBody = new URLSearchParams()
-    tokenBody.append('grant_type', 'authorization_code')
-    tokenBody.append('code', code)
-    tokenBody.append('redirect_uri', redirectUri)
-    tokenBody.append('client_id', clientId)
-    tokenBody.append('client_secret', clientSecret)
+    const tokenParams = new URLSearchParams()
+    tokenParams.append('grant_type', 'authorization_code')
+    tokenParams.append('code', code)
+    tokenParams.append('redirect_uri', redirectUri)
+    tokenParams.append('client_id', clientId)
+    tokenParams.append('client_secret', clientSecret)
 
     console.log('Requesting access token from:', tokenUrl)
-    console.log('Token request body:', tokenBody.toString())
+    console.log('Token request parameters:', tokenParams.toString())
     
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
@@ -43,7 +43,7 @@ serve(async (req) => {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
       },
-      body: tokenBody.toString(),
+      body: tokenParams.toString(),
     })
 
     const tokenData = await tokenResponse.json()
@@ -55,7 +55,7 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Get user profile
+    // Get user profile with the access token
     console.log('Fetching LinkedIn profile...')
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
@@ -89,7 +89,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('LinkedIn auth error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
