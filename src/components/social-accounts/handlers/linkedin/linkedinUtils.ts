@@ -1,16 +1,13 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { SuccessToast, ErrorToast } from "./LinkedInToasts";
 
 export const showSuccessToast = () => {
-  toast.success("LinkedIn account connected", {
-    description: SuccessToast,
-  });
+  toast.success("LinkedIn account connected");
 };
 
 export const showErrorToast = (message: string) => {
   toast.error("LinkedIn connection failed", {
-    description: () => <ErrorToast message={message} />,
+    description: message
   });
 };
 
