@@ -6,6 +6,8 @@ interface FacebookLoginStatus {
     reauthorize_required_in?: string;
     signedRequest: string;
     userID: string;
+    graphDomain?: string;
+    data_access_expiration_time?: number;
   } | null;
 }
 
@@ -27,6 +29,7 @@ interface FacebookSDKInterface {
     options?: FacebookLoginOptions
   ): void;
   getLoginStatus(callback: (response: FacebookLoginStatus) => void): void;
+  logout(callback: (response: FacebookLoginStatus) => void): void;
 }
 
 declare global {

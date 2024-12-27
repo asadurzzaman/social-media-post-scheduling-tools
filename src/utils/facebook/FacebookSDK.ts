@@ -76,9 +76,21 @@ export class FacebookSDK {
     }
 
     return new Promise((resolve) => {
-      window.FB.login((response: FacebookLoginStatusResponse) => {
+      window.FB.login((response: FacebookLoginStatus) => {
         console.log('Login response:', response);
-        resolve(response);
+        // Convert FacebookLoginStatus to FacebookLoginStatusResponse
+        const convertedResponse: FacebookLoginStatusResponse = {
+          status: response.status,
+          authResponse: response.authResponse ? {
+            accessToken: response.authResponse.accessToken,
+            userID: response.authResponse.userID,
+            expiresIn: parseInt(response.authResponse.expiresIn),
+            signedRequest: response.authResponse.signedRequest,
+            graphDomain: response.authResponse.graphDomain || '',
+            data_access_expiration_time: response.authResponse.data_access_expiration_time || 0
+          } : null
+        };
+        resolve(convertedResponse);
       }, {
         scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
         return_scopes: true,
