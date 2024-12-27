@@ -115,7 +115,7 @@ export const SocialAccountCard = ({
           )}
           <div>
             <h3 className="font-semibold text-lg">{title}</h3>
-            {isConnected && accountName && (
+            {isConnected && (
               <p className="text-sm font-medium text-primary">
                 {getDisplayName()}
               </p>
