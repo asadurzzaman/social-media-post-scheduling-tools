@@ -10,16 +10,17 @@
     const code = params.get('code');
     const error = params.get('error');
     const error_description = params.get('error_description');
+    const state = params.get('state');
 
     if (code) {
       window.opener.postMessage(
-        { type: 'linkedin_auth', code },
-        window.location.origin
+        { type: 'linkedin_auth', code, state },
+        state || window.location.origin
       );
     } else if (error) {
       window.opener.postMessage(
         { type: 'linkedin_auth_error', error: error_description || error },
-        window.location.origin
+        state || window.location.origin
       );
     }
     window.close();

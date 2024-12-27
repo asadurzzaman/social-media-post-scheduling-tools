@@ -102,6 +102,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
 
   const handleLinkedInLogin = async () => {
     try {
+      // Use the exact redirect URI that matches LinkedIn Developer Console
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
       const scope = 'w_member_social';
       
@@ -116,6 +117,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(window.location.origin)}`;
       
       console.log('Opening LinkedIn auth URL:', authUrl);
+      console.log('Redirect URI:', redirectUri);
       
       const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
       
