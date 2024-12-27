@@ -10,6 +10,16 @@ interface ConnectAccountDialogProps {
 }
 
 export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) => {
+  const checkExistingAccount = async (platform: string, identifier: string, identifierType: 'page_id' | 'account_name') => {
+    const { data: existingAccounts } = await supabase
+      .from('social_accounts')
+      .select('*')
+      .eq('platform', platform)
+      .eq(identifierType, identifier);
+    
+    return existingAccounts && existingAccounts.length > 0;
+  };
+
   const handleFacebookSuccess = async ({ accessToken, userId }: { accessToken: string; userId: string }) => {
     try {
       // Get Facebook Pages
@@ -31,8 +41,16 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
       }
 
       if (pagesData.data && pagesData.data.length > 0) {
+        let addedPages = 0;
         // Insert all pages as separate accounts
         for (const page of pagesData.data) {
+          // Check if this page is already connected
+          const isExisting = await checkExistingAccount('facebook', page.id, 'page_id');
+          if (isExisting) {
+            toast.error(`Page "${page.name}" is already connected`);
+            continue;
+          }
+
           const { error: insertError } = await supabase
             .from('social_accounts')
             .insert({
@@ -48,12 +66,17 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           if (insertError) {
             console.error("Error saving account:", insertError);
             toast.error(`Failed to save Facebook page: ${page.name}`);
-            return;
+            continue;
           }
+          addedPages++;
         }
 
-        toast.success(`Successfully connected ${pagesData.data.length} Facebook page(s)!`);
-        onSuccess();
+        if (addedPages > 0) {
+          toast.success(`Successfully connected ${addedPages} Facebook page(s)!`);
+          onSuccess();
+        } else {
+          toast.error("No new Facebook pages were connected");
+        }
       } else {
         toast.error("No Facebook pages found. Please make sure you have a Facebook page.");
       }
@@ -70,7 +93,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      // Only include the w_member_social scope which is required for posting
       const scope = 'w_member_social';
       const state = crypto.randomUUID();
       
