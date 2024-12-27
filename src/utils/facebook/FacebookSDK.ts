@@ -1,3 +1,5 @@
+import type { FacebookLoginStatus } from '@/types/facebook';
+
 export interface FacebookAuthResponse {
   accessToken: string;
   userID: string;
