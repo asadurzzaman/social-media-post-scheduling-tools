@@ -70,8 +70,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      const scope = 'r_liteprofile w_member_social';
-      // Remove the origin from state to avoid URL formatting issues
+      // Updated scopes to match LinkedIn's current API requirements
+      const scope = 'w_member_social r_basicprofile';
       const state = crypto.randomUUID();
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
@@ -82,7 +82,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
-      // Generate and store a random state value
+      // Store state in session storage for verification
       sessionStorage.setItem('linkedin_state', state);
 
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
