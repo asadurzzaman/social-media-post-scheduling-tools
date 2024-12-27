@@ -91,6 +91,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
 
   const handleLinkedInLogin = async () => {
     try {
+      // Use the current origin for the redirect URI
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
       const scope = 'r_liteprofile w_member_social';
       
@@ -102,15 +103,19 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
-      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${redirectUri}&scope=${scope}`;
+      // Construct the LinkedIn authorization URL with the correct redirect URI
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+      
+      console.log('Opening LinkedIn auth URL:', authUrl);
       
       const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
       
-      window.addEventListener('message', async (event) => {
+      const handleMessage = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
         
         if (event.data.type === 'linkedin_auth') {
           const { code } = event.data;
+          console.log('Received LinkedIn auth code:', code);
           
           const { data, error } = await supabase.functions.invoke('linkedin-auth', {
             body: { code, redirectUri }
@@ -145,14 +150,18 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           }
 
           toast.success('LinkedIn account connected successfully!');
+          window.removeEventListener('message', handleMessage);
           popup?.close();
           onSuccess({ accessToken: data.accessToken, userId: data.userId });
         } else if (event.data.type === 'linkedin_auth_error') {
           console.error('LinkedIn auth error:', event.data.error);
           toast.error('Failed to connect LinkedIn account');
+          window.removeEventListener('message', handleMessage);
           popup?.close();
         }
-      });
+      };
+
+      window.addEventListener('message', handleMessage);
     } catch (error) {
       console.error('LinkedIn login error:', error);
       toast.error('Failed to initiate LinkedIn login');
