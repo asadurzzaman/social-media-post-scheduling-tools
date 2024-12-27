@@ -3,7 +3,9 @@ import { Linkedin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   showSuccessToast, 
-  showErrorToast, 
+  showErrorToast 
+} from "./linkedin/LinkedInToasts";
+import { 
   checkExistingLinkedInAccount,
   saveLinkedInAccount 
 } from "./linkedin/linkedinUtils";
