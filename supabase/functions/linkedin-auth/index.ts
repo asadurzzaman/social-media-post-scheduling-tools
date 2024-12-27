@@ -50,31 +50,38 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Get user profile
+    // Get user profile with proper API version and fields
     console.log('LinkedIn Auth - Fetching profile...')
     const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName)', 
+      'https://api.linkedin.com/v2/userinfo', 
       {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
           'X-Restli-Protocol-Version': '2.0.0',
+          'Accept': 'application/json',
         },
       }
     )
 
+    if (!profileResponse.ok) {
+      console.error('LinkedIn Auth - Profile fetch failed:', await profileResponse.text())
+      throw new Error('Failed to fetch LinkedIn profile')
+    }
+
     const profileData = await profileResponse.json()
     console.log('LinkedIn Auth - Profile response status:', profileResponse.status)
+    console.log('LinkedIn Auth - Profile data:', JSON.stringify(profileData))
 
-    if (!profileResponse.ok) {
-      console.error('LinkedIn Auth - Profile error:', profileData)
-      throw new Error('Failed to fetch LinkedIn profile')
+    if (!profileData.sub) {
+      console.error('LinkedIn Auth - Invalid profile data:', profileData)
+      throw new Error('Invalid LinkedIn profile data')
     }
 
     return new Response(
       JSON.stringify({
         accessToken: tokenData.access_token,
-        userId: profileData.id,
-        username: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+        userId: profileData.sub,
+        username: profileData.name || `${profileData.given_name || ''} ${profileData.family_name || ''}`.trim(),
         expiresIn: tokenData.expires_in,
       }),
       {
