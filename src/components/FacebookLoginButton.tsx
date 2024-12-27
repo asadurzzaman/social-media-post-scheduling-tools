@@ -41,6 +41,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   const [initAttempts, setInitAttempts] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+    let checkInitInterval: NodeJS.Timeout;
+
     const loadFacebookSDK = () => {
       console.log('Starting Facebook SDK initialization...');
       
@@ -61,22 +64,15 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           xfbml: true,
           version: 'v18.0'
         });
-        
-        // Check if FB is actually initialized
-        if (window.FB) {
-          console.log('Facebook SDK initialized successfully');
-          setIsSDKLoaded(true);
-        } else {
-          console.error('FB object not available after initialization');
-          if (initAttempts < 3) {
-            setTimeout(() => {
-              setInitAttempts(prev => prev + 1);
-              loadFacebookSDK();
-            }, 1000);
-          } else {
-            onError('Failed to initialize Facebook SDK');
+
+        // Verify FB is properly initialized by checking login status
+        window.FB.getLoginStatus(function(response: FacebookLoginStatusResponse) {
+          console.log('FB.getLoginStatus response:', response);
+          if (isMounted) {
+            setIsSDKLoaded(true);
+            console.log('Facebook SDK fully initialized and verified');
           }
-        }
+        });
       };
 
       // Load the SDK
@@ -92,12 +88,29 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         js.crossOrigin = "anonymous";
         fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
+
+      // Set up an interval to check if FB is properly initialized
+      checkInitInterval = setInterval(() => {
+        if (window.FB && !isSDKLoaded && isMounted) {
+          window.FB.getLoginStatus(function(response: FacebookLoginStatusResponse) {
+            if (isMounted) {
+              setIsSDKLoaded(true);
+              console.log('Facebook SDK initialization verified by interval check');
+              clearInterval(checkInitInterval);
+            }
+          });
+        }
+      }, 1000);
     };
 
     loadFacebookSDK();
 
     // Cleanup function
     return () => {
+      isMounted = false;
+      if (checkInitInterval) {
+        clearInterval(checkInitInterval);
+      }
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
         existingScript.remove();
@@ -105,11 +118,11 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       delete window.FB;
       delete window.fbAsyncInit;
     };
-  }, [appId, initAttempts, onError]);
+  }, [appId, isSDKLoaded]);
 
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
-    if (!isSDKLoaded || !window.FB) {
+    if (!window.FB) {
       console.error('Facebook SDK not loaded yet');
       onError('Facebook SDK not loaded yet. Please try again.');
       return;
@@ -118,6 +131,17 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
+      // Double-check FB initialization status before proceeding
+      await new Promise<void>((resolve, reject) => {
+        window.FB.getLoginStatus(function(response: FacebookLoginStatusResponse) {
+          if (response) {
+            resolve();
+          } else {
+            reject(new Error('FB.getLoginStatus failed'));
+          }
+        });
+      });
+
       // Wait for FB.login response
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
