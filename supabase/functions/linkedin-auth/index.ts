@@ -50,10 +50,10 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Get user profile with proper API version and fields
+    // Get user profile using v2/me endpoint with specific fields
     console.log('LinkedIn Auth - Fetching profile...')
     const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/userinfo', 
+      'https://api.linkedin.com/v2/me?projection=(id,firstName,lastName)', 
       {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
@@ -72,16 +72,20 @@ serve(async (req) => {
     console.log('LinkedIn Auth - Profile response status:', profileResponse.status)
     console.log('LinkedIn Auth - Profile data:', JSON.stringify(profileData))
 
-    if (!profileData.sub) {
+    if (!profileData.id) {
       console.error('LinkedIn Auth - Invalid profile data:', profileData)
       throw new Error('Invalid LinkedIn profile data')
     }
 
+    // Extract first and last name from the nested structure
+    const firstName = profileData.firstName?.localized?.['en_US'] || '';
+    const lastName = profileData.lastName?.localized?.['en_US'] || '';
+
     return new Response(
       JSON.stringify({
         accessToken: tokenData.access_token,
-        userId: profileData.sub,
-        username: profileData.name || `${profileData.given_name || ''} ${profileData.family_name || ''}`.trim(),
+        userId: profileData.id,
+        username: `${firstName} ${lastName}`.trim(),
         expiresIn: tokenData.expires_in,
       }),
       {

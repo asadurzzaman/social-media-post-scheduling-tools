@@ -102,9 +102,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
 
   const handleLinkedInLogin = async () => {
     try {
-      // Use the exact redirect URI that matches LinkedIn Developer Console
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      const scope = 'w_member_social';
+      const scope = 'r_liteprofile w_member_social';
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
       
@@ -114,7 +113,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
-      // Construct authorization URL with exact redirect URI
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(window.location.origin)}`;
       
       console.log('LinkedIn Auth - Redirect URI:', redirectUri);
