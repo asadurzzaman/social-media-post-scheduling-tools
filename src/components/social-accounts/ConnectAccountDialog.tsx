@@ -70,9 +70,9 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      // Update scopes to include both r_liteprofile and w_member_social
       const scope = 'r_liteprofile w_member_social';
-      const state = window.location.origin;
+      // Remove the origin from state to avoid URL formatting issues
+      const state = crypto.randomUUID();
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
       
@@ -83,10 +83,9 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
       }
 
       // Generate and store a random state value
-      const stateValue = crypto.randomUUID();
-      sessionStorage.setItem('linkedin_state', stateValue);
+      sessionStorage.setItem('linkedin_state', state);
 
-      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(stateValue)}`;
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
       
       const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
       
@@ -111,7 +110,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
               body: { 
                 code,
                 redirectUri,
-                state: window.location.origin
+                state
               }
             });
             
