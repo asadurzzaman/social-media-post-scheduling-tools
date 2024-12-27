@@ -1,15 +1,4 @@
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-export const showSuccessToast = () => {
-  toast.success("LinkedIn account connected");
-};
-
-export const showErrorToast = (message: string) => {
-  toast.error("LinkedIn connection failed", {
-    description: message
-  });
-};
 
 export const checkExistingLinkedInAccount = async (profileId: string) => {
   const { data: existingAccounts } = await supabase
@@ -19,6 +8,37 @@ export const checkExistingLinkedInAccount = async (profileId: string) => {
     .eq('page_id', profileId);
 
   return existingAccounts && existingAccounts.length > 0;
+};
+
+export const canPostToLinkedIn = async (userId: string) => {
+  const { data: accounts, error } = await supabase
+    .from('social_accounts')
+    .select('*')
+    .eq('platform', 'linkedin')
+    .eq('user_id', userId)
+    .single();
+
+  if (error || !accounts) {
+    console.error('Error checking LinkedIn account:', error);
+    return false;
+  }
+
+  // Check if the token has expired
+  if (accounts.token_expires_at) {
+    const expiryDate = new Date(accounts.token_expires_at);
+    if (expiryDate < new Date()) {
+      console.log('LinkedIn token has expired');
+      return false;
+    }
+  }
+
+  // Check if account requires reconnection
+  if (accounts.requires_reconnect) {
+    console.log('LinkedIn account requires reconnection');
+    return false;
+  }
+
+  return true;
 };
 
 export const saveLinkedInAccount = async (
