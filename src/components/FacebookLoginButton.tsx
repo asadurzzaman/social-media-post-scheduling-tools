@@ -38,6 +38,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 }) => {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [initAttempts, setInitAttempts] = useState(0);
 
   useEffect(() => {
     const loadFacebookSDK = () => {
@@ -52,6 +53,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       // Clear any existing FB cookies
       document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
+      // Define async init function
       window.fbAsyncInit = function() {
         window.FB.init({
           appId: appId,
@@ -60,14 +62,21 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           version: 'v18.0'
         });
         
-        // Disable impression logging to prevent errors
-        if (window.FB.Event && window.FB.Event.subscribe) {
-          window.FB.Event.subscribe('edge.create', () => {});
-          window.FB.Event.subscribe('edge.remove', () => {});
+        // Check if FB is actually initialized
+        if (window.FB) {
+          console.log('Facebook SDK initialized successfully');
+          setIsSDKLoaded(true);
+        } else {
+          console.error('FB object not available after initialization');
+          if (initAttempts < 3) {
+            setTimeout(() => {
+              setInitAttempts(prev => prev + 1);
+              loadFacebookSDK();
+            }, 1000);
+          } else {
+            onError('Failed to initialize Facebook SDK');
+          }
         }
-        
-        console.log('Facebook SDK initialized successfully');
-        setIsSDKLoaded(true);
       };
 
       // Load the SDK
@@ -78,6 +87,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         js = d.createElement(s) as HTMLScriptElement;
         js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
+        js.async = true;
+        js.defer = true;
+        js.crossOrigin = "anonymous";
         fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
     };
@@ -93,13 +105,13 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       delete window.FB;
       delete window.fbAsyncInit;
     };
-  }, [appId]);
+  }, [appId, initAttempts, onError]);
 
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
-    if (!isSDKLoaded) {
+    if (!isSDKLoaded || !window.FB) {
       console.error('Facebook SDK not loaded yet');
-      onError('Facebook SDK not loaded yet');
+      onError('Facebook SDK not loaded yet. Please try again.');
       return;
     }
 
