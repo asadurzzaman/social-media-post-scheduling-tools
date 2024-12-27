@@ -27,13 +27,13 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
-      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagram_app_id}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+      const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagram_app_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code`;
       
       console.log('Opening Instagram auth URL:', authUrl);
       
       const popup = window.open(authUrl, 'Instagram Login', 'width=600,height=700');
       
-      window.addEventListener('message', async (event) => {
+      const handleMessage = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) return;
         
         if (event.data.type === 'instagram_auth') {
@@ -50,39 +50,18 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
             return;
           }
           
-          const { data: session } = await supabase.auth.getSession();
-          if (!session?.session?.user) {
-            toast.error('No active session found');
-            return;
-          }
-
-          const { error: insertError } = await supabase
-            .from('social_accounts')
-            .insert({
-              user_id: session.session.user.id,
-              platform: 'instagram',
-              account_name: data.username,
-              access_token: data.accessToken,
-              instagram_user_id: data.userId,
-              instagram_username: data.username,
-              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-            });
-
-          if (insertError) {
-            console.error('Error saving Instagram account:', insertError);
-            toast.error('Failed to save Instagram account');
-            return;
-          }
-
-          toast.success('Instagram account connected successfully!');
+          window.removeEventListener('message', handleMessage);
           popup?.close();
           onSuccess({ accessToken: data.accessToken, userId: data.userId });
         } else if (event.data.type === 'instagram_auth_error') {
           console.error('Instagram auth error:', event.data.error);
           toast.error('Failed to connect Instagram account');
+          window.removeEventListener('message', handleMessage);
           popup?.close();
         }
-      });
+      };
+
+      window.addEventListener('message', handleMessage);
     } catch (error) {
       console.error('Instagram login error:', error);
       toast.error('Failed to initiate Instagram login');
@@ -91,7 +70,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
 
   const handleLinkedInLogin = async () => {
     try {
-      // Use the current origin for the redirect URI
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
       const scope = 'r_liteprofile w_member_social';
       
@@ -103,8 +81,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
-      // Construct the LinkedIn authorization URL with the correct redirect URI
-      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(window.location.origin)}`;
       
       console.log('Opening LinkedIn auth URL:', authUrl);
       
@@ -118,7 +95,11 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           console.log('Received LinkedIn auth code:', code);
           
           const { data, error } = await supabase.functions.invoke('linkedin-auth', {
-            body: { code, redirectUri }
+            body: { 
+              code, 
+              redirectUri,
+              state: window.location.origin
+            }
           });
           
           if (error) {
@@ -127,29 +108,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
             return;
           }
           
-          const { data: session } = await supabase.auth.getSession();
-          if (!session?.session?.user) {
-            toast.error('No active session found');
-            return;
-          }
-
-          const { error: insertError } = await supabase
-            .from('social_accounts')
-            .insert({
-              user_id: session.session.user.id,
-              platform: 'linkedin',
-              account_name: data.username,
-              access_token: data.accessToken,
-              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-            });
-
-          if (insertError) {
-            console.error('Error saving LinkedIn account:', insertError);
-            toast.error('Failed to save LinkedIn account');
-            return;
-          }
-
-          toast.success('LinkedIn account connected successfully!');
           window.removeEventListener('message', handleMessage);
           popup?.close();
           onSuccess({ accessToken: data.accessToken, userId: data.userId });
