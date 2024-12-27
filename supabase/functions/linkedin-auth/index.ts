@@ -51,6 +51,17 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
+    // Fetch user's profile information
+    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+    });
+
+    const profileData = await profileResponse.json();
+    console.log('LinkedIn Auth - Profile data:', profileData);
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -67,13 +78,13 @@ serve(async (req) => {
       throw new Error('Failed to get user information')
     }
 
-    // Save the LinkedIn account information with a generic name since we can't fetch profile
+    // Save the LinkedIn account information with the profile name
     const { error: insertError } = await supabase
       .from('social_accounts')
       .insert({
         user_id: user.id,
         platform: 'linkedin',
-        account_name: 'LinkedIn Account', // Generic name since we can't fetch profile
+        account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
         access_token: tokenData.access_token,
         token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
       })
@@ -86,6 +97,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
+        profile: profileData,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
