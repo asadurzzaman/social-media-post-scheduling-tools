@@ -27,16 +27,16 @@ serve(async (req) => {
 
     // Exchange code for access token
     const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
-    const tokenParams = new URLSearchParams({
+    const tokenBody = new URLSearchParams({
       grant_type: 'authorization_code',
-      code: code,
+      code,
       redirect_uri: redirectUri,
       client_id: clientId,
       client_secret: clientSecret,
     })
 
     console.log('Requesting access token from:', tokenUrl)
-    console.log('Token request parameters:', tokenParams.toString())
+    console.log('Token request body:', tokenBody.toString())
     
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
@@ -44,13 +44,14 @@ serve(async (req) => {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
       },
-      body: tokenParams.toString(),
+      body: tokenBody.toString(),
     })
 
     const tokenData = await tokenResponse.json()
     console.log('Token response status:', tokenResponse.status)
+    console.log('Token response:', JSON.stringify(tokenData))
     
-    if (!tokenResponse.ok) {
+    if (!tokenResponse.ok || !tokenData.access_token) {
       console.error('Token error:', tokenData)
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
@@ -68,6 +69,7 @@ serve(async (req) => {
 
     const profileData = await profileResponse.json()
     console.log('Profile response status:', profileResponse.status)
+    console.log('Profile data:', JSON.stringify(profileData))
     
     if (!profileResponse.ok) {
       console.error('Profile error:', profileData)
