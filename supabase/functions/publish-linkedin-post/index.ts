@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { postId } = await req.json()
+    console.log('Starting LinkedIn post publication for post:', postId)
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -33,11 +34,23 @@ serve(async (req) => {
       .eq('id', postId)
       .single()
 
-    if (postError) throw postError
-    if (!post) throw new Error('Post not found')
-    if (!post.social_accounts?.access_token) throw new Error('LinkedIn access token not found')
+    if (postError) {
+      console.error('Error fetching post:', postError)
+      throw postError
+    }
+    if (!post) {
+      console.error('Post not found:', postId)
+      throw new Error('Post not found')
+    }
+    if (!post.social_accounts?.access_token) {
+      console.error('LinkedIn access token not found for post:', postId)
+      throw new Error('LinkedIn access token not found')
+    }
+
+    console.log('Successfully fetched post details')
 
     // First, get the LinkedIn member ID
+    console.log('Fetching LinkedIn profile data...')
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${post.social_accounts.access_token}`,
@@ -47,13 +60,14 @@ serve(async (req) => {
 
     if (!profileResponse.ok) {
       const error = await profileResponse.json()
+      console.error('LinkedIn profile API error:', error)
       throw new Error(`LinkedIn profile API error: ${JSON.stringify(error)}`)
     }
 
     const profileData = await profileResponse.json()
-    console.log('LinkedIn profile data:', profileData)
+    console.log('Successfully fetched LinkedIn profile data')
 
-    // Prepare the post content with correct member URN
+    // Prepare the post content
     const postData: any = {
       author: `urn:li:person:${profileData.id}`,
       lifecycleState: 'PUBLISHED',
@@ -70,18 +84,18 @@ serve(async (req) => {
       }
     }
 
-    // If there's an image, upload it first
+    // Handle image if present
     if (post.image_url) {
-      console.log('Uploading image:', post.image_url)
+      console.log('Processing image for LinkedIn post:', post.image_url)
       
-      // Fetch the image
       const imageResponse = await fetch(post.image_url)
       if (!imageResponse.ok) {
+        console.error('Failed to fetch image from URL:', post.image_url)
         throw new Error('Failed to fetch image from URL')
       }
       const imageBlob = await imageResponse.blob()
 
-      // Upload image to LinkedIn
+      console.log('Registering image upload with LinkedIn...')
       const registerUploadResponse = await fetch(
         'https://api.linkedin.com/v2/assets?action=registerUpload',
         {
@@ -105,13 +119,14 @@ serve(async (req) => {
 
       if (!registerUploadResponse.ok) {
         const error = await registerUploadResponse.json()
+        console.error('LinkedIn register upload error:', error)
         throw new Error(`LinkedIn register upload error: ${JSON.stringify(error)}`)
       }
 
       const uploadData = await registerUploadResponse.json()
-      console.log('Upload registration response:', uploadData)
+      console.log('Successfully registered image upload')
       
-      // Upload the image to LinkedIn's URL
+      console.log('Uploading image to LinkedIn...')
       const imageUploadResponse = await fetch(
         uploadData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl, 
         {
@@ -124,8 +139,11 @@ serve(async (req) => {
       )
 
       if (!imageUploadResponse.ok) {
+        console.error('Failed to upload image to LinkedIn:', imageUploadResponse.statusText)
         throw new Error(`Failed to upload image to LinkedIn: ${imageUploadResponse.statusText}`)
       }
+
+      console.log('Successfully uploaded image to LinkedIn')
 
       // Add the image to the post data
       postData.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE'
@@ -141,9 +159,7 @@ serve(async (req) => {
       }]
     }
 
-    console.log('Sending post data to LinkedIn:', postData)
-
-    // Create the post on LinkedIn
+    console.log('Publishing post to LinkedIn...')
     const publishResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
@@ -156,11 +172,12 @@ serve(async (req) => {
 
     if (!publishResponse.ok) {
       const error = await publishResponse.json()
+      console.error('LinkedIn API error:', error)
       throw new Error(`LinkedIn API error: ${JSON.stringify(error)}`)
     }
 
     const publishResult = await publishResponse.json()
-    console.log('LinkedIn publish response:', publishResult)
+    console.log('Successfully published post to LinkedIn:', publishResult)
 
     // Update post status in database
     const { error: updateError } = await supabase
@@ -168,7 +185,12 @@ serve(async (req) => {
       .update({ status: 'published' })
       .eq('id', postId)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('Error updating post status:', updateError)
+      throw updateError
+    }
+
+    console.log('Successfully updated post status to published')
 
     return new Response(
       JSON.stringify({ success: true }),
