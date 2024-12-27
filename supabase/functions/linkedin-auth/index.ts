@@ -46,6 +46,8 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
     })
 
