@@ -70,7 +70,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      const scope = 'w_member_social';
+      const scope = 'w_member_social r_liteprofile';
+      const state = window.location.origin;
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
       
@@ -80,7 +81,11 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
-      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(window.location.origin)}`;
+      // Generate and store a random state value
+      const stateValue = crypto.randomUUID();
+      sessionStorage.setItem('linkedin_state', stateValue);
+
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(stateValue)}`;
       
       const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
       
@@ -90,25 +95,45 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         }
         
         if (event.data.type === 'linkedin_auth') {
-          const { code } = event.data;
+          const { code, state: receivedState } = event.data;
           
-          const { data, error } = await supabase.functions.invoke('linkedin-auth', {
-            body: { 
-              code, 
-              redirectUri,
-              state: window.location.origin
-            }
-          });
-          
-          if (error) {
-            console.error('LinkedIn auth error:', error);
-            toast.error('Failed to connect LinkedIn account');
+          // Verify state matches
+          const storedState = sessionStorage.getItem('linkedin_state');
+          if (receivedState !== storedState) {
+            console.error('State mismatch:', { receivedState, storedState });
+            toast.error('Security verification failed');
             return;
           }
-          
+
+          try {
+            const { data, error } = await supabase.functions.invoke('linkedin-auth', {
+              body: { 
+                code,
+                redirectUri,
+                state: window.location.origin
+              }
+            });
+            
+            if (error) {
+              console.error('LinkedIn auth error:', error);
+              toast.error('Failed to connect LinkedIn account');
+              return;
+            }
+            
+            window.removeEventListener('message', handleMessage);
+            popup?.close();
+            
+            toast.success('LinkedIn account connected successfully!');
+            onSuccess();
+          } catch (error) {
+            console.error('LinkedIn auth error:', error);
+            toast.error('Failed to connect LinkedIn account');
+          }
+        } else if (event.data.type === 'linkedin_auth_error') {
+          console.error('LinkedIn auth error:', event.data.error);
+          toast.error(`LinkedIn authentication failed: ${event.data.error}`);
           window.removeEventListener('message', handleMessage);
           popup?.close();
-          onSuccess();
         }
       };
 

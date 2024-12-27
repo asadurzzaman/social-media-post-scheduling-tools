@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { code, redirectUri, state } = await req.json()
+    const { code, redirectUri } = await req.json()
     const clientId = Deno.env.get('LINKEDIN_CLIENT_ID')
     const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET')
 
@@ -50,16 +51,57 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Since we don't have r_liteprofile scope, we'll use a generic profile name
-    const timestamp = new Date().getTime()
-    const genericUsername = `LinkedIn User ${timestamp}`
+    // Get user profile information
+    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`,
+      },
+    })
+
+    const profileData = await profileResponse.json()
+    console.log('LinkedIn Auth - Profile response:', profileData)
+
+    if (!profileResponse.ok) {
+      console.error('LinkedIn Auth - Profile error:', profileData)
+      throw new Error('Failed to fetch LinkedIn profile')
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Get the user's ID from the authorization header
+    const authHeader = req.headers.get('authorization')?.split(' ')[1]
+    if (!authHeader) {
+      throw new Error('No authorization header')
+    }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader)
+    if (userError || !user) {
+      throw new Error('Failed to get user information')
+    }
+
+    // Save the LinkedIn account information
+    const { error: insertError } = await supabase
+      .from('social_accounts')
+      .insert({
+        user_id: user.id,
+        platform: 'linkedin',
+        account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+        access_token: tokenData.access_token,
+        token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+      })
+
+    if (insertError) {
+      console.error('LinkedIn Auth - Insert error:', insertError)
+      throw new Error('Failed to save LinkedIn account')
+    }
 
     return new Response(
       JSON.stringify({
-        accessToken: tokenData.access_token,
-        userId: timestamp.toString(), // Use timestamp as a unique identifier
-        username: genericUsername,
-        expiresIn: tokenData.expires_in,
+        success: true,
+        profile: profileData,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

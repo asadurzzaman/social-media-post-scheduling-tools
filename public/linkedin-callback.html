@@ -5,25 +5,22 @@
 </head>
 <body>
   <script>
-    // Extract code from URL
+    // Extract code and state from URL
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
+    const receivedState = params.get('state');
     const error = params.get('error');
     const error_description = params.get('error_description');
-    const state = params.get('state');
-
-    // Get the exact origin from state parameter
-    const origin = state || window.location.origin;
 
     if (code) {
       window.opener.postMessage(
-        { type: 'linkedin_auth', code, state: origin },
-        origin
+        { type: 'linkedin_auth', code, state: receivedState },
+        window.location.origin
       );
     } else if (error) {
       window.opener.postMessage(
         { type: 'linkedin_auth_error', error: error_description || error },
-        origin
+        window.location.origin
       );
     }
     window.close();
