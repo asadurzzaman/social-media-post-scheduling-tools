@@ -18,69 +18,96 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
 
       if (pagesData.error) {
         console.error("Facebook API Error:", pagesData.error);
-        toast.error("Error fetching Facebook pages: " + pagesData.error.message);
+        toast.error("Failed to fetch Facebook pages", {
+          description: pagesData.error.message
+        });
         return;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error("No active session found");
+        toast.error("Authentication required", {
+          description: "Please sign in to connect your Facebook account"
+        });
         return;
       }
 
-      if (pagesData.data && pagesData.data.length > 0) {
-        let addedPages = 0;
-        // Insert all pages as separate accounts
-        for (const page of pagesData.data) {
-          // Check if this page is already connected
-          const isExisting = await checkExistingAccount('facebook', page.id, 'page_id');
-          if (isExisting) {
-            toast.error(`Page "${page.name}" is already connected`);
-            continue;
-          }
+      if (!pagesData.data || pagesData.data.length === 0) {
+        toast.error("No Facebook pages found", {
+          description: "Please create a Facebook page before connecting"
+        });
+        return;
+      }
 
-          const { error: insertError } = await supabase
-            .from('social_accounts')
-            .insert({
-              user_id: session.user.id,
-              platform: 'facebook',
-              account_name: page.name,
-              access_token: page.access_token,
-              page_id: page.id,
-              page_access_token: page.access_token,
-              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-            });
+      let addedPages = 0;
+      let duplicatePages = 0;
 
-          if (insertError) {
-            console.error("Error saving account:", insertError);
-            toast.error(`Failed to save Facebook page: ${page.name}`);
-            continue;
-          }
-          addedPages++;
+      // Insert all pages as separate accounts
+      for (const page of pagesData.data) {
+        // Check if this page is already connected
+        const isExisting = await checkExistingAccount('facebook', page.id, 'page_id');
+        if (isExisting) {
+          duplicatePages++;
+          continue;
         }
 
-        if (addedPages > 0) {
-          toast.success(`Successfully connected ${addedPages} Facebook page(s)!`);
-          onSuccess();
-        } else {
-          toast.error("No new Facebook pages were connected");
+        const { error: insertError } = await supabase
+          .from('social_accounts')
+          .insert({
+            user_id: session.user.id,
+            platform: 'facebook',
+            account_name: page.name,
+            access_token: page.access_token,
+            page_id: page.id,
+            page_access_token: page.access_token,
+            token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+          });
+
+        if (insertError) {
+          console.error("Error saving account:", insertError);
+          toast.error(`Failed to save page "${page.name}"`, {
+            description: insertError.message
+          });
+          continue;
         }
-      } else {
-        toast.error("No Facebook pages found. Please make sure you have a Facebook page.");
+        addedPages++;
+      }
+
+      if (addedPages > 0) {
+        toast.success("Facebook pages connected", {
+          description: `Successfully connected ${addedPages} page${addedPages > 1 ? 's' : ''}`
+        });
+        onSuccess();
+      } 
+      
+      if (duplicatePages > 0) {
+        toast.error("Duplicate pages detected", {
+          description: `${duplicatePages} page${duplicatePages > 1 ? 's were' : ' was'} already connected`
+        });
+      }
+
+      if (addedPages === 0 && duplicatePages === pagesData.data.length) {
+        toast.error("No new pages connected", {
+          description: "All selected pages are already connected"
+        });
       }
     } catch (error) {
       console.error("Error processing Facebook connection:", error);
-      toast.error("Failed to connect Facebook account");
+      toast.error("Connection failed", {
+        description: "Failed to connect Facebook account. Please try again."
+      });
     }
   };
 
   const handleFacebookError = (error: string) => {
-    toast.error(error);
+    toast.error("Facebook login failed", {
+      description: error
+    });
   };
 
   return (
     <FacebookLoginButton
-      appId="1294294115054311"
+      appId={import.meta.env.VITE_FACEBOOK_APP_ID}
       onSuccess={handleFacebookSuccess}
       onError={handleFacebookError}
     />

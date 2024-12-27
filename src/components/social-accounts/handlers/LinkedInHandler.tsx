@@ -19,7 +19,9 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
       
       if (secretError) {
         console.error('Error fetching LinkedIn credentials:', secretError);
-        toast.error('Failed to initialize LinkedIn login');
+        toast.error("LinkedIn initialization failed", {
+          description: "Failed to initialize LinkedIn login. Please try again."
+        });
         return;
       }
 
@@ -42,7 +44,9 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
           const storedState = sessionStorage.getItem('linkedin_state');
           if (receivedState !== storedState) {
             console.error('State mismatch:', { receivedState, storedState });
-            toast.error('Security verification failed');
+            toast.error("Security verification failed", {
+              description: "LinkedIn authentication could not be verified. Please try again."
+            });
             return;
           }
 
@@ -57,7 +61,9 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
             
             if (error) {
               console.error('LinkedIn auth error:', error);
-              toast.error('Failed to connect LinkedIn account');
+              toast.error("LinkedIn connection failed", {
+                description: error.message || "Failed to connect LinkedIn account"
+              });
               return;
             }
             
@@ -65,18 +71,26 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
             popup?.close();
             
             if (data.success) {
-              toast.success('LinkedIn account connected successfully!');
+              toast.success("LinkedIn account connected", {
+                description: "Your LinkedIn account was successfully connected"
+              });
               onSuccess();
             } else if (data.duplicate) {
-              toast.error('This LinkedIn account is already connected');
+              toast.error("Duplicate account", {
+                description: "This LinkedIn account is already connected"
+              });
             }
           } catch (error) {
             console.error('LinkedIn auth error:', error);
-            toast.error('Failed to connect LinkedIn account');
+            toast.error("Connection failed", {
+              description: "Failed to connect LinkedIn account. Please try again."
+            });
           }
         } else if (event.data.type === 'linkedin_auth_error') {
           console.error('LinkedIn auth error:', event.data.error);
-          toast.error(`LinkedIn authentication failed: ${event.data.error}`);
+          toast.error("LinkedIn authentication failed", {
+            description: event.data.error || "Failed to authenticate with LinkedIn"
+          });
           window.removeEventListener('message', handleMessage);
           popup?.close();
         }
@@ -85,7 +99,9 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
       window.addEventListener('message', handleMessage);
     } catch (error) {
       console.error('LinkedIn login error:', error);
-      toast.error('Failed to initiate LinkedIn login');
+      toast.error("LinkedIn initialization failed", {
+        description: "Failed to start LinkedIn login process"
+      });
     }
   };
 
