@@ -114,19 +114,23 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         return;
       }
 
+      // Construct authorization URL with exact redirect URI
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(window.location.origin)}`;
       
-      console.log('Opening LinkedIn auth URL:', authUrl);
-      console.log('Redirect URI:', redirectUri);
+      console.log('LinkedIn Auth - Redirect URI:', redirectUri);
+      console.log('LinkedIn Auth - Full Auth URL:', authUrl);
       
       const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
       
       const handleMessage = async (event: MessageEvent) => {
-        if (event.origin !== window.location.origin) return;
+        if (event.origin !== window.location.origin) {
+          console.log('LinkedIn Auth - Ignoring message from different origin:', event.origin);
+          return;
+        }
         
         if (event.data.type === 'linkedin_auth') {
           const { code } = event.data;
-          console.log('Received LinkedIn auth code:', code);
+          console.log('LinkedIn Auth - Received auth code');
           
           const { data, error } = await supabase.functions.invoke('linkedin-auth', {
             body: { 

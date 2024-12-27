@@ -12,15 +12,18 @@
     const error_description = params.get('error_description');
     const state = params.get('state');
 
+    // Get the exact origin from state parameter
+    const origin = state || window.location.origin;
+
     if (code) {
       window.opener.postMessage(
-        { type: 'linkedin_auth', code, state },
-        state || window.location.origin
+        { type: 'linkedin_auth', code, state: origin },
+        origin
       );
     } else if (error) {
       window.opener.postMessage(
         { type: 'linkedin_auth_error', error: error_description || error },
-        state || window.location.origin
+        origin
       );
     }
     window.close();

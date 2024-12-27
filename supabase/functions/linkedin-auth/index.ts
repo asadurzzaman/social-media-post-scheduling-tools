@@ -19,9 +19,8 @@ serve(async (req) => {
       throw new Error('LinkedIn credentials not configured')
     }
 
-    console.log('Starting LinkedIn authentication...')
-    console.log('Code:', code)
-    console.log('Redirect URI:', redirectUri)
+    console.log('LinkedIn Auth - Starting authentication...')
+    console.log('LinkedIn Auth - Using redirect URI:', redirectUri)
 
     // Exchange code for access token
     const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
@@ -33,8 +32,7 @@ serve(async (req) => {
       client_secret: clientSecret,
     })
 
-    console.log('Token request URL:', tokenUrl)
-    console.log('Token request params:', tokenParams.toString())
+    console.log('LinkedIn Auth - Token request URL:', tokenUrl)
     
     const tokenResponse = await fetch(tokenUrl, {
       method: 'POST',
@@ -45,16 +43,15 @@ serve(async (req) => {
     })
 
     const tokenData = await tokenResponse.json()
-    console.log('Token response status:', tokenResponse.status)
-    console.log('Token response:', JSON.stringify(tokenData))
+    console.log('LinkedIn Auth - Token response status:', tokenResponse.status)
 
     if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error('Token error:', tokenData)
+      console.error('LinkedIn Auth - Token error:', tokenData)
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
     // Get user profile
-    console.log('Fetching LinkedIn profile...')
+    console.log('LinkedIn Auth - Fetching profile...')
     const profileResponse = await fetch(
       'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName)', 
       {
@@ -66,11 +63,10 @@ serve(async (req) => {
     )
 
     const profileData = await profileResponse.json()
-    console.log('Profile response status:', profileResponse.status)
-    console.log('Profile data:', JSON.stringify(profileData))
+    console.log('LinkedIn Auth - Profile response status:', profileResponse.status)
 
     if (!profileResponse.ok) {
-      console.error('Profile error:', profileData)
+      console.error('LinkedIn Auth - Profile error:', profileData)
       throw new Error('Failed to fetch LinkedIn profile')
     }
 
@@ -86,7 +82,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('LinkedIn auth error:', error)
+    console.error('LinkedIn Auth - Error:', error)
     return new Response(
       JSON.stringify({
         error: error.message,
