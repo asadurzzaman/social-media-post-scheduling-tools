@@ -1,4 +1,4 @@
-interface FacebookAuthResponse {
+export interface FacebookAuthResponse {
   accessToken: string;
   userID: string;
   expiresIn: number;
