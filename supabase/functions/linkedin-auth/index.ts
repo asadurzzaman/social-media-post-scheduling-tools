@@ -62,13 +62,15 @@ serve(async (req) => {
     )
 
     // Get user ID from session
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(req.headers.get('Authorization')?.split(' ')[1] || '')
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
+      req.headers.get('Authorization')?.split(' ')[1] || ''
+    )
     
     if (userError || !user) {
       throw new Error('Not authenticated')
     }
 
-    // Check if this LinkedIn account is already connected
+    // Check if this LinkedIn account is already connected by ANY user
     const { data: existingAccount } = await supabaseClient
       .from('social_accounts')
       .select('*')
