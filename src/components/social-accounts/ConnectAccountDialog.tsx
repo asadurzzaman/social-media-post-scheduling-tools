@@ -39,7 +39,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
               user_id: session.user.id,
               platform: 'facebook',
               account_name: page.name,
-              access_token: page.access_token,
+              access_token: page.access_token, // Use page access token instead of user access token
               page_id: page.id,
               page_access_token: page.access_token,
               token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
@@ -69,7 +69,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      const scope = 'w_member_social r_liteprofile';
+      const scope = 'w_member_social';
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
       
@@ -104,38 +104,12 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
             toast.error('Failed to connect LinkedIn account');
             return;
           }
-
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) {
-            toast.error("No active session found");
-            return;
-          }
-
-          // Save LinkedIn account to database
-          const { error: insertError } = await supabase
-            .from('social_accounts')
-            .insert({
-              user_id: session.user.id,
-              platform: 'linkedin',
-              account_name: data.username,
-              access_token: data.accessToken,
-              token_expires_at: new Date(Date.now() + (data.expiresIn * 1000)).toISOString()
-            });
-
-          if (insertError) {
-            console.error('Error saving LinkedIn account:', insertError);
-            toast.error('Failed to save LinkedIn account');
-            return;
-          }
           
           window.removeEventListener('message', handleMessage);
           popup?.close();
 
-          toast.success('Successfully connected LinkedIn account!');
+          // Call the general onSuccess callback after LinkedIn connection
           onSuccess();
-        } else if (event.data.type === 'linkedin_auth_error') {
-          console.error('LinkedIn auth error:', event.data.error);
-          toast.error('Failed to connect LinkedIn account: ' + event.data.error);
         }
       };
 
