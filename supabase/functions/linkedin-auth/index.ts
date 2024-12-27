@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,14 +6,19 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { code, redirectUri } = await req.json()
+    const { code, redirectUri, state } = await req.json()
     const clientId = Deno.env.get('LINKEDIN_CLIENT_ID')
     const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET')
+
+    if (!clientId || !clientSecret) {
+      throw new Error('LinkedIn credentials not configured')
+    }
 
     console.log('Exchanging code for access token...')
     
@@ -28,9 +32,9 @@ serve(async (req) => {
         grant_type: 'authorization_code',
         code,
         redirect_uri: redirectUri,
-        client_id: clientId!,
-        client_secret: clientSecret!,
-      }),
+        client_id: clientId,
+        client_secret: clientSecret,
+      }).toString(),
     })
 
     const tokenData = await tokenResponse.json()
@@ -40,14 +44,12 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Get user profile with the correct authorization header
+    // Get user profile
     console.log('Fetching LinkedIn profile...')
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
       },
     })
 
@@ -55,7 +57,7 @@ serve(async (req) => {
     console.log('Profile response:', JSON.stringify(profileData))
 
     if (!profileResponse.ok) {
-      throw new Error(`Failed to fetch LinkedIn profile: ${JSON.stringify(profileData)}`)
+      throw new Error('Failed to fetch LinkedIn profile')
     }
 
     return new Response(
