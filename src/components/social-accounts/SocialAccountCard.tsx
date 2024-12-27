@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, X, Check } from "lucide-react";
 
 interface SocialAccountCardProps {
   platform: string;
@@ -27,8 +25,6 @@ export const SocialAccountCard = ({
   children
 }: SocialAccountCardProps) => {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [newName, setNewName] = useState(accountName || '');
 
   const handleDisconnect = async () => {
     if (!accountId) return;
@@ -90,25 +86,6 @@ export const SocialAccountCard = ({
     }
   };
 
-  const handleUpdateName = async () => {
-    if (!accountId || !newName.trim()) return;
-
-    try {
-      const { error } = await supabase
-        .from('social_accounts')
-        .update({ account_name: newName.trim() })
-        .eq('id', accountId);
-
-      if (error) throw error;
-
-      toast.success('Account name updated successfully');
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating account name:', error);
-      toast.error('Failed to update account name');
-    }
-  };
-
   const getDisplayName = () => {
     if (!accountName) {
       return platform === 'linkedin' ? 'LinkedIn Profile' : `${platform} Page`;
@@ -125,51 +102,9 @@ export const SocialAccountCard = ({
         <div>
           <h3 className="font-semibold">{title}</h3>
           {isConnected && (
-            <div className="flex items-center gap-2">
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="h-8 w-48"
-                    placeholder="Enter account name"
-                  />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleUpdateName}
-                    className="h-8 w-8"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setNewName(accountName || '');
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    {getDisplayName()}
-                  </p>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setIsEditing(true)}
-                    className="h-6 w-6"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              {getDisplayName()}
+            </p>
           )}
         </div>
       </div>
