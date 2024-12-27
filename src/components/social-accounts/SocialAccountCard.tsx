@@ -125,7 +125,7 @@ export const SocialAccountCard = ({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     className="h-8 w-48"
-                    placeholder="Enter new name"
+                    placeholder="Enter page name"
                   />
                   <Button
                     size="icon"
@@ -149,7 +149,9 @@ export const SocialAccountCard = ({
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">{accountName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {accountName || `${platform} Page`}
+                  </p>
                   <Button
                     size="icon"
                     variant="ghost"
