@@ -70,8 +70,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      // Add r_liteprofile to the scope
-      const scope = 'r_liteprofile w_member_social';
+      // Update the scope to use w_member_social only
+      const scope = 'w_member_social';
       const state = window.location.origin;
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
