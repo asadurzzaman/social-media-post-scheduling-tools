@@ -127,10 +127,10 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         <Button 
           className="w-full flex items-center justify-center gap-2" 
           variant="outline" 
-          onClick={handleInstagramLogin}
+          disabled
         >
           <Instagram className="w-5 h-5 text-pink-600" />
-          Connect Instagram
+          Connect Instagram (Coming soon)
         </Button>
         <Button 
           className="w-full flex items-center justify-center gap-2" 
