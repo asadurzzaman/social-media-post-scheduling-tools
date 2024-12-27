@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 interface SocialAccountCardProps {
   platform: string;
@@ -94,31 +95,40 @@ export const SocialAccountCard = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 flex items-center justify-center bg-blue-100 rounded-lg">
-          {icon}
+    <Card className="mb-4">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 flex items-center justify-center bg-accent rounded-lg">
+            {icon}
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">{title}</h3>
+            {isConnected && accountName && (
+              <p className="text-sm font-medium text-primary">
+                {getDisplayName()}
+              </p>
+            )}
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold">{title}</h3>
-          {isConnected && (
-            <p className="text-sm text-muted-foreground">
-              {getDisplayName()}
-            </p>
-          )}
-        </div>
-      </div>
-      {isConnected ? (
-        <Button 
-          variant="destructive" 
-          onClick={handleDisconnect}
-          disabled={isDisconnecting}
-        >
-          {isDisconnecting ? "Disconnecting..." : "Disconnect"}
-        </Button>
-      ) : (
-        children
-      )}
-    </div>
+        {isConnected ? (
+          <Button 
+            variant="destructive" 
+            onClick={handleDisconnect}
+            disabled={isDisconnecting}
+          >
+            {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+          </Button>
+        ) : (
+          children
+        )}
+      </CardHeader>
+      <CardContent>
+        {isConnected && (
+          <div className="text-sm text-muted-foreground">
+            Connected as <span className="font-medium">{getDisplayName()}</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
