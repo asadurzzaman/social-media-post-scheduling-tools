@@ -2,6 +2,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
 import { checkExistingAccount } from "@/utils/socialAccounts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface FacebookHandlerProps {
   onSuccess: () => void;
@@ -19,7 +21,13 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
       if (pagesData.error) {
         console.error("Facebook API Error:", pagesData.error);
         toast.error("Failed to fetch Facebook pages", {
-          description: pagesData.error.message
+          description: (
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{pagesData.error.message}</AlertDescription>
+            </Alert>
+          ),
         });
         return;
       }
@@ -27,14 +35,26 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Authentication required", {
-          description: "Please sign in to connect your Facebook account"
+          description: (
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>Please sign in to connect your Facebook account</AlertDescription>
+            </Alert>
+          ),
         });
         return;
       }
 
       if (!pagesData.data || pagesData.data.length === 0) {
         toast.error("No Facebook pages found", {
-          description: "Please create a Facebook page before connecting"
+          description: (
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>Please create a Facebook page before connecting</AlertDescription>
+            </Alert>
+          ),
         });
         return;
       }
@@ -66,7 +86,13 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
         if (insertError) {
           console.error("Error saving account:", insertError);
           toast.error(`Failed to save page "${page.name}"`, {
-            description: insertError.message
+            description: (
+              <Alert variant="destructive" className="border-red-500">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{insertError.message}</AlertDescription>
+              </Alert>
+            ),
           });
           continue;
         }
@@ -75,33 +101,67 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
 
       if (addedPages > 0) {
         toast.success("Facebook pages connected", {
-          description: `Successfully connected ${addedPages} page${addedPages > 1 ? 's' : ''}`
+          description: (
+            <Alert className="border-green-500 bg-green-50">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800">Success</AlertTitle>
+              <AlertDescription className="text-green-700">
+                Successfully connected {addedPages} page{addedPages > 1 ? 's' : ''}
+              </AlertDescription>
+            </Alert>
+          ),
         });
         onSuccess();
       } 
       
       if (duplicatePages > 0) {
         toast.error("Duplicate pages detected", {
-          description: `${duplicatePages} page${duplicatePages > 1 ? 's were' : ' was'} already connected`
+          description: (
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                {duplicatePages} page{duplicatePages > 1 ? 's were' : ' was'} already connected
+              </AlertDescription>
+            </Alert>
+          ),
         });
       }
 
       if (addedPages === 0 && duplicatePages === pagesData.data.length) {
         toast.error("No new pages connected", {
-          description: "All selected pages are already connected"
+          description: (
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>All selected pages are already connected</AlertDescription>
+            </Alert>
+          ),
         });
       }
     } catch (error) {
       console.error("Error processing Facebook connection:", error);
       toast.error("Connection failed", {
-        description: "Failed to connect Facebook account. Please try again."
+        description: (
+          <Alert variant="destructive" className="border-red-500">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Failed to connect Facebook account. Please try again.</AlertDescription>
+          </Alert>
+        ),
       });
     }
   };
 
   const handleFacebookError = (error: string) => {
     toast.error("Facebook login failed", {
-      description: error
+      description: (
+        <Alert variant="destructive" className="border-red-500">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ),
     });
   };
 

@@ -3,6 +3,8 @@ import { Linkedin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { checkExistingAccount } from "@/utils/socialAccounts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface LinkedInHandlerProps {
   onSuccess: () => void;
@@ -20,7 +22,13 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
       if (secretError) {
         console.error('Error fetching LinkedIn credentials:', secretError);
         toast.error("LinkedIn initialization failed", {
-          description: "Failed to initialize LinkedIn login. Please try again."
+          description: (
+            <Alert variant="destructive" className="border-red-500">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>Failed to initialize LinkedIn login. Please try again.</AlertDescription>
+            </Alert>
+          ),
         });
         return;
       }
@@ -45,7 +53,13 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
           if (receivedState !== storedState) {
             console.error('State mismatch:', { receivedState, storedState });
             toast.error("Security verification failed", {
-              description: "LinkedIn authentication could not be verified. Please try again."
+              description: (
+                <Alert variant="destructive" className="border-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>LinkedIn authentication could not be verified. Please try again.</AlertDescription>
+                </Alert>
+              ),
             });
             return;
           }
@@ -62,7 +76,13 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
             if (error) {
               console.error('LinkedIn auth error:', error);
               toast.error("LinkedIn connection failed", {
-                description: error.message || "Failed to connect LinkedIn account"
+                description: (
+                  <Alert variant="destructive" className="border-red-500">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{error.message || "Failed to connect LinkedIn account"}</AlertDescription>
+                  </Alert>
+                ),
               });
               return;
             }
@@ -72,24 +92,50 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
             
             if (data.success) {
               toast.success("LinkedIn account connected", {
-                description: "Your LinkedIn account was successfully connected"
+                description: (
+                  <Alert className="border-green-500 bg-green-50">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="text-green-800">Success</AlertTitle>
+                    <AlertDescription className="text-green-700">
+                      Your LinkedIn account was successfully connected
+                    </AlertDescription>
+                  </Alert>
+                ),
               });
               onSuccess();
             } else if (data.duplicate) {
               toast.error("Duplicate account", {
-                description: "This LinkedIn account is already connected"
+                description: (
+                  <Alert variant="destructive" className="border-red-500">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>This LinkedIn account is already connected</AlertDescription>
+                  </Alert>
+                ),
               });
             }
           } catch (error) {
             console.error('LinkedIn auth error:', error);
             toast.error("Connection failed", {
-              description: "Failed to connect LinkedIn account. Please try again."
+              description: (
+                <Alert variant="destructive" className="border-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>Failed to connect LinkedIn account. Please try again.</AlertDescription>
+                </Alert>
+              ),
             });
           }
         } else if (event.data.type === 'linkedin_auth_error') {
           console.error('LinkedIn auth error:', event.data.error);
           toast.error("LinkedIn authentication failed", {
-            description: event.data.error || "Failed to authenticate with LinkedIn"
+            description: (
+              <Alert variant="destructive" className="border-red-500">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{event.data.error || "Failed to authenticate with LinkedIn"}</AlertDescription>
+              </Alert>
+            ),
           });
           window.removeEventListener('message', handleMessage);
           popup?.close();
@@ -100,7 +146,13 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
     } catch (error) {
       console.error('LinkedIn login error:', error);
       toast.error("LinkedIn initialization failed", {
-        description: "Failed to start LinkedIn login process"
+        description: (
+          <Alert variant="destructive" className="border-red-500">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>Failed to start LinkedIn login process</AlertDescription>
+          </Alert>
+        ),
       });
     }
   };
