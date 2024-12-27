@@ -109,6 +109,13 @@ export const SocialAccountCard = ({
     }
   };
 
+  const getDisplayName = () => {
+    if (!accountName) {
+      return platform === 'linkedin' ? 'LinkedIn Profile' : `${platform} Page`;
+    }
+    return accountName;
+  };
+
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border mb-4">
       <div className="flex items-center gap-3">
@@ -125,7 +132,7 @@ export const SocialAccountCard = ({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     className="h-8 w-48"
-                    placeholder="Enter page name"
+                    placeholder="Enter account name"
                   />
                   <Button
                     size="icon"
@@ -150,7 +157,7 @@ export const SocialAccountCard = ({
               ) : (
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">
-                    {accountName || `${platform} Page`}
+                    {getDisplayName()}
                   </p>
                   <Button
                     size="icon"
