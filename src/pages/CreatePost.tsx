@@ -24,8 +24,7 @@ const CreatePost = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("social_accounts")
-        .select("*")
-        .eq("platform", "facebook");
+        .select("*");
       
       if (error) throw error;
       return data;
