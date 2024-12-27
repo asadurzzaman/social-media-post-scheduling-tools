@@ -6,50 +6,69 @@ import { Instagram, Linkedin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ConnectAccountDialogProps {
-  onSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
+  onSuccess: () => void;
 }
 
 export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) => {
-  const handleFacebookError = (error: string) => {
-    toast.error(error);
-  };
-
-  const handleLinkedInSuccess = async (data: { accessToken: string; userId: string; username: string }) => {
+  const handleFacebookSuccess = async ({ accessToken, userId }: { accessToken: string; userId: string }) => {
     try {
+      // Get Facebook Pages
+      const pagesResponse = await fetch(
+        `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`
+      );
+      const pagesData = await pagesResponse.json();
+
+      if (pagesData.error) {
+        console.error("Facebook API Error:", pagesData.error);
+        toast.error("Error fetching Facebook pages: " + pagesData.error.message);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("No active session found");
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from('social_accounts')
-        .insert({
-          user_id: session.user.id,
-          platform: 'linkedin',
-          account_name: data.username,
-          access_token: data.accessToken,
-          token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-        });
+      if (pagesData.data && pagesData.data.length > 0) {
+        // Insert all pages as separate accounts
+        for (const page of pagesData.data) {
+          const { error: insertError } = await supabase
+            .from('social_accounts')
+            .insert({
+              user_id: session.user.id,
+              platform: 'facebook',
+              account_name: page.name,
+              access_token: page.access_token, // Use page access token instead of user access token
+              page_id: page.id,
+              page_access_token: page.access_token,
+              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+            });
 
-      if (insertError) {
-        console.error("Error saving LinkedIn account:", insertError);
-        toast.error("Failed to save LinkedIn account");
-        return;
+          if (insertError) {
+            console.error("Error saving account:", insertError);
+            toast.error(`Failed to save Facebook page: ${page.name}`);
+          }
+        }
+
+        toast.success(`Successfully connected ${pagesData.data.length} Facebook page(s)!`);
+        onSuccess();
+      } else {
+        toast.error("No Facebook pages found. Please make sure you have a Facebook page.");
       }
-
-      toast.success("LinkedIn account connected successfully!");
-      await onSuccess({ accessToken: data.accessToken, userId: data.userId });
     } catch (error) {
-      console.error("Error processing LinkedIn connection:", error);
-      toast.error("Failed to connect LinkedIn account");
+      console.error("Error processing Facebook connection:", error);
+      toast.error("Failed to connect Facebook account");
     }
+  };
+
+  const handleFacebookError = (error: string) => {
+    toast.error(error);
   };
 
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      // Only use w_member_social scope which should be enabled by default
       const scope = 'w_member_social';
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
@@ -62,20 +81,15 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
 
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${linkedin_client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(window.location.origin)}`;
       
-      console.log('LinkedIn Auth - Redirect URI:', redirectUri);
-      console.log('LinkedIn Auth - Full Auth URL:', authUrl);
-      
       const popup = window.open(authUrl, 'LinkedIn Login', 'width=600,height=700');
       
       const handleMessage = async (event: MessageEvent) => {
         if (event.origin !== window.location.origin) {
-          console.log('LinkedIn Auth - Ignoring message from different origin:', event.origin);
           return;
         }
         
         if (event.data.type === 'linkedin_auth') {
           const { code } = event.data;
-          console.log('LinkedIn Auth - Received auth code');
           
           const { data, error } = await supabase.functions.invoke('linkedin-auth', {
             body: { 
@@ -94,12 +108,8 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           window.removeEventListener('message', handleMessage);
           popup?.close();
 
-          await handleLinkedInSuccess(data);
-        } else if (event.data.type === 'linkedin_auth_error') {
-          console.error('LinkedIn auth error:', event.data.error);
-          toast.error('Failed to connect LinkedIn account');
-          window.removeEventListener('message', handleMessage);
-          popup?.close();
+          // Call the general onSuccess callback after LinkedIn connection
+          onSuccess();
         }
       };
 
@@ -121,7 +131,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
       <div className="space-y-4 py-4">
         <FacebookLoginButton
           appId="1294294115054311"
-          onSuccess={onSuccess}
+          onSuccess={handleFacebookSuccess}
           onError={handleFacebookError}
         />
         <Button 
