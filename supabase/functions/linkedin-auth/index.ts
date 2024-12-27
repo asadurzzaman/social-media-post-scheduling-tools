@@ -27,13 +27,12 @@ serve(async (req) => {
 
     // Exchange code for access token
     const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
-    const tokenBody = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      client_id: clientId,
-      client_secret: clientSecret,
-    })
+    const tokenBody = new URLSearchParams()
+    tokenBody.append('grant_type', 'authorization_code')
+    tokenBody.append('code', code)
+    tokenBody.append('redirect_uri', redirectUri)
+    tokenBody.append('client_id', clientId)
+    tokenBody.append('client_secret', clientSecret)
 
     console.log('Requesting access token from:', tokenUrl)
     console.log('Token request body:', tokenBody.toString())
@@ -42,7 +41,6 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
       },
       body: tokenBody.toString(),
     })
@@ -62,8 +60,6 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
-        'Accept': 'application/json',
-        'cache-control': 'no-cache',
       },
     })
 
