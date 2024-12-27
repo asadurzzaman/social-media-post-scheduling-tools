@@ -5,6 +5,7 @@ interface SocialAccount {
   id: string;
   platform: string;
   account_name: string;
+  avatar_url?: string;
 }
 
 interface AccountsListProps {
@@ -80,6 +81,7 @@ export const AccountsList = ({
               isConnected={true}
               accountName={account.account_name}
               accountId={account.id}
+              avatarUrl={account.avatar_url}
               onDisconnect={() => onDisconnect(account.id)}
             >
               {null}

@@ -14,6 +14,7 @@ interface SocialAccountCardProps {
   accountId?: string;
   onDisconnect?: () => void;
   children: React.ReactNode;
+  avatarUrl?: string;
 }
 
 export const SocialAccountCard = ({
@@ -24,7 +25,8 @@ export const SocialAccountCard = ({
   accountName,
   accountId,
   onDisconnect,
-  children
+  children,
+  avatarUrl
 }: SocialAccountCardProps) => {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
@@ -101,7 +103,7 @@ export const SocialAccountCard = ({
         <div className="flex items-center gap-3">
           {platform === 'linkedin' ? (
             <Avatar className="h-12 w-12">
-              <AvatarImage src={accountName ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${accountName}` : undefined} />
+              <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${accountName}`} />
               <AvatarFallback className="bg-accent">
                 {icon}
               </AvatarFallback>

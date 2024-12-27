@@ -51,8 +51,8 @@ serve(async (req) => {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Fetch user's profile information
-    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
+    // Fetch user's profile information including profile picture
+    const profileResponse = await fetch('https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
@@ -61,6 +61,18 @@ serve(async (req) => {
 
     const profileData = await profileResponse.json();
     console.log('LinkedIn Auth - Profile data:', profileData);
+
+    // Extract the profile picture URL from the response
+    let profilePictureUrl = null;
+    if (profileData.profilePicture && 
+        profileData.profilePicture['displayImage~'] && 
+        profileData.profilePicture['displayImage~'].elements && 
+        profileData.profilePicture['displayImage~'].elements.length > 0) {
+      // Get the highest quality image
+      const elements = profileData.profilePicture['displayImage~'].elements;
+      const highestQualityImage = elements[elements.length - 1];
+      profilePictureUrl = highestQualityImage.identifiers[0].identifier;
+    }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -78,7 +90,7 @@ serve(async (req) => {
       throw new Error('Failed to get user information')
     }
 
-    // Save the LinkedIn account information with the profile name
+    // Save the LinkedIn account information with the profile picture URL
     const { error: insertError } = await supabase
       .from('social_accounts')
       .insert({
@@ -87,6 +99,7 @@ serve(async (req) => {
         account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
         access_token: tokenData.access_token,
         token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+        avatar_url: profilePictureUrl
       })
 
     if (insertError) {
