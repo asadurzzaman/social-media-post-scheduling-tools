@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface SocialAccountCardProps {
   platform: string;
@@ -98,9 +99,18 @@ export const SocialAccountCard = ({
     <Card className="mb-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 flex items-center justify-center bg-accent rounded-lg">
-            {icon}
-          </div>
+          {platform === 'linkedin' ? (
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={accountName ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${accountName}` : undefined} />
+              <AvatarFallback className="bg-accent">
+                {icon}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-12 h-12 flex items-center justify-center bg-accent rounded-lg">
+              {icon}
+            </div>
+          )}
           <div>
             <h3 className="font-semibold text-lg">{title}</h3>
             {isConnected && accountName && (
