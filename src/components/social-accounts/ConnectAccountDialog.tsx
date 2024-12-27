@@ -111,6 +111,25 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           
           window.removeEventListener('message', handleMessage);
           popup?.close();
+
+          // Create social account entry in the database
+          const { error: insertError } = await supabase
+            .from('social_accounts')
+            .insert({
+              platform: 'linkedin',
+              account_name: data.username,
+              access_token: data.accessToken,
+              user_id: (await supabase.auth.getUser()).data.user?.id,
+              token_expires_at: new Date(Date.now() + (data.expiresIn * 1000)).toISOString()
+            });
+
+          if (insertError) {
+            console.error('Error saving LinkedIn account:', insertError);
+            toast.error('Failed to save LinkedIn account');
+            return;
+          }
+
+          toast.success('LinkedIn account connected successfully!');
           onSuccess({ accessToken: data.accessToken, userId: data.userId });
         } else if (event.data.type === 'linkedin_auth_error') {
           console.error('LinkedIn auth error:', event.data.error);
