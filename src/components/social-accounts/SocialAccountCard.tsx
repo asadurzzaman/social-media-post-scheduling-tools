@@ -116,16 +116,9 @@ export const SocialAccountCard = ({
           <div>
             <h3 className="font-semibold text-lg">{title}</h3>
             {isConnected && accountName && (
-              <>
-                <p className="text-sm font-medium text-primary">
-                  {getDisplayName()}
-                </p>
-                {platform === 'linkedin' && (
-                  <p className="text-xs text-muted-foreground">
-                    Display Name: {accountName}
-                  </p>
-                )}
-              </>
+              <p className="text-sm font-medium text-primary">
+                {platform === 'linkedin' ? `LinkedIn Profile: ${accountName}` : accountName}
+              </p>
             )}
           </div>
         </div>
@@ -144,7 +137,7 @@ export const SocialAccountCard = ({
       <CardContent>
         {isConnected && (
           <div className="text-sm text-muted-foreground">
-            Connected as <span className="font-medium">{getDisplayName()}</span>
+            Connected successfully
           </div>
         )}
       </CardContent>
