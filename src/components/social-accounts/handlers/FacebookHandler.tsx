@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
 import { checkExistingAccount } from "@/utils/socialAccounts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface FacebookHandlerProps {
   onSuccess: () => void;
@@ -25,7 +26,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
             <Alert variant="destructive" className="border-red-500">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{pagesData.error.message}</AlertDescription>
+              <AlertDescription className="pr-8">{pagesData.error.message}</AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-red-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ),
         });
@@ -39,7 +48,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
             <Alert variant="destructive" className="border-red-500">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>Please sign in to connect your Facebook account</AlertDescription>
+              <AlertDescription className="pr-8">Please sign in to connect your Facebook account</AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-red-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ),
         });
@@ -52,7 +69,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
             <Alert variant="destructive" className="border-red-500">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>Please create a Facebook page before connecting</AlertDescription>
+              <AlertDescription className="pr-8">Please create a Facebook page before connecting</AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-red-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ),
         });
@@ -90,7 +115,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
               <Alert variant="destructive" className="border-red-500">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{insertError.message}</AlertDescription>
+                <AlertDescription className="pr-8">{insertError.message}</AlertDescription>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="absolute right-2 top-2 hover:bg-red-50"
+                  onClick={() => toast.dismiss()}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </Alert>
             ),
           });
@@ -105,9 +138,17 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
             <Alert className="border-green-500 bg-green-50">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-800">Success</AlertTitle>
-              <AlertDescription className="text-green-700">
+              <AlertDescription className="text-green-700 pr-8">
                 Successfully connected {addedPages} page{addedPages > 1 ? 's' : ''}
               </AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-green-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4 text-green-600" />
+              </Button>
             </Alert>
           ),
         });
@@ -120,9 +161,17 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
             <Alert variant="destructive" className="border-red-500">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
+              <AlertDescription className="pr-8">
                 {duplicatePages} page{duplicatePages > 1 ? 's were' : ' was'} already connected
               </AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-red-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ),
         });
@@ -134,7 +183,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
             <Alert variant="destructive" className="border-red-500">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>All selected pages are already connected</AlertDescription>
+              <AlertDescription className="pr-8">All selected pages are already connected</AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-red-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ),
         });
@@ -146,7 +203,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
           <Alert variant="destructive" className="border-red-500">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Failed to connect Facebook account. Please try again.</AlertDescription>
+            <AlertDescription className="pr-8">Failed to connect Facebook account. Please try again.</AlertDescription>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="absolute right-2 top-2 hover:bg-red-50"
+              onClick={() => toast.dismiss()}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </Alert>
         ),
       });
@@ -159,7 +224,15 @@ export const FacebookHandler = ({ onSuccess }: FacebookHandlerProps) => {
         <Alert variant="destructive" className="border-red-500">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="pr-8">{error}</AlertDescription>
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="absolute right-2 top-2 hover:bg-red-50"
+            onClick={() => toast.dismiss()}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </Alert>
       ),
     });

@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Linkedin } from "lucide-react";
+import { Linkedin, AlertCircle, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { checkExistingAccount } from "@/utils/socialAccounts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface LinkedInHandlerProps {
   onSuccess: () => void;
@@ -26,7 +25,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
             <Alert variant="destructive" className="border-red-500">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>Failed to initialize LinkedIn login. Please try again.</AlertDescription>
+              <AlertDescription className="pr-8">Failed to initialize LinkedIn login. Please try again.</AlertDescription>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="absolute right-2 top-2 hover:bg-red-50"
+                onClick={() => toast.dismiss()}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </Alert>
           ),
         });
@@ -57,7 +64,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
                 <Alert variant="destructive" className="border-red-500">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>LinkedIn authentication could not be verified. Please try again.</AlertDescription>
+                  <AlertDescription className="pr-8">LinkedIn authentication could not be verified. Please try again.</AlertDescription>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="absolute right-2 top-2 hover:bg-red-50"
+                    onClick={() => toast.dismiss()}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </Alert>
               ),
             });
@@ -80,7 +95,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
                   <Alert variant="destructive" className="border-red-500">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error.message || "Failed to connect LinkedIn account"}</AlertDescription>
+                    <AlertDescription className="pr-8">{error.message || "Failed to connect LinkedIn account"}</AlertDescription>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="absolute right-2 top-2 hover:bg-red-50"
+                      onClick={() => toast.dismiss()}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </Alert>
                 ),
               });
@@ -96,9 +119,17 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
                   <Alert className="border-green-500 bg-green-50">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertTitle className="text-green-800">Success</AlertTitle>
-                    <AlertDescription className="text-green-700">
+                    <AlertDescription className="text-green-700 pr-8">
                       Your LinkedIn account was successfully connected
                     </AlertDescription>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="absolute right-2 top-2 hover:bg-green-50"
+                      onClick={() => toast.dismiss()}
+                    >
+                      <X className="h-4 w-4 text-green-600" />
+                    </Button>
                   </Alert>
                 ),
               });
@@ -109,7 +140,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
                   <Alert variant="destructive" className="border-red-500">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>This LinkedIn account is already connected</AlertDescription>
+                    <AlertDescription className="pr-8">This LinkedIn account is already connected</AlertDescription>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="absolute right-2 top-2 hover:bg-red-50"
+                      onClick={() => toast.dismiss()}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </Alert>
                 ),
               });
@@ -121,7 +160,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
                 <Alert variant="destructive" className="border-red-500">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>Failed to connect LinkedIn account. Please try again.</AlertDescription>
+                  <AlertDescription className="pr-8">Failed to connect LinkedIn account. Please try again.</AlertDescription>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="absolute right-2 top-2 hover:bg-red-50"
+                    onClick={() => toast.dismiss()}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </Alert>
               ),
             });
@@ -133,7 +180,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
               <Alert variant="destructive" className="border-red-500">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{event.data.error || "Failed to authenticate with LinkedIn"}</AlertDescription>
+                <AlertDescription className="pr-8">{event.data.error || "Failed to authenticate with LinkedIn"}</AlertDescription>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="absolute right-2 top-2 hover:bg-red-50"
+                  onClick={() => toast.dismiss()}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </Alert>
             ),
           });
@@ -150,7 +205,15 @@ export const LinkedInHandler = ({ onSuccess }: LinkedInHandlerProps) => {
           <Alert variant="destructive" className="border-red-500">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
-            <AlertDescription>Failed to start LinkedIn login process</AlertDescription>
+            <AlertDescription className="pr-8">Failed to start LinkedIn login process</AlertDescription>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="absolute right-2 top-2 hover:bg-red-50"
+              onClick={() => toast.dismiss()}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </Alert>
         ),
       });
