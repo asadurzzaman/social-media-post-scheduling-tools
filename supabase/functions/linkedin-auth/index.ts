@@ -21,6 +21,8 @@ serve(async (req) => {
     }
 
     console.log('Exchanging code for access token...')
+    console.log('Code:', code)
+    console.log('Redirect URI:', redirectUri)
     
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
@@ -41,6 +43,7 @@ serve(async (req) => {
     console.log('Token response:', JSON.stringify(tokenData))
 
     if (!tokenResponse.ok) {
+      console.error('Token error:', tokenData)
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
@@ -50,6 +53,7 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
+        'Accept': 'application/json',
       },
     })
 
@@ -57,6 +61,7 @@ serve(async (req) => {
     console.log('Profile response:', JSON.stringify(profileData))
 
     if (!profileResponse.ok) {
+      console.error('Profile error:', profileData)
       throw new Error('Failed to fetch LinkedIn profile')
     }
 
