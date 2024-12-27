@@ -6,126 +6,100 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface LinkedInTokenResponse {
+  access_token: string;
+  expires_in: number;
+}
+
+interface LinkedInProfileResponse {
+  id: string;
+  localizedFirstName?: string;
+  localizedLastName?: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { code, redirectUri } = await req.json()
-    const clientId = Deno.env.get('LINKEDIN_CLIENT_ID')
-    const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET')
-
-    if (!clientId || !clientSecret) {
-      throw new Error('LinkedIn credentials not configured')
-    }
-
-    console.log('LinkedIn Auth - Starting authentication...')
-    console.log('LinkedIn Auth - Using redirect URI:', redirectUri)
+    const { code, redirectUri, state } = await req.json()
 
     // Exchange code for access token
-    const tokenUrl = 'https://www.linkedin.com/oauth/v2/accessToken'
-    const tokenParams = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      client_id: clientId,
-      client_secret: clientSecret,
-    })
-
-    console.log('LinkedIn Auth - Token request URL:', tokenUrl)
-    
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: tokenParams.toString(),
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        client_id: Deno.env.get('LINKEDIN_CLIENT_ID') || '',
+        client_secret: Deno.env.get('LINKEDIN_CLIENT_SECRET') || '',
+      }),
     })
 
-    const tokenData = await tokenResponse.json()
-    console.log('LinkedIn Auth - Token response status:', tokenResponse.status)
+    const tokenData: LinkedInTokenResponse = await tokenResponse.json()
 
-    if (!tokenResponse.ok || !tokenData.access_token) {
-      console.error('LinkedIn Auth - Token error:', tokenData)
-      throw new Error(tokenData.error_description || 'Failed to exchange code for token')
+    if (!tokenData.access_token) {
+      throw new Error('Failed to get access token')
     }
 
-    // Fetch user's profile information including profile picture
-    const profileResponse = await fetch('https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))', {
+    // Get user profile information
+    const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
-        'X-Restli-Protocol-Version': '2.0.0',
       },
-    });
+    })
 
-    const profileData = await profileResponse.json();
-    console.log('LinkedIn Auth - Profile data:', profileData);
+    const profileData: LinkedInProfileResponse = await profileResponse.json()
 
-    // Extract the profile picture URL from the response
-    let profilePictureUrl = null;
-    if (profileData.profilePicture && 
-        profileData.profilePicture['displayImage~'] && 
-        profileData.profilePicture['displayImage~'].elements && 
-        profileData.profilePicture['displayImage~'].elements.length > 0) {
-      // Get the highest quality image
-      const elements = profileData.profilePicture['displayImage~'].elements;
-      const highestQualityImage = elements[elements.length - 1];
-      profilePictureUrl = highestQualityImage.identifiers[0].identifier;
-    }
+    // Create Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Get the user's ID from the authorization header
-    const authHeader = req.headers.get('authorization')?.split(' ')[1]
-    if (!authHeader) {
-      throw new Error('No authorization header')
-    }
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader)
+    // Get user ID from session
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(req.headers.get('Authorization')?.split(' ')[1] || '')
+    
     if (userError || !user) {
-      throw new Error('Failed to get user information')
+      throw new Error('Not authenticated')
     }
 
-    // Save the LinkedIn account information with the profile picture URL
-    const { error: insertError } = await supabase
+    // Store the account information
+    const accountName = profileData.localizedFirstName && profileData.localizedLastName 
+      ? `${profileData.localizedFirstName} ${profileData.localizedLastName}`
+      : `LinkedIn Profile ${profileData.id}`
+
+    const { error: insertError } = await supabaseClient
       .from('social_accounts')
       .insert({
         user_id: user.id,
         platform: 'linkedin',
-        account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+        account_name: accountName,
         access_token: tokenData.access_token,
         token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
-        avatar_url: profilePictureUrl
       })
 
     if (insertError) {
-      console.error('LinkedIn Auth - Insert error:', insertError)
-      throw new Error('Failed to save LinkedIn account')
+      throw insertError
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        profile: profileData,
-      }),
-      {
+      JSON.stringify({ success: true }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       },
     )
   } catch (error) {
-    console.error('LinkedIn Auth - Error:', error)
     return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: error.toString(),
-      }),
-      {
-        status: 400,
+      JSON.stringify({ error: error.message }),
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       },
     )
   }
