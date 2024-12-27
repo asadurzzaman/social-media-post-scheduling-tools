@@ -14,6 +14,38 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
     toast.error(error);
   };
 
+  const handleLinkedInSuccess = async (data: { accessToken: string; userId: string; username: string }) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("No active session found");
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from('social_accounts')
+        .insert({
+          user_id: session.user.id,
+          platform: 'linkedin',
+          account_name: data.username,
+          access_token: data.accessToken,
+          token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+        });
+
+      if (insertError) {
+        console.error("Error saving LinkedIn account:", insertError);
+        toast.error("Failed to save LinkedIn account");
+        return;
+      }
+
+      toast.success("LinkedIn account connected successfully!");
+      await onSuccess({ accessToken: data.accessToken, userId: data.userId });
+    } catch (error) {
+      console.error("Error processing LinkedIn connection:", error);
+      toast.error("Failed to connect LinkedIn account");
+    }
+  };
+
   const handleInstagramLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/instagram-callback.html`;
@@ -71,7 +103,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
   const handleLinkedInLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-      // Updated scopes to match LinkedIn application settings
       const scope = 'w_member_social';
       
       const { data: { linkedin_client_id }, error: secretError } = await supabase.functions.invoke('get-linkedin-credentials');
@@ -112,25 +143,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           window.removeEventListener('message', handleMessage);
           popup?.close();
 
-          // Create social account entry in the database
-          const { error: insertError } = await supabase
-            .from('social_accounts')
-            .insert({
-              platform: 'linkedin',
-              account_name: data.username,
-              access_token: data.accessToken,
-              user_id: (await supabase.auth.getUser()).data.user?.id,
-              token_expires_at: new Date(Date.now() + (data.expiresIn * 1000)).toISOString()
-            });
-
-          if (insertError) {
-            console.error('Error saving LinkedIn account:', insertError);
-            toast.error('Failed to save LinkedIn account');
-            return;
-          }
-
-          toast.success('LinkedIn account connected successfully!');
-          onSuccess({ accessToken: data.accessToken, userId: data.userId });
+          await handleLinkedInSuccess(data);
         } else if (event.data.type === 'linkedin_auth_error') {
           console.error('LinkedIn auth error:', event.data.error);
           toast.error('Failed to connect LinkedIn account');
