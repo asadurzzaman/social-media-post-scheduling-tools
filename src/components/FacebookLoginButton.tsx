@@ -42,6 +42,16 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   useEffect(() => {
     const loadFacebookSDK = () => {
       console.log('Starting Facebook SDK initialization...');
+      
+      // Remove existing Facebook SDK if present
+      const existingScript = document.getElementById('facebook-jssdk');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      // Clear any existing FB cookies
+      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
       window.fbAsyncInit = function() {
         window.FB.init({
           appId: appId,
@@ -60,15 +70,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         setIsSDKLoaded(true);
       };
 
-      // Remove existing Facebook SDK if present
-      const existingScript = document.getElementById('facebook-jssdk');
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      // Clear any existing FB cookies
-      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-
+      // Load the SDK
       (function(d, s, id) {
         let js: HTMLScriptElement;
         const fjs = d.getElementsByTagName(s)[0];
@@ -93,38 +95,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     };
   }, [appId]);
 
-  const updateTokenInDatabase = async (accessToken: string, expiresIn: number, accountId?: string) => {
-    try {
-      const expirationDate = new Date();
-      expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
-
-      const query = supabase
-        .from('social_accounts')
-        .update({
-          access_token: accessToken,
-          token_expires_at: expirationDate.toISOString(),
-          requires_reconnect: false,
-          last_error: null
-        });
-
-      if (accountId) {
-        query.eq('id', accountId);
-      } else {
-        query.eq('platform', 'facebook');
-      }
-
-      const { error } = await query;
-
-      if (error) {
-        console.error('Error updating token in database:', error);
-        throw error;
-      }
-    } catch (error) {
-      console.error('Failed to update token in database:', error);
-      throw error;
-    }
-  };
-
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
     if (!isSDKLoaded) {
@@ -136,8 +106,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      // Force a new login attempt
-      console.log('Initiating Facebook login...');
+      // Wait for FB.login response
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
           console.log('Login response:', response);
@@ -150,12 +119,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       });
 
       if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-        console.log('Login successful, updating token in database');
-        await updateTokenInDatabase(
-          loginResponse.authResponse.accessToken,
-          loginResponse.authResponse.expiresIn
-        );
-        
         onSuccess({
           accessToken: loginResponse.authResponse.accessToken,
           userId: loginResponse.authResponse.userID
