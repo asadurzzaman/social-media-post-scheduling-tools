@@ -68,6 +68,24 @@ serve(async (req) => {
       throw new Error('Not authenticated')
     }
 
+    // Check if this LinkedIn account is already connected
+    const { data: existingAccount } = await supabaseClient
+      .from('social_accounts')
+      .select('*')
+      .eq('platform', 'linkedin')
+      .eq('page_id', profileData.id)
+      .single()
+
+    if (existingAccount) {
+      return new Response(
+        JSON.stringify({ success: false, duplicate: true }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
     // Store the account information
     const accountName = profileData.localizedFirstName && profileData.localizedLastName 
       ? `${profileData.localizedFirstName} ${profileData.localizedLastName}`
@@ -80,6 +98,7 @@ serve(async (req) => {
         platform: 'linkedin',
         account_name: accountName,
         access_token: tokenData.access_token,
+        page_id: profileData.id,
         token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
       })
 
