@@ -16,6 +16,8 @@ serve(async (req) => {
     const clientId = Deno.env.get('LINKEDIN_CLIENT_ID')
     const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET')
 
+    console.log('Exchanging code for access token...')
+    
     // Exchange code for access token
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',
@@ -32,22 +34,26 @@ serve(async (req) => {
     })
 
     const tokenData = await tokenResponse.json()
+    console.log('Token response:', JSON.stringify(tokenData))
 
     if (!tokenResponse.ok) {
       throw new Error(tokenData.error_description || 'Failed to exchange code for token')
     }
 
-    // Get user profile
+    // Get user profile with the correct authorization header
+    console.log('Fetching LinkedIn profile...')
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${tokenData.access_token}`,
+        'X-Restli-Protocol-Version': '2.0.0',
       },
     })
 
     const profileData = await profileResponse.json()
+    console.log('Profile response:', JSON.stringify(profileData))
 
     if (!profileResponse.ok) {
-      throw new Error('Failed to fetch LinkedIn profile')
+      throw new Error(`Failed to fetch LinkedIn profile: ${JSON.stringify(profileData)}`)
     }
 
     return new Response(
@@ -55,12 +61,14 @@ serve(async (req) => {
         accessToken: tokenData.access_token,
         userId: profileData.id,
         username: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+        expiresIn: tokenData.expires_in,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
     )
   } catch (error) {
+    console.error('LinkedIn auth error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
