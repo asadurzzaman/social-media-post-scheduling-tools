@@ -75,20 +75,8 @@ const Auth = () => {
                 },
               },
             }}
-            providers={["facebook", "linkedin"]}
+            providers={["facebook"]}
             redirectTo={`${window.location.origin}/dashboard`}
-            showLinks={false}
-            view="sign_up"
-            localization={{
-              variables: {
-                sign_up: {
-                  email_label: "Email",
-                  password_label: "Password",
-                  button_label: "Sign up",
-                  social_provider_text: "Continue with",
-                },
-              },
-            }}
           />
         </div>
       </div>
