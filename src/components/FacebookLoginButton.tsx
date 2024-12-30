@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
-import { FacebookSDK, FacebookLoginStatusResponse } from '@/utils/facebook/FacebookSDK';
+import { useFacebookSDK } from '@/utils/facebook/useFacebookSDK';
+import { toast } from 'sonner';
 
 interface FacebookLoginButtonProps {
   appId: string;
@@ -15,52 +16,38 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   onError,
   isReconnect = false
 }) => {
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    const sdk = FacebookSDK.getInstance();
-    let mounted = true;
-
-    const initializeSDK = async () => {
-      try {
-        await sdk.initialize(appId);
-        if (mounted) {
-          setIsSDKLoaded(true);
-        }
-      } catch (error) {
-        console.error('Failed to initialize Facebook SDK:', error);
-        if (mounted) {
-          onError('Failed to initialize Facebook SDK');
-        }
-      }
-    };
-
-    initializeSDK();
-
-    return () => {
-      mounted = false;
-      sdk.cleanup();
-    };
-  }, [appId, onError]);
+  const { isSDKLoaded, initError } = useFacebookSDK(appId);
 
   const handleFacebookLogin = async () => {
-    console.log('Starting Facebook login process...');
     if (!window.FB) {
+      toast.error('Facebook SDK not loaded');
       onError('Facebook SDK not loaded yet. Please try again.');
       return;
     }
 
+    if (initError) {
+      toast.error(initError);
+      onError(initError);
+      return;
+    }
+
     setIsProcessing(true);
+    console.log('Starting Facebook login process...');
 
     try {
-      const sdk = FacebookSDK.getInstance();
-      const loginResponse = await sdk.login();
+      const response = await new Promise<any>((resolve) => {
+        window.FB.login(resolve, {
+          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
+          return_scopes: true,
+          auth_type: 'rerequest'
+        });
+      });
 
-      if (loginResponse.status === 'connected' && loginResponse.authResponse) {
+      if (response.status === 'connected' && response.authResponse) {
         onSuccess({
-          accessToken: loginResponse.authResponse.accessToken,
-          userId: loginResponse.authResponse.userID
+          accessToken: response.authResponse.accessToken,
+          userId: response.authResponse.userID
         });
       } else {
         console.error('Login failed or was cancelled');
