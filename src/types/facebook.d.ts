@@ -24,12 +24,15 @@ export interface FacebookSDKInterface {
     xfbml?: boolean;
     version: string;
   }): void;
+  
   login(
     callback: (response: FacebookLoginStatus) => void,
     options?: FacebookLoginOptions
   ): void;
+  
+  logout(callback: () => void): void;
+  
   getLoginStatus(callback: (response: FacebookLoginStatus) => void): void;
-  logout(callback: (response: FacebookLoginStatus) => void): void;
 }
 
 declare global {

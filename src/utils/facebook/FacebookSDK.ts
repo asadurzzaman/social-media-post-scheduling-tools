@@ -1,4 +1,4 @@
-import type { FacebookLoginStatus } from '@/types/facebook';
+import type { FacebookLoginStatus, FacebookLoginOptions } from '@/types/facebook';
 
 export interface FacebookAuthResponse {
   accessToken: string;
@@ -50,7 +50,7 @@ export class FacebookSDK {
         });
 
         // Verify initialization
-        window.FB.getLoginStatus((response) => {
+        window.FB.getLoginStatus((response: FacebookLoginStatus) => {
           console.log('FB SDK initialized, status:', response.status);
           resolve();
         });
@@ -63,10 +63,17 @@ export class FacebookSDK {
       js.async = true;
       js.defer = true;
       js.crossOrigin = "anonymous";
-      js.onerror = () => reject(new Error('Failed to load Facebook SDK'));
+      js.onerror = () => {
+        console.error('Failed to load Facebook SDK');
+        reject(new Error('Failed to load Facebook SDK'));
+      };
       
       const fjs = document.getElementsByTagName('script')[0];
-      fjs.parentNode?.insertBefore(js, fjs);
+      if (fjs && fjs.parentNode) {
+        fjs.parentNode.insertBefore(js, fjs);
+      } else {
+        document.head.appendChild(js);
+      }
     });
 
     return this.initPromise;
@@ -97,6 +104,19 @@ export class FacebookSDK {
         scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
         return_scopes: true,
         auth_type: 'rerequest'
+      });
+    });
+  }
+
+  async logout(): Promise<void> {
+    if (!window.FB) {
+      throw new Error('Facebook SDK not initialized');
+    }
+
+    return new Promise((resolve) => {
+      window.FB.logout(() => {
+        console.log('User logged out from Facebook');
+        resolve();
       });
     });
   }
