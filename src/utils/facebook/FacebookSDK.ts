@@ -56,23 +56,29 @@ export class FacebookSDK {
         });
       };
 
-      // Load the SDK
-      const js = document.createElement('script');
-      js.id = 'facebook-jssdk';
-      js.src = "https://connect.facebook.net/en_US/sdk.js";
-      js.async = true;
-      js.defer = true;
-      js.crossOrigin = "anonymous";
-      js.onerror = () => {
-        console.error('Failed to load Facebook SDK');
-        reject(new Error('Failed to load Facebook SDK'));
-      };
-      
-      const fjs = document.getElementsByTagName('script')[0];
-      if (fjs && fjs.parentNode) {
-        fjs.parentNode.insertBefore(js, fjs);
-      } else {
-        document.head.appendChild(js);
+      try {
+        // Load the SDK
+        const js = document.createElement('script');
+        js.id = 'facebook-jssdk';
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        js.async = true;
+        js.defer = true;
+        js.crossOrigin = "anonymous";
+        
+        js.onerror = (error) => {
+          console.error('Failed to load Facebook SDK:', error);
+          reject(new Error('Failed to load Facebook SDK'));
+        };
+        
+        const fjs = document.getElementsByTagName('script')[0];
+        if (fjs && fjs.parentNode) {
+          fjs.parentNode.insertBefore(js, fjs);
+        } else {
+          document.head.appendChild(js);
+        }
+      } catch (error) {
+        console.error('Error loading Facebook SDK:', error);
+        reject(error);
       }
     });
 
@@ -122,12 +128,16 @@ export class FacebookSDK {
   }
 
   cleanup(): void {
-    const existingScript = document.getElementById('facebook-jssdk');
-    if (existingScript) {
-      existingScript.remove();
+    try {
+      const existingScript = document.getElementById('facebook-jssdk');
+      if (existingScript) {
+        existingScript.remove();
+      }
+      delete window.FB;
+      delete window.fbAsyncInit;
+      this.initPromise = null;
+    } catch (error) {
+      console.error('Error during cleanup:', error);
     }
-    delete window.FB;
-    delete window.fbAsyncInit;
-    this.initPromise = null;
   }
 }
