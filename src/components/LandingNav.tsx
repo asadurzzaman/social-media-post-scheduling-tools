@@ -10,9 +10,11 @@ export function LandingNav() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
+    // Initialize auth state
+    const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
         setIsAuthenticated(!!session);
       } catch (error) {
         console.error("Session check error:", error);
@@ -22,13 +24,16 @@ export function LandingNav() {
       }
     };
 
-    checkSession();
+    initAuth();
 
+    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
