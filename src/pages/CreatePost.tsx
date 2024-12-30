@@ -10,22 +10,37 @@ const CreatePost = () => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session) {
-        console.error("Auth error:", error);
-        toast.error("Please sign in to create posts");
+    const initAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Auth error:", error);
+          toast.error("Authentication error occurred");
+          navigate("/auth");
+          return;
+        }
+
+        if (!session) {
+          toast.error("Please sign in to create posts");
+          navigate("/auth");
+          return;
+        }
+        
+        setUserId(session.user.id);
+      } catch (error) {
+        console.error("Session error:", error);
+        toast.error("Error checking authentication status");
         navigate("/auth");
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      
-      setUserId(session.user.id);
     };
 
-    checkAuth();
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
@@ -40,7 +55,7 @@ const CreatePost = () => {
     };
   }, [navigate]);
 
-  const { data: accounts, isLoading } = useQuery({
+  const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ["social-accounts"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -58,8 +73,18 @@ const CreatePost = () => {
     setFormKey(prev => prev + 1);
   };
 
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   if (!userId) {
-    return null; // Don't render anything while checking auth
+    return null;
   }
 
   return (
@@ -70,7 +95,7 @@ const CreatePost = () => {
           <p className="text-muted-foreground">Schedule a new social media post</p>
         </div>
         
-        {isLoading ? (
+        {isLoadingAccounts ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
