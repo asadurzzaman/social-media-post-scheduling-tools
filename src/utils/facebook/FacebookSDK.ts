@@ -3,6 +3,7 @@ import type { FacebookLoginStatus, FacebookLoginOptions } from '@/types/facebook
 export class FacebookSDK {
   private static instance: FacebookSDK;
   private initPromise: Promise<void> | null = null;
+  private isInitialized: boolean = false;
 
   private constructor() {}
 
@@ -13,9 +14,21 @@ export class FacebookSDK {
     return FacebookSDK.instance;
   }
 
-  async initialize(appId: string): Promise<void> {
+  async waitForInitialization(): Promise<void> {
+    if (this.isInitialized) return;
     if (this.initPromise) {
-      return this.initPromise;
+      await this.initPromise;
+      return;
+    }
+    throw new Error('SDK not initialized');
+  }
+
+  async initialize(appId: string): Promise<void> {
+    if (this.isInitialized) return;
+    
+    if (this.initPromise) {
+      await this.initPromise;
+      return;
     }
 
     this.initPromise = new Promise((resolve, reject) => {
@@ -41,6 +54,7 @@ export class FacebookSDK {
           // Verify initialization
           window.FB.getLoginStatus((response: FacebookLoginStatus) => {
             console.log('FB SDK initialized, status:', response.status);
+            this.isInitialized = true;
             resolve();
           });
         };
@@ -55,6 +69,7 @@ export class FacebookSDK {
         
         js.onerror = (error) => {
           console.error('Failed to load Facebook SDK:', error);
+          this.isInitialized = false;
           reject(new Error('Failed to load Facebook SDK'));
         };
         
@@ -66,6 +81,7 @@ export class FacebookSDK {
         }
       } catch (error) {
         console.error('Error loading Facebook SDK:', error);
+        this.isInitialized = false;
         reject(error);
       }
     });
@@ -82,6 +98,7 @@ export class FacebookSDK {
       delete window.FB;
       delete window.fbAsyncInit;
       this.initPromise = null;
+      this.isInitialized = false;
     } catch (error) {
       console.error('Error during cleanup:', error);
     }

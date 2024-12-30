@@ -38,8 +38,11 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     console.log('Starting Facebook login process...');
 
     try {
+      // Wait for SDK initialization
+      const sdk = window.FB;
+      
       const response = await new Promise<any>((resolve, reject) => {
-        window.FB.login((loginResponse) => {
+        sdk.login((loginResponse) => {
           if (loginResponse.status === 'connected') {
             resolve(loginResponse);
           } else {
