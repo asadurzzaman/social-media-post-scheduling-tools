@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface MediaGridProps {
   files: any[];
@@ -22,8 +23,42 @@ export const MediaGrid = ({
   viewMode,
 }: MediaGridProps) => {
   const getPublicUrl = (fileName: string) => {
-    const { data } = supabase.storage.from('media').getPublicUrl(fileName);
-    return data?.publicUrl || '';
+    try {
+      const { data } = supabase.storage.from('media').getPublicUrl(fileName);
+      if (!data?.publicUrl) {
+        console.error('Failed to get public URL for:', fileName);
+        return '';
+      }
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error getting public URL:', error);
+      toast.error(`Failed to load image: ${fileName}`);
+      return '';
+    }
+  };
+
+  const renderImage = (file: any, size: "small" | "large") => {
+    const url = getPublicUrl(file.name);
+    if (!url) {
+      return (
+        <div className={`bg-muted flex items-center justify-center ${size === "large" ? "aspect-square" : "w-12 h-12"} rounded-lg`}>
+          <span className="text-sm text-muted-foreground">No image</span>
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={url}
+        alt={file.name}
+        className={
+          size === "large"
+            ? "object-cover w-full h-full rounded-lg transition-transform group-hover:scale-105"
+            : "w-12 h-12 object-cover rounded"
+        }
+        onError={() => toast.error(`Failed to load image: ${file.name}`)}
+      />
+    );
   };
 
   if (viewMode === "grid") {
@@ -39,11 +74,7 @@ export const MediaGrid = ({
                     onCheckedChange={() => onFileSelect(file.name)}
                   />
                 </div>
-                <img
-                  src={getPublicUrl(file.name)}
-                  alt={file.name}
-                  className="object-cover w-full h-full rounded-lg transition-transform group-hover:scale-105"
-                />
+                {renderImage(file, "large")}
                 <Button
                   variant="destructive"
                   size="icon"
@@ -78,11 +109,7 @@ export const MediaGrid = ({
               checked={selectedFiles.includes(file.name)}
               onCheckedChange={() => onFileSelect(file.name)}
             />
-            <img
-              src={getPublicUrl(file.name)}
-              alt={file.name}
-              className="w-12 h-12 object-cover rounded"
-            />
+            {renderImage(file, "small")}
             <div>
               <p className="font-medium">{file.name}</p>
               <p className="text-sm text-muted-foreground">
