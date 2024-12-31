@@ -21,6 +21,11 @@ export const MediaGrid = ({
   deletingFiles,
   viewMode,
 }: MediaGridProps) => {
+  const getPublicUrl = (fileName: string) => {
+    const { data } = supabase.storage.from('media').getPublicUrl(fileName);
+    return data?.publicUrl || '';
+  };
+
   if (viewMode === "grid") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -35,7 +40,7 @@ export const MediaGrid = ({
                   />
                 </div>
                 <img
-                  src={`${supabase.storage.from('media').getPublicUrl(file.name).data.publicUrl}`}
+                  src={getPublicUrl(file.name)}
                   alt={file.name}
                   className="object-cover w-full h-full rounded-lg transition-transform group-hover:scale-105"
                 />
@@ -74,7 +79,7 @@ export const MediaGrid = ({
               onCheckedChange={() => onFileSelect(file.name)}
             />
             <img
-              src={`${supabase.storage.from('media').getPublicUrl(file.name).data.publicUrl}`}
+              src={getPublicUrl(file.name)}
               alt={file.name}
               className="w-12 h-12 object-cover rounded"
             />
