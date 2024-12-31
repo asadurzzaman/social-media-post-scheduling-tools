@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
-import { useFacebookSDK } from '@/utils/facebook/useFacebookSDK';
+import React, { useState, useEffect } from 'react';
+import { FacebookLoginService } from '@/utils/facebook/FacebookLoginService';
+import { FacebookSDKInitializer } from '@/utils/facebook/FacebookSDKInitializer';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -18,56 +18,31 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   isReconnect = false
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const { isSDKLoaded, initError, reinitialize } = useFacebookSDK(appId);
+
+  useEffect(() => {
+    // Initialize SDK when component mounts
+    FacebookSDKInitializer.initialize(appId).catch((error) => {
+      console.error('Failed to initialize Facebook SDK:', error);
+      toast.error('Failed to initialize Facebook SDK');
+    });
+
+    // Cleanup when component unmounts
+    return () => {
+      FacebookSDKInitializer.cleanup();
+    };
+  }, [appId]);
 
   const handleFacebookLogin = async () => {
-    if (!window.FB) {
-      toast.error('Facebook SDK not loaded');
-      // Try to reinitialize the SDK
-      await reinitialize();
-      return;
-    }
-
-    if (initError) {
-      toast.error(initError);
-      onError(initError);
-      return;
-    }
-
+    if (isProcessing) return;
+    
     setIsProcessing(true);
-    console.log('Starting Facebook login process...');
-
     try {
-      // Wait for SDK initialization
-      const sdk = window.FB;
-      
-      const response = await new Promise<any>((resolve, reject) => {
-        sdk.login((loginResponse) => {
-          if (loginResponse.status === 'connected') {
-            resolve(loginResponse);
-          } else {
-            reject(new Error('Login failed or was cancelled'));
-          }
-        }, {
-          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
-          return_scopes: true,
-          auth_type: 'rerequest'
-        });
-      });
-
-      if (response.authResponse) {
-        onSuccess({
-          accessToken: response.authResponse.accessToken,
-          userId: response.authResponse.userID
-        });
-      }
-    } catch (error) {
+      const response = await FacebookLoginService.login(appId);
+      onSuccess(response);
+    } catch (error: any) {
       console.error('Facebook login error:', error);
-      try {
-        await FacebookErrorHandler.handleError(error);
-      } catch (handledError: any) {
-        onError(handledError.message);
-      }
+      onError(error.message);
+      toast.error(error.message);
     } finally {
       setIsProcessing(false);
     }
@@ -76,7 +51,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   return (
     <button
       onClick={handleFacebookLogin}
-      disabled={!isSDKLoaded || isProcessing}
+      disabled={isProcessing}
       className={`
         flex items-center justify-center gap-2 
         px-4 py-2 rounded
