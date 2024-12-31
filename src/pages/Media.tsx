@@ -1,27 +1,12 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Upload, Grid, List, Search, Filter, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Checkbox } from "@/components/ui/checkbox";
+import { MediaHeader } from "@/components/media/MediaHeader";
+import { MediaUploader } from "@/components/media/MediaUploader";
+import { MediaFilters } from "@/components/media/MediaFilters";
+import { MediaGrid } from "@/components/media/MediaGrid";
 
 const Media = () => {
   const [uploading, setUploading] = useState(false);
@@ -109,13 +94,6 @@ const Media = () => {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
-    }
-  });
-
   const toggleFileSelection = (fileName: string) => {
     setSelectedFiles(prev => 
       prev.includes(fileName) 
@@ -135,167 +113,34 @@ const Media = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Media Library</h2>
-            <p className="text-muted-foreground mt-2">Upload and manage your media files</p>
-          </div>
-          {selectedFiles.length > 0 && (
-            <Button 
-              variant="destructive" 
-              onClick={handleBulkDelete}
-              disabled={deleting.length > 0}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Selected ({selectedFiles.length})
-            </Button>
-          )}
-        </div>
+        <MediaHeader 
+          selectedFiles={selectedFiles}
+          onBulkDelete={handleBulkDelete}
+        />
 
-        <Card className="border border-border">
-          <CardContent className="p-6">
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-              }`}
-            >
-              <Input {...getInputProps()} />
-              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg mb-2 font-medium">
-                {isDragActive
-                  ? "Drop the files here..."
-                  : "Drag 'n' drop files here, or click to select files"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Supports: PNG, JPG, GIF
-              </p>
-              {uploading && (
-                <div className="mt-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <MediaUploader 
+          onDrop={onDrop}
+          uploading={uploading}
+        />
 
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search media files..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All dates</SelectItem>
-                  <SelectItem value="recent">Last 7 days</SelectItem>
-                  <SelectItem value="old">Older than 7 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon"
-                onClick={() => setViewMode("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          <MediaFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
 
-          {viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredFiles?.map((file) => (
-                <Card key={file.name} className="group relative overflow-hidden border border-border">
-                  <CardContent className="p-4">
-                    <div className="aspect-square rounded-lg bg-muted flex items-center justify-center relative group overflow-hidden">
-                      <div className="absolute top-2 left-2 z-10">
-                        <Checkbox
-                          checked={selectedFiles.includes(file.name)}
-                          onCheckedChange={() => toggleFileSelection(file.name)}
-                        />
-                      </div>
-                      <img
-                        src={`${supabase.storage.from('media').getPublicUrl(file.name).data.publicUrl}`}
-                        alt={file.name}
-                        className="object-cover w-full h-full rounded-lg transition-transform group-hover:scale-105"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleDelete([file.name])}
-                        disabled={deleting.includes(file.name)}
-                      >
-                        {deleting.includes(file.name) ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background"></div>
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <p className="mt-2 text-sm truncate text-muted-foreground">{file.name}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredFiles?.map((file) => (
-                <div
-                  key={file.name}
-                  className="flex items-center justify-between p-4 bg-background border border-border rounded-lg"
-                >
-                  <div className="flex items-center gap-4">
-                    <Checkbox
-                      checked={selectedFiles.includes(file.name)}
-                      onCheckedChange={() => toggleFileSelection(file.name)}
-                    />
-                    <img
-                      src={`${supabase.storage.from('media').getPublicUrl(file.name).data.publicUrl}`}
-                      alt={file.name}
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                    <div>
-                      <p className="font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(file.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDelete([file.name])}
-                    disabled={deleting.includes(file.name)}
-                  >
-                    {deleting.includes(file.name) ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background"></div>
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
+          <MediaGrid
+            files={filteredFiles}
+            selectedFiles={selectedFiles}
+            onFileSelect={toggleFileSelection}
+            onDelete={handleDelete}
+            deletingFiles={deleting}
+            viewMode={viewMode}
+          />
         </div>
       </div>
     </DashboardLayout>
