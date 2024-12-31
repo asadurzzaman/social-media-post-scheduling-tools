@@ -84,7 +84,7 @@ export const RichTextEditor = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <div className="min-h-[200px] border rounded-md overflow-hidden relative">
+        <div className="min-h-[200px] border rounded-md overflow-hidden relative dark:border-gray-700">
           <textarea
             ref={textareaRef}
             value={value}
@@ -93,6 +93,7 @@ export const RichTextEditor = ({
             required={required}
             className={cn(
               "w-full h-[200px] p-3 resize-none focus:outline-none",
+              "bg-background text-foreground",
               "placeholder:text-muted-foreground"
             )}
             placeholder="Write your post content here... Use @ to mention"
