@@ -21,10 +21,16 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
   useEffect(() => {
     // Initialize SDK when component mounts
-    FacebookSDKInitializer.initialize(appId).catch((error) => {
-      console.error('Failed to initialize Facebook SDK:', error);
-      toast.error('Failed to initialize Facebook SDK');
-    });
+    const initSDK = async () => {
+      try {
+        await FacebookSDKInitializer.initialize(appId);
+      } catch (error) {
+        console.error('Failed to initialize Facebook SDK:', error);
+        toast.error('Failed to initialize Facebook SDK');
+      }
+    };
+
+    initSDK();
 
     // Cleanup when component unmounts
     return () => {

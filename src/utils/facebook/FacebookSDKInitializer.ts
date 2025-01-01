@@ -9,16 +9,15 @@ export class FacebookSDKInitializer {
       return this.initPromise;
     }
 
+    console.log('Initializing Facebook SDK...');
+
     this.initPromise = new Promise((resolve, reject) => {
       try {
-        // Clean up any existing SDK
+        // Remove existing SDK if present
         const existingScript = document.getElementById('facebook-jssdk');
         if (existingScript) {
           existingScript.remove();
         }
-
-        // Clear FB cookies
-        document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
         // Load the SDK
         const js = document.createElement('script');
@@ -28,25 +27,27 @@ export class FacebookSDKInitializer {
         js.defer = true;
         js.crossOrigin = "anonymous";
         
-        js.onerror = () => {
-          console.error('Failed to load Facebook SDK');
+        js.onload = () => {
+          window.fbAsyncInit = () => {
+            window.FB.init({
+              appId: appId,
+              cookie: true,
+              xfbml: true,
+              version: 'v18.0'
+            });
+
+            console.log('Facebook SDK initialized');
+            this.isInitialized = true;
+            resolve();
+          };
+        };
+
+        js.onerror = (error) => {
+          console.error('Failed to load Facebook SDK:', error);
           this.isInitialized = false;
           reject(new Error('Failed to load Facebook SDK'));
         };
 
-        window.fbAsyncInit = () => {
-          window.FB.init({
-            appId: appId,
-            cookie: true,
-            xfbml: true,
-            version: 'v18.0'
-          });
-
-          console.log('Facebook SDK initialized');
-          this.isInitialized = true;
-          resolve();
-        };
-        
         const fjs = document.getElementsByTagName('script')[0];
         if (fjs?.parentNode) {
           fjs.parentNode.insertBefore(js, fjs);
