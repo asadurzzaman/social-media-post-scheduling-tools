@@ -51,7 +51,6 @@ const AddAccount = () => {
     }
   };
 
-  const facebookAccounts = socialAccounts?.filter(account => account.platform === 'facebook') || [];
   const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
   const linkedinAccounts = socialAccounts?.filter(account => account.platform === 'linkedin') || [];
 
@@ -63,7 +62,6 @@ const AddAccount = () => {
           <ConnectAccountDialog onSuccess={handleSuccess} />
         </Dialog>
         <AccountsList 
-          facebookAccounts={facebookAccounts}
           instagramAccounts={instagramAccounts}
           linkedinAccounts={linkedinAccounts}
           onDisconnect={handleDisconnect}

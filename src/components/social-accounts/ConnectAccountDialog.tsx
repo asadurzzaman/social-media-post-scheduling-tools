@@ -1,7 +1,6 @@
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Instagram } from "lucide-react";
-import { FacebookHandler } from "./handlers/FacebookHandler";
 import { LinkedInHandler } from "./handlers/LinkedInHandler";
 
 interface ConnectAccountDialogProps {
@@ -18,7 +17,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
-        <FacebookHandler onSuccess={onSuccess} />
         <Button 
           className="w-full flex items-center justify-center gap-2" 
           variant="outline" 
