@@ -9,7 +9,7 @@ interface CalendarGridProps {
   view: 'week' | 'month';
 }
 
-export const CalendarGrid = ({ weekDays, dayHours, posts, onCreatePost, view }: CalendarGridProps) => {
+export const CalendarGrid = ({ weekDays, dayHours, posts = [], onCreatePost, view }: CalendarGridProps) => {
   if (view === 'month') {
     return (
       <div className="grid grid-cols-7 divide-x divide-y">
@@ -23,12 +23,13 @@ export const CalendarGrid = ({ weekDays, dayHours, posts, onCreatePost, view }: 
         {/* Calendar days */}
         {weekDays.map((day) => {
           const dayPosts = posts?.filter(post => {
+            if (!post?.scheduled_for) return false;
             const postDate = new Date(post.scheduled_for);
             return (
               postDate.getDate() === day.getDate() &&
               postDate.getMonth() === day.getMonth()
             );
-          });
+          }) || [];
 
           return (
             <div
@@ -89,12 +90,13 @@ export const CalendarGrid = ({ weekDays, dayHours, posts, onCreatePost, view }: 
               slotDate.setHours(hour.getHours(), 0, 0, 0);
               
               const dayPosts = posts?.filter(post => {
+                if (!post?.scheduled_for) return false;
                 const postDate = new Date(post.scheduled_for);
                 return (
                   postDate.getDate() === day.getDate() &&
                   postDate.getHours() === hour.getHours()
                 );
-              });
+              }) || [];
 
               return (
                 <CalendarTimeSlot
