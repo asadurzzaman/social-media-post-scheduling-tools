@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { CalendarTimeSlot } from "./CalendarTimeSlot";
+import { Plus } from "lucide-react";
 
 interface CalendarGridProps {
   weekDays: Date[];
@@ -12,48 +13,62 @@ interface CalendarGridProps {
 export const CalendarGrid = ({ weekDays, dayHours, posts = [], onCreatePost, view }: CalendarGridProps) => {
   if (view === 'month') {
     return (
-      <div className="grid grid-cols-7 divide-x divide-y">
-        {/* Day headers */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="h-12 p-2 text-sm font-medium bg-gray-50">
-            {day}
-          </div>
-        ))}
-        
-        {/* Calendar days */}
-        {weekDays.map((day) => {
-          const dayPosts = posts?.filter(post => {
-            if (!post?.scheduled_for) return false;
-            const postDate = new Date(post.scheduled_for);
-            return (
-              postDate.getDate() === day.getDate() &&
-              postDate.getMonth() === day.getMonth()
-            );
-          }) || [];
-
-          return (
-            <div
-              key={day.toString()}
-              className="min-h-[8rem] p-2 hover:bg-gray-50 cursor-pointer"
-              onClick={() => onCreatePost(day)}
-            >
-              <div className="text-sm">
-                {format(day, 'd')}
-              </div>
-              <div className="mt-2 space-y-1">
-                {dayPosts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="text-xs p-1 bg-blue-100 text-blue-800 rounded truncate"
-                    title={post.content}
-                  >
-                    {format(new Date(post.scheduled_for), 'h:mm a')} - {post.content.substring(0, 20)}...
-                  </div>
-                ))}
+      <div className="overflow-auto">
+        <div className="grid grid-cols-7 divide-x">
+          {/* Day headers */}
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            <div key={day} className="h-12 border-b p-2 sticky top-0 bg-white">
+              <div className="text-sm font-medium">
+                {day}
               </div>
             </div>
-          );
-        })}
+          ))}
+          
+          {/* Calendar days */}
+          {weekDays.map((day) => {
+            const dayPosts = posts?.filter(post => {
+              if (!post?.scheduled_for) return false;
+              const postDate = new Date(post.scheduled_for);
+              return (
+                postDate.getDate() === day.getDate() &&
+                postDate.getMonth() === day.getMonth()
+              );
+            }) || [];
+
+            return (
+              <div
+                key={day.toString()}
+                className="min-h-[8rem] relative group hover:bg-gray-50"
+              >
+                <div className="p-2">
+                  <div className="text-sm">
+                    {format(day, 'd')}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {dayPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="p-1 rounded bg-primary/10 text-primary text-sm truncate"
+                        title={post.content}
+                      >
+                        {format(new Date(post.scheduled_for), 'h:mm a')} - {post.content.substring(0, 20)}
+                        {post.content.length > 20 && '...'}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5"
+                  onClick={() => onCreatePost(day)}
+                >
+                  <div className="bg-white p-2 rounded-full shadow-sm">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   }
