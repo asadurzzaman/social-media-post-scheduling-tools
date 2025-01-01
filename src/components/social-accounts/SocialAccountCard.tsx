@@ -51,9 +51,13 @@ export const SocialAccountCard = ({
       const { error: accountError } = await supabase
         .from('social_accounts')
         .delete()
-        .eq('id', accountId);
+        .eq('id', accountId)
+        .single();
 
-      if (accountError) throw accountError;
+      if (accountError) {
+        console.error('Error disconnecting account:', accountError);
+        throw accountError;
+      }
 
       toast.success(`${platform} account disconnected successfully`);
 
