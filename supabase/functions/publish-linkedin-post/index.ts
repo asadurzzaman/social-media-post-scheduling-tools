@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -8,26 +8,29 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { postId } = await req.json()
     
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    if (!postId) {
+      throw new Error('Post ID is required')
+    }
 
-    // Fetch post details
-    const { data: post, error: postError } = await supabase
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Get post details including the social account
+    const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
-        content,
-        image_url,
+        *,
         social_accounts (
-          access_token,
-          platform
+          access_token
         )
       `)
       .eq('id', postId)
@@ -47,107 +50,101 @@ serve(async (req) => {
     })
 
     if (!profileResponse.ok) {
-      const error = await profileResponse.json()
-      throw new Error(`LinkedIn profile API error: ${JSON.stringify(error)}`)
+      throw new Error(`LinkedIn profile API error: ${await profileResponse.text()}`)
     }
 
     const profileData = await profileResponse.json()
-    console.log('LinkedIn profile data:', profileData)
+    const memberId = profileData.id
 
-    // Prepare the post content with correct member URN
-    const postData: any = {
-      author: `urn:li:person:${profileData.id}`,
-      lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text: post.content
-          },
-          shareMediaCategory: 'NONE'
-        }
+    let postData: any = {
+      author: `urn:li:person:${memberId}`,
+      commentary: post.content,
+      visibility: "PUBLIC",
+      distribution: {
+        feedDistribution: "MAIN_FEED",
+        targetEntities: [],
+        thirdPartyDistributionChannels: []
       },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
-      }
+      lifecycleState: "PUBLISHED",
+      isReshareDisabledByAuthor: false
     }
 
-    // If there's an image, upload it first
+    // Handle image upload if present
     if (post.image_url) {
-      console.log('Uploading image:', post.image_url)
-      
-      // Fetch the image
-      const imageResponse = await fetch(post.image_url)
-      if (!imageResponse.ok) {
-        throw new Error('Failed to fetch image from URL')
-      }
-      const imageBlob = await imageResponse.blob()
+      try {
+        // Download image from Supabase Storage
+        const imageUrl = post.image_url.replace(/^https:\/\/[^/]+\.supabase\.co/, Deno.env.get('SUPABASE_URL') || '')
+        const imageResponse = await fetch(imageUrl)
+        if (!imageResponse.ok) throw new Error('Failed to fetch image from storage')
+        const imageBlob = await imageResponse.blob()
 
-      // Upload image to LinkedIn
-      const registerUploadResponse = await fetch(
-        'https://api.linkedin.com/v2/assets?action=registerUpload',
-        {
+        // Register upload
+        const registerResponse = await fetch(
+          'https://api.linkedin.com/v2/assets?action=registerUpload',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${post.social_accounts.access_token}`,
+              'Content-Type': 'application/json',
+              'X-Restli-Protocol-Version': '2.0.0',
+              'LinkedIn-Version': '202304',
+            },
+            body: JSON.stringify({
+              registerUploadRequest: {
+                recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                owner: `urn:li:person:${memberId}`,
+                serviceRelationships: [
+                  {
+                    relationshipType: 'OWNER',
+                    identifier: 'urn:li:userGeneratedContent',
+                  },
+                ],
+              },
+            }),
+          }
+        )
+
+        if (!registerResponse.ok) {
+          throw new Error(`Failed to register upload: ${await registerResponse.text()}`)
+        }
+
+        const { value: { uploadMechanism, asset } } = await registerResponse.json()
+        const { uploadUrl } = uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']
+
+        // Upload the image
+        const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${post.social_accounts.access_token}`,
-            'Content-Type': 'application/json',
-            'X-Restli-Protocol-Version': '2.0.0',
-            'LinkedIn-Version': '202304',
+            'Content-Type': imageBlob.type,
           },
-          body: JSON.stringify({
-            registerUploadRequest: {
-              recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-              owner: `urn:li:person:${profileData.id}`,
-              serviceRelationships: [{
-                relationshipType: 'OWNER',
-                identifier: 'urn:li:userGeneratedContent'
-              }]
+          body: imageBlob,
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Failed to upload image: ${await uploadResponse.text()}`)
+        }
+
+        // Add image to post data
+        postData = {
+          ...postData,
+          content: {
+            media: {
+              id: asset,
+              title: {
+                text: "Image"
+              }
             }
-          })
+          }
         }
-      )
-
-      if (!registerUploadResponse.ok) {
-        const error = await registerUploadResponse.json()
-        throw new Error(`LinkedIn register upload error: ${JSON.stringify(error)}`)
+      } catch (error) {
+        console.error('Error uploading image:', error)
+        throw error
       }
-
-      const uploadData = await registerUploadResponse.json()
-      console.log('Upload registration response:', uploadData)
-      
-      // Upload the image to LinkedIn's URL
-      const imageUploadResponse = await fetch(
-        uploadData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl, 
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${post.social_accounts.access_token}`,
-          },
-          body: imageBlob
-        }
-      )
-
-      if (!imageUploadResponse.ok) {
-        throw new Error(`Failed to upload image to LinkedIn: ${imageUploadResponse.statusText}`)
-      }
-
-      // Add the image to the post data
-      postData.specificContent['com.linkedin.ugc.ShareContent'].shareMediaCategory = 'IMAGE'
-      postData.specificContent['com.linkedin.ugc.ShareContent'].media = [{
-        status: 'READY',
-        description: {
-          text: 'Image'
-        },
-        media: uploadData.value.asset,
-        title: {
-          text: 'Image'
-        }
-      }]
     }
 
-    console.log('Sending post data to LinkedIn:', postData)
-
-    // Create the post on LinkedIn
-    const publishResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+    // Create the post
+    const createPostResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${post.social_accounts.access_token}`,
@@ -158,16 +155,12 @@ serve(async (req) => {
       body: JSON.stringify(postData)
     })
 
-    if (!publishResponse.ok) {
-      const error = await publishResponse.json()
-      throw new Error(`LinkedIn API error: ${JSON.stringify(error)}`)
+    if (!createPostResponse.ok) {
+      throw new Error(`Failed to create post: ${await createPostResponse.text()}`)
     }
 
-    const publishResult = await publishResponse.json()
-    console.log('LinkedIn publish response:', publishResult)
-
-    // Update post status in database
-    const { error: updateError } = await supabase
+    // Update post status
+    const { error: updateError } = await supabaseClient
       .from('posts')
       .update({ status: 'published' })
       .eq('id', postId)
@@ -175,17 +168,18 @@ serve(async (req) => {
     if (updateError) throw updateError
 
     return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      JSON.stringify({ message: 'Post published successfully' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+
   } catch (error) {
-    console.error('Error publishing to LinkedIn:', error)
+    console.error('Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      },
+      }
     )
   }
 })
