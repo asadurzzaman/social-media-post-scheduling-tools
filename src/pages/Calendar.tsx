@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, addDays, eachHourOfInterval, startOfDay, endOfDay } from "date-fns";
+import { startOfWeek, startOfMonth, addDays, eachHourOfInterval, startOfDay, endOfDay, endOfMonth, addMonths } from "date-fns";
 import { useState } from "react";
 import { CalendarHeader } from "@/components/calendar/CalendarHeader";
 import { CalendarGrid } from "@/components/calendar/CalendarGrid";
@@ -10,25 +10,33 @@ import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 0 });
+  const [view, setView] = useState<'week' | 'month'>('week');
   
-  const weekDays = [...Array(7)].map((_, i) => addDays(startOfCurrentWeek, i));
+  const startDate = view === 'week' 
+    ? startOfWeek(currentDate, { weekStartsOn: 0 })
+    : startOfMonth(currentDate);
+  
+  const endDate = view === 'week'
+    ? addDays(startDate, 7)
+    : endOfMonth(currentDate);
+  
+  const weekDays = view === 'week'
+    ? [...Array(7)].map((_, i) => addDays(startDate, i))
+    : [...Array(35)].map((_, i) => addDays(startDate, i));
+  
   const dayHours = eachHourOfInterval({
     start: startOfDay(currentDate),
     end: endOfDay(currentDate),
   });
 
   const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ['scheduled-posts', startOfCurrentWeek],
+    queryKey: ['scheduled-posts', startDate, view],
     queryFn: async () => {
-      const startDate = startOfCurrentWeek.toISOString();
-      const endDate = addDays(startOfCurrentWeek, 7).toISOString();
-      
       const { data, error } = await supabase
         .from('posts')
         .select('*')
-        .gte('scheduled_for', startDate)
-        .lt('scheduled_for', endDate)
+        .gte('scheduled_for', startDate.toISOString())
+        .lt('scheduled_for', endDate.toISOString())
         .order('scheduled_for', { ascending: true });
       
       if (error) throw error;
@@ -48,12 +56,20 @@ const Calendar = () => {
     }
   });
 
-  const previousWeek = () => {
-    setCurrentDate(addDays(currentDate, -7));
+  const previousPeriod = () => {
+    if (view === 'week') {
+      setCurrentDate(addDays(currentDate, -7));
+    } else {
+      setCurrentDate(addMonths(currentDate, -1));
+    }
   };
 
-  const nextWeek = () => {
-    setCurrentDate(addDays(currentDate, 7));
+  const nextPeriod = () => {
+    if (view === 'week') {
+      setCurrentDate(addDays(currentDate, 7));
+    } else {
+      setCurrentDate(addMonths(currentDate, 1));
+    }
   };
 
   const goToToday = () => {
@@ -68,14 +84,20 @@ const Calendar = () => {
     setSelectedDate(null);
   };
 
+  const handleViewChange = (newView: string) => {
+    setView(newView as 'week' | 'month');
+  };
+
   return (
     <DashboardLayout>
       <CalendarHeader
         currentDate={currentDate}
-        onPreviousWeek={previousWeek}
-        onNextWeek={nextWeek}
+        onPreviousWeek={previousPeriod}
+        onNextWeek={nextPeriod}
         onToday={goToToday}
         onRefresh={refetch}
+        view={view}
+        onViewChange={handleViewChange}
       />
 
       <div className="bg-white rounded-lg border shadow">
@@ -84,6 +106,7 @@ const Calendar = () => {
           dayHours={dayHours}
           posts={posts}
           onCreatePost={handleCreatePost}
+          view={view}
         />
       </div>
 
@@ -92,7 +115,7 @@ const Calendar = () => {
         onClose={handleCloseDialog}
         selectedDate={selectedDate}
         accounts={accounts || []}
-        userId={null} // TODO: Get actual user ID
+        userId={null}
       />
     </DashboardLayout>
   );

@@ -16,6 +16,8 @@ interface CalendarHeaderProps {
   onNextWeek: () => void;
   onToday: () => void;
   onRefresh: () => void;
+  view: 'week' | 'month';
+  onViewChange: (view: string) => void;
 }
 
 export const CalendarHeader = ({
@@ -24,6 +26,8 @@ export const CalendarHeader = ({
   onNextWeek,
   onToday,
   onRefresh,
+  view,
+  onViewChange,
 }: CalendarHeaderProps) => {
   return (
     <div className="space-y-6">
@@ -79,7 +83,7 @@ export const CalendarHeader = ({
             </Button>
           </div>
           <div className="flex items-center gap-4">
-            <Select defaultValue="week">
+            <Select value={view} onValueChange={onViewChange}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="View" />
               </SelectTrigger>
