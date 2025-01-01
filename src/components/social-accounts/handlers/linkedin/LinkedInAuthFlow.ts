@@ -1,5 +1,6 @@
 export const initializeLinkedInAuth = () => {
   const redirectUri = `${window.location.origin}/linkedin-callback.html`;
+  // Add r_liteprofile scope to allow reading basic profile info
   const scope = 'r_liteprofile w_member_social';
   const state = crypto.randomUUID();
   sessionStorage.setItem('linkedin_state', state);

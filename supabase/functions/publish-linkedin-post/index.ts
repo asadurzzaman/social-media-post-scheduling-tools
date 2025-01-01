@@ -40,17 +40,22 @@ serve(async (req) => {
     if (!post) throw new Error('Post not found')
     if (!post.social_accounts?.access_token) throw new Error('LinkedIn access token not found')
 
-    // First, get the LinkedIn member ID with version header
+    // Add required LinkedIn API version headers
+    const linkedInHeaders = {
+      'Authorization': `Bearer ${post.social_accounts.access_token}`,
+      'X-Restli-Protocol-Version': '2.0.0',
+      'LinkedIn-Version': '202304',
+    }
+
+    // First, get the LinkedIn member ID
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
-      headers: {
-        'Authorization': `Bearer ${post.social_accounts.access_token}`,
-        'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304',
-      },
+      headers: linkedInHeaders,
     })
 
     if (!profileResponse.ok) {
-      throw new Error(`LinkedIn profile API error: ${await profileResponse.text()}`)
+      const errorText = await profileResponse.text()
+      console.error('LinkedIn profile API error:', errorText)
+      throw new Error(`LinkedIn profile API error: ${errorText}`)
     }
 
     const profileData = await profileResponse.json()
@@ -84,10 +89,8 @@ serve(async (req) => {
           {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${post.social_accounts.access_token}`,
+              ...linkedInHeaders,
               'Content-Type': 'application/json',
-              'X-Restli-Protocol-Version': '2.0.0',
-              'LinkedIn-Version': '202304',
             },
             body: JSON.stringify({
               registerUploadRequest: {
@@ -115,7 +118,7 @@ serve(async (req) => {
         const uploadResponse = await fetch(uploadUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${post.social_accounts.access_token}`,
+            ...linkedInHeaders,
             'Content-Type': imageBlob.type,
           },
           body: imageBlob,
@@ -147,10 +150,8 @@ serve(async (req) => {
     const createPostResponse = await fetch('https://api.linkedin.com/v2/ugcPosts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${post.social_accounts.access_token}`,
+        ...linkedInHeaders,
         'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202304',
       },
       body: JSON.stringify(postData)
     })
