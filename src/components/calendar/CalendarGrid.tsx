@@ -14,75 +14,60 @@ export const CalendarGrid = ({ weekDays, dayHours, posts = [], onCreatePost, vie
   if (view === 'month') {
     return (
       <div className="overflow-auto">
-        <div className="grid grid-cols-8 divide-x">
-          {/* Time Column */}
-          <div className="w-20">
-            <div className="h-12 border-b"></div>
-            {dayHours.map((hour) => (
-              <div key={hour.toString()} className="h-20 border-b px-2 py-1">
-                <span className="text-sm text-muted-foreground">
-                  {format(hour, 'h a')}
-                </span>
+        <div className="grid grid-cols-7 divide-x">
+          {/* Day headers */}
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            <div key={day} className="h-12 border-b p-2 sticky top-0 bg-white">
+              <div className="text-sm font-medium">
+                {day}
               </div>
-            ))}
-          </div>
-
-          {/* Days Columns */}
-          {weekDays.map((day) => (
-            <div key={day.toString()} className="flex-1 min-w-[8rem]">
-              <div className="h-12 border-b p-2 sticky top-0 bg-white">
-                <div className="text-sm font-medium">
-                  {format(day, 'EEE')}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {format(day, 'MMM d')}
-                </div>
-              </div>
-
-              {dayHours.map((hour) => {
-                const slotDate = new Date(day);
-                slotDate.setHours(hour.getHours(), 0, 0, 0);
-                
-                const dayPosts = posts?.filter(post => {
-                  if (!post?.scheduled_for) return false;
-                  const postDate = new Date(post.scheduled_for);
-                  return (
-                    postDate.getDate() === day.getDate() &&
-                    postDate.getMonth() === day.getMonth() &&
-                    postDate.getHours() === hour.getHours()
-                  );
-                }) || [];
-
-                return (
-                  <div
-                    key={hour.toString()}
-                    className="h-20 border-b relative group"
-                  >
-                    <div className="absolute inset-1">
-                      {dayPosts.map((post) => (
-                        <div
-                          key={post.id}
-                          className="p-1 text-sm bg-primary/10 text-primary rounded mb-1 truncate"
-                        >
-                          {post.content}
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => onCreatePost(slotDate)}
-                      className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <div className="flex items-center justify-center w-full h-full bg-primary/5">
-                        <div className="bg-primary text-primary-foreground p-2 rounded-lg shadow-sm">
-                          <Plus className="h-4 w-4" />
-                        </div>
-                      </div>
-                    </button>
-                  </div>
-                );
-              })}
             </div>
           ))}
+          
+          {/* Calendar days */}
+          {weekDays.map((day) => {
+            const dayPosts = posts?.filter(post => {
+              if (!post?.scheduled_for) return false;
+              const postDate = new Date(post.scheduled_for);
+              return (
+                postDate.getDate() === day.getDate() &&
+                postDate.getMonth() === day.getMonth()
+              );
+            }) || [];
+
+            return (
+              <div
+                key={day.toString()}
+                className="min-h-[8rem] relative group hover:bg-gray-50"
+              >
+                <div className="p-2">
+                  <div className="text-sm">
+                    {format(day, 'd')}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {dayPosts.map((post) => (
+                      <div
+                        key={post.id}
+                        className="p-1 rounded bg-primary/10 text-primary text-sm truncate"
+                        title={post.content}
+                      >
+                        {format(new Date(post.scheduled_for), 'h:mm a')} - {post.content.substring(0, 20)}
+                        {post.content.length > 20 && '...'}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  className="absolute inset-0 w-full h-full opacity-0 group-hover:opacity-100 flex items-center justify-center bg-black/5"
+                  onClick={() => onCreatePost(day)}
+                >
+                  <div className="bg-white p-2 rounded-full shadow-sm">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
