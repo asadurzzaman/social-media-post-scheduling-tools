@@ -37,11 +37,12 @@ serve(async (req) => {
     if (!post) throw new Error('Post not found')
     if (!post.social_accounts?.access_token) throw new Error('LinkedIn access token not found')
 
-    // First, get the LinkedIn member ID
+    // First, get the LinkedIn member ID with version header
     const profileResponse = await fetch('https://api.linkedin.com/v2/me', {
       headers: {
         'Authorization': `Bearer ${post.social_accounts.access_token}`,
         'X-Restli-Protocol-Version': '2.0.0',
+        'LinkedIn-Version': '202304',
       },
     })
 
@@ -89,6 +90,8 @@ serve(async (req) => {
           headers: {
             'Authorization': `Bearer ${post.social_accounts.access_token}`,
             'Content-Type': 'application/json',
+            'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202304',
           },
           body: JSON.stringify({
             registerUploadRequest: {
@@ -150,6 +153,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${post.social_accounts.access_token}`,
         'Content-Type': 'application/json',
         'X-Restli-Protocol-Version': '2.0.0',
+        'LinkedIn-Version': '202304',
       },
       body: JSON.stringify(postData)
     })
