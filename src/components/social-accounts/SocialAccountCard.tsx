@@ -36,16 +36,6 @@ export const SocialAccountCard = ({
     try {
       setIsDisconnecting(true);
       
-      // If it's a Facebook account, logout from Facebook SDK
-      if (platform === 'facebook' && window.FB) {
-        await new Promise<void>((resolve) => {
-          window.FB.logout(() => {
-            console.log('Logged out from Facebook SDK');
-            resolve();
-          });
-        });
-      }
-
       // First, delete all posts associated with this social account
       const { error: postsError } = await supabase
         .from('posts')
@@ -70,17 +60,6 @@ export const SocialAccountCard = ({
       // Call the onDisconnect callback if provided
       if (onDisconnect) {
         onDisconnect();
-      }
-
-      // Reinitialize Facebook SDK if it was a Facebook account
-      if (platform === 'facebook' && window.FB) {
-        window.FB.init({
-          appId: '1294294115054311',
-          cookie: true,
-          xfbml: true,
-          version: 'v18.0'
-        });
-        console.log('Facebook SDK reinitialized');
       }
     } catch (error) {
       console.error(`Error disconnecting ${platform} account:`, error);

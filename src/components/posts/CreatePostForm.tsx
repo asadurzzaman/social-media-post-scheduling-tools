@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { publishPost } from "@/utils/postPublisher";
 import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/integrations/supabase/client";
-import { ReconnectFacebookDialog } from "../social-accounts/ReconnectFacebookDialog";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -46,7 +45,6 @@ export const CreatePostForm = ({
     return [];
   });
   const [isDraft, setIsDraft] = useState(false);
-  const [showReconnectDialog, setShowReconnectDialog] = useState(false);
 
   const resetForm = () => {
     setContent("");
@@ -105,24 +103,13 @@ export const CreatePostForm = ({
     toast.success("Draft cleared successfully!");
   };
 
-  const handleReconnectSuccess = () => {
-    setShowReconnectDialog(false);
-    toast.success("Facebook account reconnected successfully!");
-    // Retry the last action (publish/schedule)
-    if (date) {
-      handleSubmit(new Event('submit') as any);
-    } else {
-      handlePublishNow();
-    }
-  };
-
   const handlePublishError = async (error: any) => {
     console.error("Error publishing post:", error);
     
     const errorBody = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
     const errorMessage = errorBody?.error || error.message;
     
-    if (errorMessage?.includes("Facebook token has expired")) {
+    if (errorMessage?.includes("token has expired")) {
       await supabase
         .from('social_accounts')
         .update({ 
@@ -131,7 +118,7 @@ export const CreatePostForm = ({
         })
         .eq('id', selectedAccount);
       
-      setShowReconnectDialog(true);
+      toast.error("Social media token has expired. Please reconnect your account.");
     } else {
       toast.error(errorMessage || "Failed to publish post");
     }
@@ -197,36 +184,28 @@ export const CreatePostForm = ({
   };
 
   return (
-    <>
-      <CreatePostFormContent
-        accounts={accounts}
-        content={content}
-        setContent={setContent}
-        selectedAccount={selectedAccount}
-        setSelectedAccount={setSelectedAccount}
-        date={date}
-        setDate={setDate}
-        postType={postType}
-        setPostType={setPostType}
-        uploadedFiles={uploadedFiles}
-        setUploadedFiles={setUploadedFiles}
-        previewUrls={previewUrls}
-        setPreviewUrls={setPreviewUrls}
-        isDraft={isDraft}
-        onSubmit={handleSubmit}
-        clearDraft={clearDraft}
-        timezone={timezone}
-        onTimezoneChange={setTimezone}
-        onPublishNow={handlePublishNow}
-        onSaveDraft={handleSaveDraft}
-        initialPost={initialPost}
-      />
-      <ReconnectFacebookDialog
-        isOpen={showReconnectDialog}
-        onClose={() => setShowReconnectDialog(false)}
-        accountId={selectedAccount}
-        onSuccess={handleReconnectSuccess}
-      />
-    </>
+    <CreatePostFormContent
+      accounts={accounts}
+      content={content}
+      setContent={setContent}
+      selectedAccount={selectedAccount}
+      setSelectedAccount={setSelectedAccount}
+      date={date}
+      setDate={setDate}
+      postType={postType}
+      setPostType={setPostType}
+      uploadedFiles={uploadedFiles}
+      setUploadedFiles={setUploadedFiles}
+      previewUrls={previewUrls}
+      setPreviewUrls={setPreviewUrls}
+      isDraft={isDraft}
+      onSubmit={handleSubmit}
+      clearDraft={clearDraft}
+      timezone={timezone}
+      onTimezoneChange={setTimezone}
+      onPublishNow={handlePublishNow}
+      onSaveDraft={handleSaveDraft}
+      initialPost={initialPost}
+    />
   );
 };
