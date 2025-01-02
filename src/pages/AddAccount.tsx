@@ -15,7 +15,7 @@ type FacebookPage = Tables<"facebook_pages">;
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
+  const { data: accounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
       console.log('Starting to fetch social accounts...');
@@ -30,7 +30,8 @@ const AddAccount = () => {
       // Fetch from social_accounts table
       const { data: socialData, error: socialError } = await supabase
         .from('social_accounts')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
       
       if (socialError) {
         console.error("Error fetching social accounts:", socialError);
@@ -42,7 +43,8 @@ const AddAccount = () => {
       const { data: fbData, error: fbError } = await supabase
         .from('facebook_pages')
         .select('*')
-        .eq('user_id', user.id); // Filter by the authenticated user's ID
+        .eq('user_id', user.id)
+        .eq('status', 'active');
 
       if (fbError) {
         console.error("Error fetching Facebook pages:", fbError);
@@ -59,7 +61,6 @@ const AddAccount = () => {
         platform: 'facebook',
         account_name: page.page_name,
         user_id: page.user_id,
-        avatar_url: null, // Facebook pages don't have avatar_url in the table
         created_at: page.connected_at || new Date().toISOString(),
       })) || [];
 
@@ -67,17 +68,6 @@ const AddAccount = () => {
       
       console.log('Combined accounts:', allAccounts);
       console.log('Number of total accounts:', allAccounts.length);
-      
-      if (allAccounts.length > 0) {
-        allAccounts.forEach((account, index) => {
-          console.log(`Account ${index + 1}:`, {
-            id: account.id,
-            platform: account.platform,
-            accountName: account.account_name,
-            avatarUrl: account.avatar_url
-          });
-        });
-      }
       
       return allAccounts as SocialAccount[];
     },
@@ -126,13 +116,8 @@ const AddAccount = () => {
   };
 
   // Filter accounts by platform
-  const instagramAccounts = Array.isArray(socialAccounts) 
-    ? socialAccounts.filter(account => account.platform === 'instagram')
-    : [];
-
-  const facebookAccounts = Array.isArray(socialAccounts)
-    ? socialAccounts.filter(account => account.platform === 'facebook')
-    : [];
+  const instagramAccounts = accounts?.filter(account => account.platform === 'instagram') || [];
+  const facebookAccounts = accounts?.filter(account => account.platform === 'facebook') || [];
 
   console.log('Filtered Facebook accounts:', facebookAccounts);
   console.log('Filtered Instagram accounts:', instagramAccounts);
