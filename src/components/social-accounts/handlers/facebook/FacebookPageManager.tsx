@@ -97,11 +97,6 @@ export const FacebookPageManager = () => {
     }
   };
 
-  const handleCreatePost = (pageId: string) => {
-    setSelectedPageId(pageId);
-    setIsCreateDialogOpen(true);
-  };
-
   return (
     <div className="space-y-4">
       <Button 
@@ -121,15 +116,6 @@ export const FacebookPageManager = () => {
             <span>Connect Facebook Pages</span>
           </>
         )}
-      </Button>
-
-      <Button
-        onClick={() => handleCreatePost("your_page_id")}
-        className="w-full flex items-center justify-center gap-2"
-        variant="default"
-      >
-        <Plus className="h-4 w-4" />
-        Create Post
       </Button>
 
       <CreateFacebookPostDialog
