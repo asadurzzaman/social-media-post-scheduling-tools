@@ -1,4 +1,4 @@
 project_id = "czuhcymoqjgsmwzimlzd"
 
-[functions.publish-linkedin-post]
+[functions.publish-facebook-post]
 verify_jwt = true
