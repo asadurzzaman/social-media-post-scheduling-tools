@@ -20,6 +20,13 @@ const AddAccount = () => {
     queryFn: async () => {
       console.log('Starting to fetch social accounts...');
       
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
+      console.log('Current user ID:', user.id);
+
       // Fetch from social_accounts table
       const { data: socialData, error: socialError } = await supabase
         .from('social_accounts')
@@ -34,7 +41,8 @@ const AddAccount = () => {
       // Fetch from facebook_pages table
       const { data: fbData, error: fbError } = await supabase
         .from('facebook_pages')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id); // Filter by the authenticated user's ID
 
       if (fbError) {
         console.error("Error fetching Facebook pages:", fbError);
