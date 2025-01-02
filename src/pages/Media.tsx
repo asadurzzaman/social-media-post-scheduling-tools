@@ -7,6 +7,7 @@ import { MediaHeader } from "@/components/media/MediaHeader";
 import { MediaUploader } from "@/components/media/MediaUploader";
 import { MediaFilters } from "@/components/media/MediaFilters";
 import { MediaGrid } from "@/components/media/MediaGrid";
+import { useUser } from "@/hooks/useUser";
 
 const Media = () => {
   const [uploading, setUploading] = useState(false);
@@ -15,6 +16,7 @@ const Media = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<string>("all");
+  const { userId } = useUser();
 
   const { data: mediaFiles, refetch } = useQuery({
     queryKey: ['media-files'],
@@ -50,13 +52,31 @@ const Media = () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
 
-        const { error } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('media')
           .upload(fileName, file);
 
-        if (error) {
+        if (uploadError) {
           toast.error(`Error uploading ${file.name}`);
-          console.error('Error:', error);
+          console.error('Error:', uploadError);
+          continue;
+        }
+
+        // Insert record into media_files table
+        const { error: dbError } = await supabase
+          .from('media_files')
+          .insert({
+            user_id: userId,
+            file_name: fileName,
+            file_path: fileName,
+            file_type: fileExt || 'unknown',
+            file_size: file.size,
+            mime_type: file.type,
+          });
+
+        if (dbError) {
+          console.error('Database error:', dbError);
+          toast.error(`Error saving metadata for ${file.name}`);
         } else {
           toast.success(`${file.name} uploaded successfully`);
         }
@@ -68,12 +88,24 @@ const Media = () => {
     } finally {
       setUploading(false);
     }
-  }, [refetch]);
+  }, [refetch, userId]);
 
   const handleDelete = async (fileNames: string[]) => {
     setDeleting(fileNames);
     try {
-      // First, try to delete from storage
+      // First, delete from media_files table
+      const { error: dbError } = await supabase
+        .from('media_files')
+        .delete()
+        .in('file_name', fileNames);
+
+      if (dbError) {
+        console.error('Database deletion error:', dbError);
+        toast.error('Error removing file metadata');
+        return;
+      }
+
+      // Then delete from storage
       const { error: storageError } = await supabase
         .storage
         .from('media')
@@ -85,20 +117,7 @@ const Media = () => {
         return;
       }
 
-      // If storage deletion was successful, delete from media_files table
-      const { error: dbError } = await supabase
-        .from('media_files')
-        .delete()
-        .in('file_name', fileNames);
-
-      if (dbError) {
-        console.error('Database deletion error:', dbError);
-        // Even if DB deletion fails, storage deletion succeeded
-        toast.warning('Files deleted from storage but metadata update failed');
-      } else {
-        toast.success(`${fileNames.length} file(s) deleted successfully`);
-      }
-
+      toast.success(`${fileNames.length} file(s) deleted successfully`);
       setSelectedFiles([]);
       await refetch();
     } catch (error) {
