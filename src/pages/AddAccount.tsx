@@ -18,7 +18,7 @@ const AddAccount = () => {
   const { data: accounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
-      console.log('Starting to fetch social accounts...');
+      console.log('Starting to fetch accounts...');
       
       // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
@@ -27,15 +27,16 @@ const AddAccount = () => {
       }
       console.log('Current user ID:', user.id);
 
-      // Fetch from social_accounts table
+      // Fetch from social_accounts table for Instagram accounts
       const { data: socialData, error: socialError } = await supabase
         .from('social_accounts')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('platform', 'instagram');
       
       if (socialError) {
-        console.error("Error fetching social accounts:", socialError);
-        toast.error("Failed to fetch social accounts");
+        console.error("Error fetching Instagram accounts:", socialError);
+        toast.error("Failed to fetch Instagram accounts");
         throw socialError;
       }
 
@@ -52,7 +53,7 @@ const AddAccount = () => {
         throw fbError;
       }
       
-      console.log('Raw response from social_accounts:', socialData);
+      console.log('Raw response from social_accounts (Instagram):', socialData);
       console.log('Raw response from facebook_pages:', fbData);
 
       // Convert facebook_pages to social_accounts format
@@ -62,7 +63,7 @@ const AddAccount = () => {
         account_name: page.page_name,
         user_id: page.user_id,
         created_at: page.connected_at || new Date().toISOString(),
-        avatar_url: null, // Add this if you have page avatar URLs
+        avatar_url: null,
         page_id: page.page_id,
         page_access_token: page.page_access_token
       })) || [];
@@ -92,7 +93,7 @@ const AddAccount = () => {
     try {
       console.log('Attempting to disconnect account:', accountId);
       
-      // Try to delete from social_accounts first
+      // Try to delete from social_accounts first (for Instagram)
       const { error: socialError } = await supabase
         .from('social_accounts')
         .delete()
