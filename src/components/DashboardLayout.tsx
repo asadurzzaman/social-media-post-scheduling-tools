@@ -55,23 +55,26 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      // Check if we have a token in localStorage
-      const token = localStorage.getItem('sb-czuhcymoqjgsmwzimlzd-auth-token');
+      // First try to get the current session
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (token) {
-        // Only attempt to sign out if we have a token
-        await supabase.auth.signOut();
+      // If we have a session, attempt to sign out
+      if (session) {
+        const { error } = await supabase.auth.signOut({
+          scope: 'local'
+        });
+        if (error) throw error;
       }
       
-      // Always clear localStorage and redirect
-      localStorage.removeItem('sb-czuhcymoqjgsmwzimlzd-auth-token');
+      // Always clear local storage and redirect
+      localStorage.clear(); // Clear all storage to be thorough
       navigate("/login");
       toast.success("Logged out successfully");
       
     } catch (error) {
       console.error("Logout error:", error);
       // Even if there's an error, clear storage and redirect
-      localStorage.removeItem('sb-czuhcymoqjgsmwzimlzd-auth-token');
+      localStorage.clear();
       navigate("/login");
     }
   };
