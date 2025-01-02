@@ -7,18 +7,19 @@ import { usePostsData } from "./usePostsData";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays } from "date-fns";
-
-type SortOption = 'newest' | 'oldest' | 'scheduled';
+import { BulkActions } from "./BulkActions";
+import { usePostRealtime } from "@/hooks/usePostRealtime";
 
 export const PostsContainer = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'scheduled'>('newest');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [shouldApplyFilter, setShouldApplyFilter] = useState(false);
+  const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
 
   const { data: posts, isLoading, refetch } = usePostsData(
     statusFilter,
@@ -27,6 +28,11 @@ export const PostsContainer = () => {
     startDate,
     endDate
   );
+
+  // Enable real-time updates
+  usePostRealtime(() => {
+    refetch();
+  });
 
   const { data: accounts } = useQuery({
     queryKey: ["social-accounts"],
@@ -90,6 +96,14 @@ export const PostsContainer = () => {
     toast.success("Date filter applied");
   };
 
+  const togglePostSelection = (postId: string) => {
+    setSelectedPosts(prev => 
+      prev.includes(postId) 
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    );
+  };
+
   return (
     <div className="space-y-6">
       <PostsHeader
@@ -113,11 +127,19 @@ export const PostsContainer = () => {
         onApplyDateFilter={handleApplyDateFilter}
       />
 
+      <BulkActions
+        selectedPosts={selectedPosts}
+        onSuccess={refetch}
+        onClearSelection={() => setSelectedPosts([])}
+      />
+
       <PostList
         posts={posts}
         isLoading={isLoading}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        selectedPosts={selectedPosts}
+        onToggleSelect={togglePostSelection}
       />
 
       {selectedPost && (

@@ -11,15 +11,25 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface PostListProps {
   posts: any[];
   onEdit: (post: any) => void;
   onDelete: (id: string) => void;
   isLoading: boolean;
+  selectedPosts: string[];
+  onToggleSelect: (postId: string) => void;
 }
 
-export const PostList = ({ posts, onEdit, onDelete, isLoading }: PostListProps) => {
+export const PostList = ({ 
+  posts, 
+  onEdit, 
+  onDelete, 
+  isLoading,
+  selectedPosts,
+  onToggleSelect
+}: PostListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
   const totalPages = Math.ceil((posts?.length || 0) / postsPerPage);
@@ -51,12 +61,19 @@ export const PostList = ({ posts, onEdit, onDelete, isLoading }: PostListProps) 
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {currentPosts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
+          <div key={post.id} className="relative group">
+            <div className="absolute top-2 left-2 z-10">
+              <Checkbox
+                checked={selectedPosts.includes(post.id)}
+                onCheckedChange={() => onToggleSelect(post.id)}
+              />
+            </div>
+            <PostCard
+              post={post}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          </div>
         ))}
       </div>
       
