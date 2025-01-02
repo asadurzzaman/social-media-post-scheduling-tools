@@ -88,6 +88,11 @@ export function PricingCard({ title, price, features, priceId, isCurrentPlan }: 
             'Get Started'
           )}
         </Button>
+        {isCurrentPlan && (
+          <p className="text-sm text-center text-muted-foreground mt-2">
+            You are currently subscribed to this plan
+          </p>
+        )}
       </div>
     </Card>
   );

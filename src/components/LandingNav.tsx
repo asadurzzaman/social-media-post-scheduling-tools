@@ -90,9 +90,14 @@ export function LandingNav() {
               </Button>
             </>
           ) : (
-            <Button onClick={() => navigate("/auth")}>
-              Sign In
-            </Button>
+            <>
+              <Button variant="ghost" onClick={() => navigate("/login")}>
+                Login
+              </Button>
+              <Button onClick={() => navigate("/pricing")}>
+                Get Started
+              </Button>
+            </>
           )}
         </div>
       </div>

@@ -1,27 +1,19 @@
-import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
+import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { LandingNav } from "@/components/LandingNav";
 import { Footer } from "@/components/Footer";
 
-const Auth = () => {
+const Login = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const success = searchParams.get('success');
 
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (session) {
-          navigate("/dashboard");
-        }
-      } catch (error) {
-        console.error("Session check error:", error);
-        toast.error("Error checking authentication status");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/dashboard");
       }
     };
 
@@ -29,39 +21,25 @@ const Auth = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         navigate("/dashboard");
-      } else if (event === 'SIGNED_OUT') {
-        navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, success]);
-
-  if (!success) {
-    return null;
-  }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <LandingNav />
       <div className="flex-1 container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Complete Your Registration
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Create your account to access your subscription
-            </p>
-          </div>
-          <div className="mt-8">
-            <SupabaseAuth
+          <h1 className="text-3xl font-bold text-center mb-8">Welcome Back</h1>
+          <div className="bg-white p-8 rounded-lg shadow-md">
+            <Auth
               supabaseClient={supabase}
-              appearance={{ 
+              appearance={{
                 theme: ThemeSupa,
                 variables: {
                   default: {
@@ -83,4 +61,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default Login;
