@@ -1,9 +1,9 @@
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InstagramAuthHandler } from "./handlers/instagram/InstagramAuthHandler";
 import { LinkedInAuthHandler } from "./handlers/linkedin/LinkedInAuthHandler";
-import { FacebookAuthButton } from "./handlers/facebook/FacebookAuthButton";
 import { Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FacebookPageManager } from "./handlers/facebook/FacebookPageManager";
 
 interface ConnectAccountDialogProps {
   onSuccess: () => void;
@@ -19,7 +19,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-4 py-4">
-        <FacebookAuthButton />
+        <FacebookPageManager onSuccess={onSuccess} />
         <InstagramAuthHandler />
         <LinkedInAuthHandler />
         <Button className="w-full flex items-center justify-center gap-2" variant="outline" disabled>

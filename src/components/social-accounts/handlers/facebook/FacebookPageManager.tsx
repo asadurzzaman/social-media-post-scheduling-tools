@@ -7,7 +7,11 @@ import { showFacebookError, showFacebookSuccess } from "./FacebookToasts";
 import { handleFacebookAuth } from "./FacebookAuthHandler";
 import { CreateFacebookPostDialog } from "@/components/facebook/CreateFacebookPostDialog";
 
-export const FacebookPageManager = () => {
+interface FacebookPageManagerProps {
+  onSuccess?: () => void;
+}
+
+export const FacebookPageManager = ({ onSuccess }: FacebookPageManagerProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedPageId, setSelectedPageId] = useState<string>("");
@@ -74,6 +78,10 @@ export const FacebookPageManager = () => {
           "Facebook pages connected successfully",
           `Added ${addedPages} new pages${duplicatePages > 0 ? ` (${duplicatePages} already connected)` : ''}`
         );
+        // Call onSuccess callback to close dialog and refresh list
+        if (onSuccess) {
+          onSuccess();
+        }
       } else if (duplicatePages > 0) {
         showFacebookError(
           "No new pages added",
