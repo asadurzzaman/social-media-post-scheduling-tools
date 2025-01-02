@@ -12,7 +12,7 @@ declare global {
           accessToken: string;
         };
         status?: string;
-      }) => void, params: { scope: string; return_scopes: boolean; redirect_uri?: string }) => void;
+      }) => void, params: { scope: string; return_scopes: boolean }) => void;
     };
     fbAsyncInit: () => void;
   }
@@ -25,10 +25,6 @@ export const handleFacebookAuth = async (): Promise<string> => {
     // Initialize Facebook SDK
     await initFacebookSDK();
     console.log('Facebook SDK initialized');
-
-    // Get the current URL as redirect URI
-    const redirectUri = window.location.origin + '/add-account';
-    console.log('Using redirect URI:', redirectUri);
 
     // Trigger Facebook login
     const response = await new Promise<{ authResponse?: { accessToken: string } }>((resolve, reject) => {
@@ -46,8 +42,7 @@ export const handleFacebookAuth = async (): Promise<string> => {
         }
       }, {
         scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata',
-        return_scopes: true,
-        redirect_uri: redirectUri
+        return_scopes: true
       });
     });
 
@@ -72,7 +67,7 @@ const initFacebookSDK = async (): Promise<void> => {
     
     // Set up the FB init callback
     window.fbAsyncInit = () => {
-      const appId = import.meta.env.VITE_FACEBOOK_APP_ID;
+      const appId = '2579075792280951'; // Your Facebook App ID
       console.log('Initializing Facebook SDK with App ID:', appId);
       
       window.FB.init({
@@ -82,7 +77,6 @@ const initFacebookSDK = async (): Promise<void> => {
         version: 'v19.0'
       });
 
-      // Only resolve after FB.init is called
       resolve();
     };
 
