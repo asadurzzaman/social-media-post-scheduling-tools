@@ -11,14 +11,18 @@ import { AccountsList } from "@/components/social-accounts/AccountsList";
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
+  const { data: socialAccounts = [], refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('social_accounts')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching social accounts:", error);
+        throw error;
+      }
+      
       return data || [];
     },
   });
@@ -51,7 +55,7 @@ const AddAccount = () => {
     }
   };
 
-  const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
+  const instagramAccounts = socialAccounts.filter(account => account.platform === 'instagram');
 
   return (
     <DashboardLayout>
