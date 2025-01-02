@@ -55,20 +55,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      // Clear all local storage items related to auth
-      localStorage.removeItem('sb-czuhcymoqjgsmwzimlzd-auth-token');
+      // Get the current session first
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Force clear the session
-      await supabase.auth.signOut({
-        scope: 'local'
-      }).catch(() => {
-        // Ignore any errors from signOut
-      });
-
-      // Clear any other session data
-      await supabase.auth.clearSession();
+      if (session) {
+        // If we have a session, sign out properly
+        await supabase.auth.signOut();
+      }
       
-      // Always navigate to login, regardless of success/failure
+      // Clear the auth data from localStorage
+      const storageKey = `sb-${supabase.supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
+      localStorage.removeItem(storageKey);
+      
+      // Navigate to login and show success message
       navigate("/login");
       toast.success("Logged out successfully");
       
