@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Facebook } from "lucide-react";
+import { Facebook, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkExistingAccount } from "@/utils/socialAccounts";
 import { showFacebookError, showFacebookSuccess } from "./FacebookToasts";
 import { handleFacebookAuth } from "./FacebookAuthHandler";
+import { CreateFacebookPostDialog } from "@/components/facebook/CreateFacebookPostDialog";
 
-interface FacebookPageManagerProps {
-  onSuccess?: () => void;
-}
-
-export const FacebookPageManager = ({ onSuccess }: FacebookPageManagerProps) => {
+export const FacebookPageManager = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedPageId, setSelectedPageId] = useState<string>("");
 
   const handleConnect = async () => {
     try {
@@ -75,8 +74,6 @@ export const FacebookPageManager = ({ onSuccess }: FacebookPageManagerProps) => 
           "Facebook pages connected successfully",
           `Added ${addedPages} new pages${duplicatePages > 0 ? ` (${duplicatePages} already connected)` : ''}`
         );
-        // Call onSuccess callback to close dialog and refresh list
-        onSuccess?.();
       } else if (duplicatePages > 0) {
         showFacebookError(
           "No new pages added",
@@ -101,23 +98,31 @@ export const FacebookPageManager = ({ onSuccess }: FacebookPageManagerProps) => 
   };
 
   return (
-    <Button 
-      onClick={handleConnect}
-      disabled={isLoading}
-      className="w-full flex items-center justify-center gap-2"
-      variant="outline"
-    >
-      {isLoading ? (
-        <>
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-          <span>Connecting...</span>
-        </>
-      ) : (
-        <>
-          <Facebook className="h-5 w-5" />
-          <span>Connect Facebook Pages</span>
-        </>
-      )}
-    </Button>
+    <div className="space-y-4">
+      <Button 
+        onClick={handleConnect}
+        disabled={isLoading}
+        className="w-full flex items-center justify-center gap-2"
+        variant="outline"
+      >
+        {isLoading ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+            <span>Connecting...</span>
+          </>
+        ) : (
+          <>
+            <Facebook className="h-5 w-5" />
+            <span>Connect Facebook Pages</span>
+          </>
+        )}
+      </Button>
+
+      <CreateFacebookPostDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        pageId={selectedPageId}
+      />
+    </div>
   );
 };

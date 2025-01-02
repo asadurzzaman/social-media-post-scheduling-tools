@@ -14,31 +14,12 @@ const AddAccount = () => {
   const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
-      const { data: instagramAccounts, error: instagramError } = await supabase
+      const { data, error } = await supabase
         .from('social_accounts')
-        .select('*')
-        .eq('platform', 'instagram');
-      
-      if (instagramError) throw instagramError;
-
-      const { data: facebookPages, error: facebookError } = await supabase
-        .from('facebook_pages')
         .select('*');
       
-      if (facebookError) throw facebookError;
-
-      // Transform Facebook pages to match social accounts structure
-      const facebookAccounts = facebookPages.map(page => ({
-        id: page.id,
-        platform: 'facebook',
-        account_name: page.page_name,
-        page_id: page.page_id
-      }));
-
-      return {
-        instagram: instagramAccounts || [],
-        facebook: facebookAccounts || []
-      };
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -48,29 +29,17 @@ const AddAccount = () => {
       setIsDialogOpen(false);
       toast.success("Account connected successfully!");
     } catch (error) {
-      console.error("Error refreshing accounts list:", error);
+      console.error("Error refreshing accounts:", error);
       toast.error("Failed to refresh accounts list");
     }
   };
 
-  const handleDisconnect = async (accountId: string, platform: string) => {
+  const handleDisconnect = async (accountId: string) => {
     try {
-      let error;
-      
-      // Delete from the appropriate table based on the platform
-      if (platform === 'facebook') {
-        const { error: fbError } = await supabase
-          .from('facebook_pages')
-          .delete()
-          .eq('id', accountId);
-        error = fbError;
-      } else {
-        const { error: igError } = await supabase
-          .from('social_accounts')
-          .delete()
-          .eq('id', accountId);
-        error = igError;
-      }
+      const { error } = await supabase
+        .from('social_accounts')
+        .delete()
+        .eq('id', accountId);
 
       if (error) throw error;
       
@@ -82,6 +51,8 @@ const AddAccount = () => {
     }
   };
 
+  const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -90,8 +61,7 @@ const AddAccount = () => {
           <ConnectAccountDialog onSuccess={handleSuccess} />
         </Dialog>
         <AccountsList 
-          instagramAccounts={socialAccounts?.instagram || []}
-          facebookAccounts={socialAccounts?.facebook || []}
+          instagramAccounts={instagramAccounts}
           onDisconnect={handleDisconnect}
         />
       </div>

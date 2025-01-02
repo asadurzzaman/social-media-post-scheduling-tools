@@ -39,43 +39,19 @@ export const handleFacebookAuth = async (): Promise<string> => {
         if (response.authResponse) {
           resolve(response);
         } else {
-          // More specific error message based on the status
-          if (response.status === 'not_authorized') {
-            reject(new Error('Please authorize the application to manage your Facebook pages'));
-          } else {
-            reject(new Error('Please complete the Facebook login process and grant the required permissions'));
-          }
+          reject(new Error('User cancelled login or did not fully authorize'));
         }
       }, {
-        // Updated scope to include all required permissions
-        scope: [
-          'public_profile',
-          'pages_show_list',
-          'pages_read_engagement',
-          'pages_manage_posts',
-          'pages_manage_metadata',
-          'pages_manage_engagement'
-        ].join(','),
+        scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata',
         return_scopes: true
       });
     });
 
-    if (!response.authResponse?.accessToken) {
-      throw new Error('No access token received from Facebook');
-    }
-
     console.log('Facebook auth successful, token obtained');
-    return response.authResponse.accessToken;
+    return response.authResponse!.accessToken;
   } catch (error: any) {
     console.error('Facebook auth error:', error);
-    // Provide more user-friendly error messages
-    if (error.message.includes('SDK')) {
-      throw new Error('Failed to load Facebook integration. Please try again.');
-    } else if (error.message.includes('authorize')) {
-      throw new Error('Please grant all required permissions to manage your Facebook pages');
-    } else {
-      throw new Error(`Facebook authentication failed: ${error.message}`);
-    }
+    throw new Error(`Facebook authentication failed: ${error.message}`);
   }
 };
 

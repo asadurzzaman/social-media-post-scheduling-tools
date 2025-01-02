@@ -51,7 +51,8 @@ export const SocialAccountCard = ({
       const { error: accountError } = await supabase
         .from('social_accounts')
         .delete()
-        .eq('id', accountId);
+        .eq('id', accountId)
+        .single();
 
       if (accountError) {
         console.error('Error disconnecting account:', accountError);
