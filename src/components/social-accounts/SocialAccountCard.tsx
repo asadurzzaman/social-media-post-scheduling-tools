@@ -2,8 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 
 interface SocialAccountCardProps {
   platform: string;
@@ -13,7 +12,7 @@ interface SocialAccountCardProps {
   accountName?: string;
   accountId?: string;
   onDisconnect?: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   avatarUrl?: string;
 }
 
@@ -21,12 +20,9 @@ export const SocialAccountCard = ({
   platform,
   icon,
   title,
-  isConnected,
   accountName,
   accountId,
   onDisconnect,
-  children,
-  avatarUrl
 }: SocialAccountCardProps) => {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
@@ -73,57 +69,30 @@ export const SocialAccountCard = ({
     }
   };
 
-  const getDisplayName = () => {
-    if (!accountName) {
-      return platform === 'linkedin' ? 'LinkedIn Profile' : `${platform} Page`;
-    }
-    return accountName;
-  };
-
   return (
-    <Card className="mb-4">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-3">
-          {platform === 'linkedin' ? (
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${accountName}`} />
-              <AvatarFallback className="bg-accent">
-                {icon}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <div className="w-12 h-12 flex items-center justify-center bg-accent rounded-lg">
-              {icon}
-            </div>
-          )}
+    <Card className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 flex items-center justify-center bg-primary/10 rounded-lg">
+            {icon}
+          </div>
           <div>
-            <h3 className="font-semibold text-lg">{title}</h3>
-            {isConnected && (
-              <p className="text-sm font-medium text-primary">
-                {getDisplayName()}
-              </p>
-            )}
+            <h3 className="text-lg font-semibold">{title}</h3>
+            <p className="text-sm text-primary">{accountName}</p>
           </div>
         </div>
-        {isConnected ? (
-          <Button 
-            variant="destructive" 
-            onClick={handleDisconnect}
-            disabled={isDisconnecting}
-          >
-            {isDisconnecting ? "Disconnecting..." : "Disconnect"}
-          </Button>
-        ) : (
-          children
-        )}
-      </CardHeader>
-      <CardContent>
-        {isConnected && (
-          <div className="text-sm text-muted-foreground">
-            Connected as <span className="font-medium">{getDisplayName()}</span>
-          </div>
-        )}
-      </CardContent>
+        <Button 
+          variant="destructive" 
+          onClick={handleDisconnect}
+          disabled={isDisconnecting}
+          className="rounded-full px-6"
+        >
+          {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+        </Button>
+      </div>
+      <p className="text-sm text-muted-foreground mt-4">
+        Connected as <span className="font-medium">{accountName}</span>
+      </p>
     </Card>
   );
 };
