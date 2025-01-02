@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { corsHeaders } from '../_shared/cors.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.0'
+import { corsHeaders } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -31,11 +31,13 @@ Deno.serve(async (req) => {
     const socialAccount = post.social_accounts;
     if (!socialAccount) throw new Error('Social account not found');
 
+    console.log('Publishing post to Facebook:', { postId, socialAccount: socialAccount.id });
+
     // Prepare the Facebook API request
     const url = `https://graph.facebook.com/v19.0/${socialAccount.page_id}/feed`;
     const body: any = {
       message: post.content,
-      access_token: socialAccount.access_token,
+      access_token: socialAccount.page_access_token,
     };
 
     // If there's an image, attach it
@@ -56,6 +58,8 @@ Deno.serve(async (req) => {
     const result = await response.json();
 
     if (!response.ok) {
+      console.error('Facebook API error:', result);
+      
       // Check if token has expired
       if (result.error?.code === 190) {
         await supabase
@@ -70,6 +74,8 @@ Deno.serve(async (req) => {
       }
       throw new Error(result.error?.message || 'Failed to publish to Facebook');
     }
+
+    console.log('Successfully published to Facebook:', result);
 
     // Update post status
     await supabase
