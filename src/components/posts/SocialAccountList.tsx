@@ -1,11 +1,13 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
+import { Facebook, Instagram } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
 interface SocialAccount {
   id: string;
   platform: string;
   account_name: string;
+  avatar_url?: string;
 }
 
 interface SocialAccountListProps {
@@ -14,88 +16,75 @@ interface SocialAccountListProps {
   onSelect: (accountId: string) => void;
 }
 
-const demoAccounts = [
-  {
-    id: 'demo-linkedin',
-    platform: 'linkedin',
-    account_name: 'Demo LinkedIn Page'
-  },
-  {
-    id: 'demo-youtube',
-    platform: 'youtube',
-    account_name: 'Demo YouTube Channel'
-  },
-  {
-    id: 'demo-instagram',
-    platform: 'instagram',
-    account_name: 'Demo Instagram Profile'
-  },
-  {
-    id: 'demo-twitter',
-    platform: 'twitter',
-    account_name: 'Demo Twitter Account'
-  }
-];
-
-export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: SocialAccountListProps) => {
-  const getPlatformIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case 'linkedin':
-        return <Linkedin className="h-6 w-6 text-[#0077B5]" />;
-      case 'youtube':
-        return <Youtube className="h-6 w-6 text-[#FF0000]" />;
-      case 'instagram':
-        return <Instagram className="h-6 w-6 text-[#E4405F]" />;
-      case 'twitter':
-        return <Twitter className="h-6 w-6 text-[#1DA1F2]" />;
-      default:
-        return null;
-    }
-  };
-
-  const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
+export const SocialAccountList = ({
+  accounts,
+  selectedAccount,
+  onSelect,
+}: SocialAccountListProps) => {
+  const facebookAccounts = accounts.filter(account => account.platform === 'facebook');
+  const instagramAccounts = accounts.filter(account => account.platform === 'instagram');
+  
+  console.log('Facebook accounts:', facebookAccounts);
+  console.log('Instagram accounts:', instagramAccounts);
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">
+      <Label className="text-sm font-medium">
         Select Social Media Account <span className="text-red-500">*</span>
-      </label>
-      <Select value={selectedAccount} onValueChange={onSelect}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an account">
-            {selectedAccount && displayAccounts.map((account) => (
-              account.id === selectedAccount && (
-                <div key={account.id} className="flex items-center gap-3">
-                  {getPlatformIcon(account.platform)}
-                  <span className="font-medium">{account.account_name}</span>
-                </div>
-              )
-            ))}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {displayAccounts.map((account) => (
-            <SelectItem 
-              key={account.id} 
-              value={account.id}
-              className="flex items-center gap-3 py-2"
+      </Label>
+      <RadioGroup
+        value={selectedAccount}
+        onValueChange={onSelect}
+        className="space-y-2"
+      >
+        {facebookAccounts.map((account) => (
+          <div
+            key={account.id}
+            className={cn(
+              "flex items-center space-x-3 rounded-lg border p-4",
+              selectedAccount === account.id
+                ? "border-primary bg-primary/5"
+                : "border-input"
+            )}
+          >
+            <RadioGroupItem value={account.id} id={account.id} />
+            <Label
+              htmlFor={account.id}
+              className="flex flex-1 items-center space-x-3 cursor-pointer"
             >
-              <div className="flex items-center gap-3">
-                {getPlatformIcon(account.platform)}
-                <span className="font-medium">{account.account_name}</span>
-                {accounts.length === 0 && (
-                  <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {accounts.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          These are demo accounts. Connect your social media accounts to start posting.
-        </p>
-      )}
+              <Facebook className="h-5 w-5 text-[#1877F2]" />
+              <span>{account.account_name}</span>
+            </Label>
+          </div>
+        ))}
+
+        {instagramAccounts.map((account) => (
+          <div
+            key={account.id}
+            className={cn(
+              "flex items-center space-x-3 rounded-lg border p-4",
+              selectedAccount === account.id
+                ? "border-primary bg-primary/5"
+                : "border-input"
+            )}
+          >
+            <RadioGroupItem value={account.id} id={account.id} />
+            <Label
+              htmlFor={account.id}
+              className="flex flex-1 items-center space-x-3 cursor-pointer"
+            >
+              <Instagram className="h-5 w-5 text-[#E4405F]" />
+              <span>{account.account_name}</span>
+            </Label>
+          </div>
+        ))}
+
+        {accounts.length === 0 && (
+          <div className="text-sm text-muted-foreground">
+            No social media accounts connected. Please connect an account first.
+          </div>
+        )}
+      </RadioGroup>
     </div>
   );
 };
