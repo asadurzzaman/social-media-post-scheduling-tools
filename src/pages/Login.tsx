@@ -50,10 +50,19 @@ const Login = () => {
                   },
                 },
               }}
+              view="sign_in"
+              showLinks={false}
               providers={["facebook"]}
               redirectTo={`${window.location.origin}/dashboard`}
             />
           </div>
+          <p className="text-center mt-4 text-sm text-gray-600">
+            New to SocialManager? Visit our{" "}
+            <a href="/pricing" className="text-primary hover:underline">
+              pricing page
+            </a>{" "}
+            to get started.
+          </p>
         </div>
       </div>
       <Footer />
