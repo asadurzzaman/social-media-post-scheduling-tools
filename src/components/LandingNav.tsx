@@ -36,27 +36,28 @@ export function LandingNav() {
 
   const handleLogout = async () => {
     try {
-      // First check if we have a session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { error } = await supabase.auth.signOut({
+        scope: 'local'
+      });
       
-      if (!session) {
-        // If no session, just redirect to login
-        setIsAuthenticated(false);
-        navigate("/login");
-        return;
-      }
-
-      // If we have a session, proceed with logout
-      const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear all local storage
+      localStorage.clear();
+      
+      // Reset auth state
       setIsAuthenticated(false);
-      toast.success("Logged out successfully");
+      
+      // Navigate and show success message
       navigate("/login");
+      toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Error logging out");
-      // Even if there's an error, try to redirect to login
+      
+      // Even if there's an error, clear storage and redirect
+      localStorage.clear();
+      setIsAuthenticated(false);
       navigate("/login");
     }
   };

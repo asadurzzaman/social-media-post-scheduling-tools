@@ -55,24 +55,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      // First try to get the current session
-      const { data: { session } } = await supabase.auth.getSession();
+      const { error } = await supabase.auth.signOut({
+        scope: 'local'
+      });
       
-      // If we have a session, attempt to sign out
-      if (session) {
-        const { error } = await supabase.auth.signOut({
-          scope: 'local'
-        });
-        if (error) throw error;
-      }
+      if (error) throw error;
       
-      // Always clear local storage and redirect
-      localStorage.clear(); // Clear all storage to be thorough
+      // Clear all local storage
+      localStorage.clear();
+      
+      // Navigate and show success message
       navigate("/login");
       toast.success("Logged out successfully");
-      
     } catch (error) {
       console.error("Logout error:", error);
+      toast.error("Error logging out");
+      
       // Even if there's an error, clear storage and redirect
       localStorage.clear();
       navigate("/login");
