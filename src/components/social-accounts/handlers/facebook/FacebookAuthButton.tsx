@@ -19,19 +19,21 @@ export const FacebookAuthButton = () => {
 
       // Get Facebook access token
       const accessToken = await handleFacebookAuth();
-      console.log('Facebook access token obtained:', accessToken);
+      console.log('Facebook access token obtained');
 
-      // Fetch pages
+      // Fetch pages with error handling
       const response = await fetch(
         `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`
       );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Facebook API Error:", errorData);
+        throw new Error(errorData.error?.message || 'Failed to fetch Facebook pages');
+      }
+
       const data = await response.json();
       console.log('Facebook pages data:', data);
-      
-      if (data.error) {
-        console.error("Facebook API Error:", data.error);
-        throw new Error(data.error.message);
-      }
 
       if (!data.data || data.data.length === 0) {
         throw new Error('No Facebook pages found. Make sure you have admin access to at least one Facebook page.');
@@ -39,7 +41,21 @@ export const FacebookAuthButton = () => {
 
       // Save pages to database
       let addedPages = 0;
+      let duplicatePages = 0;
+
       for (const page of data.data) {
+        // Check if page already exists
+        const { data: existingPages } = await supabase
+          .from('facebook_pages')
+          .select('page_id')
+          .eq('page_id', page.id)
+          .eq('user_id', user.id);
+
+        if (existingPages && existingPages.length > 0) {
+          duplicatePages++;
+          continue;
+        }
+
         const { error: insertError } = await supabase
           .from('facebook_pages')
           .insert({
@@ -51,10 +67,6 @@ export const FacebookAuthButton = () => {
           });
 
         if (insertError) {
-          if (insertError.code === '23505') { // Unique violation
-            console.log(`Page ${page.name} already exists`);
-            continue;
-          }
           console.error("Error saving page:", insertError);
           throw insertError;
         }
@@ -64,8 +76,10 @@ export const FacebookAuthButton = () => {
 
       if (addedPages > 0) {
         toast.success(`Successfully connected ${addedPages} Facebook ${addedPages === 1 ? 'page' : 'pages'}`);
+      } else if (duplicatePages > 0) {
+        toast.info('All Facebook pages are already connected');
       } else {
-        toast.info('No new Facebook pages were added. Your pages might already be connected.');
+        toast.error('No pages were added. Please make sure you have admin access to at least one Facebook page.');
       }
 
     } catch (error: any) {

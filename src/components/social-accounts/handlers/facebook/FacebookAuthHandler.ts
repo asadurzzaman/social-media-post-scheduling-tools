@@ -10,6 +10,7 @@ declare global {
       login: (callback: (response: {
         authResponse?: {
           accessToken: string;
+          userID: string;
         };
         status?: string;
       }) => void, params: { scope: string; return_scopes: boolean }) => void;
@@ -26,7 +27,7 @@ export const handleFacebookAuth = async (): Promise<string> => {
     await initFacebookSDK();
     console.log('Facebook SDK initialized');
 
-    // Trigger Facebook login
+    // Trigger Facebook login with updated permissions
     const response = await new Promise<{ authResponse?: { accessToken: string } }>((resolve, reject) => {
       if (!window.FB) {
         reject(new Error('Facebook SDK not loaded'));
@@ -41,7 +42,7 @@ export const handleFacebookAuth = async (): Promise<string> => {
           reject(new Error('User cancelled login or did not fully authorize'));
         }
       }, {
-        scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata',
+        scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata',
         return_scopes: true
       });
     });
@@ -67,7 +68,7 @@ const initFacebookSDK = async (): Promise<void> => {
     
     // Set up the FB init callback
     window.fbAsyncInit = () => {
-      const appId = '2579075792280951'; // Your Facebook App ID
+      const appId = '2579075792280951';
       console.log('Initializing Facebook SDK with App ID:', appId);
       
       window.FB.init({
