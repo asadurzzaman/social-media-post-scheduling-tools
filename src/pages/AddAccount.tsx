@@ -27,20 +27,21 @@ const AddAccount = () => {
       }
       console.log('Current user ID:', user.id);
 
-      // Fetch from social_accounts table for Instagram accounts
-      const { data: socialData, error: socialError } = await supabase
+      // First, let's check all social accounts
+      const { data: allSocialAccounts, error: socialError } = await supabase
         .from('social_accounts')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('platform', 'instagram');
+        .eq('user_id', user.id);
       
+      console.log('All social accounts:', allSocialAccounts);
+
       if (socialError) {
-        console.error("Error fetching Instagram accounts:", socialError);
-        toast.error("Failed to fetch Instagram accounts");
+        console.error("Error fetching social accounts:", socialError);
+        toast.error("Failed to fetch social accounts");
         throw socialError;
       }
 
-      // Fetch from facebook_pages table
+      // Now, let's check Facebook pages specifically
       const { data: fbData, error: fbError } = await supabase
         .from('facebook_pages')
         .select('*')
@@ -53,8 +54,7 @@ const AddAccount = () => {
         throw fbError;
       }
       
-      console.log('Raw response from social_accounts (Instagram):', socialData);
-      console.log('Raw response from facebook_pages:', fbData);
+      console.log('Facebook pages:', fbData);
 
       // Convert facebook_pages to social_accounts format
       const facebookAccounts = fbData?.map(page => ({
@@ -68,10 +68,17 @@ const AddAccount = () => {
         page_access_token: page.page_access_token
       })) || [];
 
-      const allAccounts = [...(socialData || []), ...facebookAccounts];
+      // Filter Instagram accounts from social_accounts
+      const instagramAccounts = allSocialAccounts?.filter(account => 
+        account.platform === 'instagram'
+      ) || [];
+
+      const allAccounts = [...instagramAccounts, ...facebookAccounts];
       
       console.log('Combined accounts:', allAccounts);
       console.log('Number of total accounts:', allAccounts.length);
+      console.log('Number of Instagram accounts:', instagramAccounts.length);
+      console.log('Number of Facebook accounts:', facebookAccounts.length);
       
       return allAccounts as SocialAccount[];
     },
