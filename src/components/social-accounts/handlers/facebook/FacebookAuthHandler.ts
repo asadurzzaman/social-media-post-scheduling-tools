@@ -12,7 +12,7 @@ declare global {
           accessToken: string;
         };
         status?: string;
-      }) => void, params: { scope: string; return_scopes: boolean }) => void;
+      }) => void, params: { scope: string; return_scopes: boolean; redirect_uri?: string }) => void;
     };
     fbAsyncInit: () => void;
   }
@@ -26,6 +26,10 @@ export const handleFacebookAuth = async (): Promise<string> => {
     await initFacebookSDK();
     console.log('Facebook SDK initialized');
 
+    // Get the current URL as redirect URI
+    const redirectUri = window.location.origin + window.location.pathname;
+    console.log('Using redirect URI:', redirectUri);
+
     // Trigger Facebook login
     const response = await new Promise<{ authResponse?: { accessToken: string } }>((resolve, reject) => {
       window.FB.login((response) => {
@@ -37,7 +41,8 @@ export const handleFacebookAuth = async (): Promise<string> => {
         }
       }, {
         scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata',
-        return_scopes: true
+        return_scopes: true,
+        redirect_uri: redirectUri
       });
     });
 
