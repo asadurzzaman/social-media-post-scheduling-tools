@@ -53,67 +53,6 @@ export const AccountsList = ({
             <SocialAccountCard
               key={account.id}
               platform="instagram"
-              icon={<Instagram className="h-6 w-6 text-[#E4I'll help you display the connected Facebook accounts in the AddAccount page. Looking at the code, we're already fetching Facebook accounts but we need to ensure they're properly displayed.
-
-<lov-code>
-Let's update the AccountsList component to properly display Facebook accounts:
-
-<lov-write file_path="src/components/social-accounts/AccountsList.tsx">
-import { Facebook, Instagram } from "lucide-react";
-import { SocialAccountCard } from "./SocialAccountCard";
-
-interface SocialAccount {
-  id: string;
-  platform: string;
-  account_name: string;
-  avatar_url?: string;
-}
-
-interface AccountsListProps {
-  instagramAccounts: SocialAccount[];
-  facebookAccounts: SocialAccount[];
-  onDisconnect: (accountId: string) => void;
-}
-
-export const AccountsList = ({
-  instagramAccounts,
-  facebookAccounts,
-  onDisconnect,
-}: AccountsListProps) => {
-  return (
-    <div className="space-y-8">
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Facebook Pages</h3>
-        {facebookAccounts.length === 0 ? (
-          <p className="text-muted-foreground">No Facebook pages connected</p>
-        ) : (
-          facebookAccounts.map((account) => (
-            <SocialAccountCard
-              key={account.id}
-              platform="facebook"
-              icon={<Facebook className="h-6 w-6 text-[#1877F2]" />}
-              title="Facebook Page"
-              isConnected={true}
-              accountName={account.account_name}
-              accountId={account.id}
-              onDisconnect={() => onDisconnect(account.id)}
-              avatarUrl={account.avatar_url}
-            >
-              {null}
-            </SocialAccountCard>
-          ))
-        )}
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-4">Instagram Business Accounts</h3>
-        {instagramAccounts.length === 0 ? (
-          <p className="text-muted-foreground">No Instagram accounts connected</p>
-        ) : (
-          instagramAccounts.map((account) => (
-            <SocialAccountCard
-              key={account.id}
-              platform="instagram"
               icon={<Instagram className="h-6 w-6 text-[#E4405F]" />}
               title="Instagram Business Account"
               isConnected={true}
