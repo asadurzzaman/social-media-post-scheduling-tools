@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { publishPost } from "@/utils/postPublisher";
 import { useUser } from "@/hooks/useUser";
 import { supabase } from "@/integrations/supabase/client";
+import { CreatePostSidebar } from "./CreatePostSidebar";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -184,28 +185,38 @@ export const CreatePostForm = ({
   };
 
   return (
-    <CreatePostFormContent
-      accounts={accounts}
-      content={content}
-      setContent={setContent}
-      selectedAccount={selectedAccount}
-      setSelectedAccount={setSelectedAccount}
-      date={date}
-      setDate={setDate}
-      postType={postType}
-      setPostType={setPostType}
-      uploadedFiles={uploadedFiles}
-      setUploadedFiles={setUploadedFiles}
-      previewUrls={previewUrls}
-      setPreviewUrls={setPreviewUrls}
-      isDraft={isDraft}
-      onSubmit={handleSubmit}
-      clearDraft={clearDraft}
-      timezone={timezone}
-      onTimezoneChange={setTimezone}
-      onPublishNow={handlePublishNow}
-      onSaveDraft={handleSaveDraft}
-      initialPost={initialPost}
-    />
+    <div className="flex">
+      <CreatePostSidebar
+        postType={postType}
+        onPostTypeChange={setPostType}
+        onPreviewClick={() => toast.info("Preview feature coming soon")}
+        onSaveDraft={handleSaveDraft}
+      />
+      <div className="flex-1 px-6">
+        <CreatePostFormContent
+          accounts={accounts}
+          content={content}
+          setContent={setContent}
+          selectedAccount={selectedAccount}
+          setSelectedAccount={setSelectedAccount}
+          date={date}
+          setDate={setDate}
+          postType={postType}
+          setPostType={setPostType}
+          uploadedFiles={uploadedFiles}
+          setUploadedFiles={setUploadedFiles}
+          previewUrls={previewUrls}
+          setPreviewUrls={setPreviewUrls}
+          isDraft={isDraft}
+          onSubmit={handleSubmit}
+          clearDraft={clearDraft}
+          timezone={timezone}
+          onTimezoneChange={setTimezone}
+          onPublishNow={handlePublishNow}
+          onSaveDraft={handleSaveDraft}
+          initialPost={initialPost}
+        />
+      </div>
+    </div>
   );
 };

@@ -100,12 +100,14 @@ const CreatePost = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <CreatePostForm 
-            key={formKey}
-            accounts={accounts || []} 
-            userId={userId} 
-            onSuccess={handleSuccess}
-          />
+          <div className="bg-background rounded-lg border">
+            <CreatePostForm 
+              key={formKey}
+              accounts={accounts || []} 
+              userId={userId} 
+              onSuccess={handleSuccess}
+            />
+          </div>
         )}
       </div>
     </DashboardLayout>
