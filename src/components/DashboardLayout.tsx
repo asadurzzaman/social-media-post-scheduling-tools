@@ -63,9 +63,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         await supabase.auth.signOut();
       }
       
-      // Clear the auth data from localStorage
-      const storageKey = `sb-${supabase.supabaseUrl.split('//')[1].split('.')[0]}-auth-token`;
-      localStorage.removeItem(storageKey);
+      // Clear the auth data from localStorage using the project ID directly
+      localStorage.removeItem('sb-czuhcymoqjgsmwzimlzd-auth-token');
       
       // Navigate to login and show success message
       navigate("/login");
