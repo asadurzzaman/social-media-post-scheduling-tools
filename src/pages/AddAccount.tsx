@@ -62,6 +62,9 @@ const AddAccount = () => {
         account_name: page.page_name,
         user_id: page.user_id,
         created_at: page.connected_at || new Date().toISOString(),
+        avatar_url: null, // Add this if you have page avatar URLs
+        page_id: page.page_id,
+        page_access_token: page.page_access_token
       })) || [];
 
       const allAccounts = [...(socialData || []), ...facebookAccounts];
