@@ -60,9 +60,13 @@ const AddAccount = () => {
     }
   };
 
-  // Ensure we're working with an array and filter it
+  // Ensure we're working with an array and filter accounts by platform
   const instagramAccounts = Array.isArray(socialAccounts) 
     ? socialAccounts.filter(account => account.platform === 'instagram')
+    : [];
+
+  const facebookAccounts = Array.isArray(socialAccounts)
+    ? socialAccounts.filter(account => account.platform === 'facebook')
     : [];
 
   return (
@@ -74,6 +78,7 @@ const AddAccount = () => {
         </Dialog>
         <AccountsList 
           instagramAccounts={instagramAccounts}
+          facebookAccounts={facebookAccounts}
           onDisconnect={handleDisconnect}
         />
       </div>
