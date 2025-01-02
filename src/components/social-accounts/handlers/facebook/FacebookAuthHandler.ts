@@ -1,4 +1,3 @@
-// Define FB SDK types
 declare global {
   interface Window {
     FB: {
