@@ -16,6 +16,7 @@ const Auth = () => {
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
         if (session) {
           navigate("/dashboard");
         }
@@ -30,18 +31,16 @@ const Auth = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
       if (event === 'SIGNED_IN' && session) {
         navigate("/dashboard");
-      } else if (event === 'SIGNED_OUT') {
-        navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, success]);
+  }, [navigate]);
 
   if (!success) {
+    navigate("/pricing");
     return null;
   }
 
@@ -74,6 +73,10 @@ const Auth = () => {
               }}
               providers={["facebook"]}
               redirectTo={`${window.location.origin}/dashboard`}
+              onError={(error) => {
+                console.error("Auth error:", error);
+                toast.error(error.message);
+              }}
             />
           </div>
         </div>
