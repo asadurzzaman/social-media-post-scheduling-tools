@@ -27,11 +27,16 @@ export const handleFacebookAuth = async (): Promise<string> => {
     console.log('Facebook SDK initialized');
 
     // Get the current URL as redirect URI
-    const redirectUri = window.location.origin + window.location.pathname;
+    const redirectUri = window.location.origin + '/add-account';
     console.log('Using redirect URI:', redirectUri);
 
     // Trigger Facebook login
     const response = await new Promise<{ authResponse?: { accessToken: string } }>((resolve, reject) => {
+      if (!window.FB) {
+        reject(new Error('Facebook SDK not loaded'));
+        return;
+      }
+
       window.FB.login((response) => {
         console.log('Facebook login response:', response);
         if (response.authResponse) {
@@ -76,6 +81,8 @@ const initFacebookSDK = async (): Promise<void> => {
         xfbml: true,
         version: 'v19.0'
       });
+
+      // Only resolve after FB.init is called
       resolve();
     };
 
