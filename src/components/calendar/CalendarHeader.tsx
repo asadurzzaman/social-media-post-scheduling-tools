@@ -54,11 +54,11 @@ export const CalendarHeader = ({
             Today
           </Button>
         </div>
-        <div className="text-lg">
-          {format(currentDate, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
-        </div>
       </div>
       <div className="flex items-center gap-4">
+        <div className="text-lg font-medium">
+          {format(currentDate, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
+        </div>
         <Select value={view} onValueChange={onViewChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select view" />
