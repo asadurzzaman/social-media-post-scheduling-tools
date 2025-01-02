@@ -21,7 +21,7 @@ export const FacebookPageManager = () => {
 
       // Initialize Facebook SDK and get access token using FacebookAuthHandler
       const authHandler = new FacebookAuthHandler();
-      const accessToken = await authHandler.authenticate();
+      const accessToken = await authHandler.handleFacebookAuth();
 
       // Fetch pages
       const response = await fetch(
