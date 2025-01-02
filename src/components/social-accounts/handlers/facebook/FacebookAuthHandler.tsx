@@ -7,7 +7,20 @@ import { toast } from "sonner";
 // Define FB SDK types
 declare global {
   interface Window {
-    FB: any;
+    FB: {
+      init: (params: {
+        appId: string;
+        cookie: boolean;
+        xfbml: boolean;
+        version: string;
+      }) => void;
+      login: (callback: (response: {
+        authResponse?: {
+          accessToken: string;
+        };
+        status?: string;
+      }) => void, params: { scope: string; return_scopes: boolean }) => void;
+    };
     fbAsyncInit: () => void;
   }
 }
@@ -19,16 +32,16 @@ export const FacebookAuthHandler = () => {
     try {
       setIsConnecting(true);
 
-      // Initialize Facebook SDK
-      await initFacebookSDK();
-
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user found');
 
+      // Initialize Facebook SDK
+      await initFacebookSDK();
+
       // Trigger Facebook login
-      const response: any = await new Promise((resolve, reject) => {
-        window.FB.login((response: any) => {
+      const response = await new Promise<{ authResponse?: { accessToken: string } }>((resolve, reject) => {
+        window.FB.login((response) => {
           if (response.authResponse) {
             resolve(response);
           } else {
@@ -40,7 +53,7 @@ export const FacebookAuthHandler = () => {
         });
       });
 
-      const { accessToken } = response.authResponse;
+      const { accessToken } = response.authResponse!;
 
       // Save account to database
       const { error: dbError } = await supabase
@@ -66,7 +79,7 @@ export const FacebookAuthHandler = () => {
     }
   };
 
-  const initFacebookSDK = (): Promise<void> => {
+  const initFacebookSDK = async (): Promise<void> => {
     return new Promise((resolve) => {
       // Load the Facebook SDK if it's not already loaded
       if (typeof window.FB !== 'undefined') {
@@ -76,7 +89,7 @@ export const FacebookAuthHandler = () => {
 
       window.fbAsyncInit = () => {
         window.FB.init({
-          appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+          appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!,
           cookie: true,
           xfbml: true,
           version: 'v19.0'

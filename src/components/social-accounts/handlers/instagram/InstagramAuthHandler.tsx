@@ -10,6 +10,10 @@ export const InstagramAuthHandler = () => {
     try {
       setIsConnecting(true);
       
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user found');
+      
       // Get Instagram app credentials from edge function
       const { data: credentials, error: credentialsError } = await supabase.functions.invoke(
         'get-instagram-credentials'
@@ -43,10 +47,6 @@ export const InstagramAuthHandler = () => {
         if (event.data.type === 'instagram_auth') {
           const { code } = event.data;
           
-          // Get current user
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('No authenticated user found');
-
           // Exchange code for access token
           const { data: authData, error: authError } = await supabase.functions.invoke(
             'instagram-auth',

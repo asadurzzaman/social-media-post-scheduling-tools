@@ -11,6 +11,10 @@ export const LinkedInAuthHandler = () => {
     try {
       setIsConnecting(true);
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user found');
+
       // Get LinkedIn credentials from environment
       const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
       if (!clientId) {
@@ -71,10 +75,6 @@ export const LinkedInAuthHandler = () => {
           }
 
           const { accessToken, profileData } = authData;
-
-          // Get current user
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('No authenticated user found');
 
           // Save account to database
           const { error: dbError } = await supabase
