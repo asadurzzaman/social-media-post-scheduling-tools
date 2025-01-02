@@ -215,29 +215,38 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
+          last_login: string | null
+          login_count: number | null
           post_platform_selection: boolean | null
           timezone: string | null
         }
         Insert: {
+          account_status?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id: string
+          last_login?: string | null
+          login_count?: number | null
           post_platform_selection?: boolean | null
           timezone?: string | null
         }
         Update: {
+          account_status?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
+          last_login?: string | null
+          login_count?: number | null
           post_platform_selection?: boolean | null
           timezone?: string | null
         }

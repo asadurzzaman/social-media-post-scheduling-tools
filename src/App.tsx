@@ -14,6 +14,7 @@ import AddAccount from "./pages/AddAccount";
 import CreatePost from "./pages/CreatePost";
 import Media from "./pages/Media";
 import Auth from "./pages/Auth";
+import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Posts from "./pages/Posts";
 import Engage from "./pages/Engage";
@@ -72,6 +73,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
