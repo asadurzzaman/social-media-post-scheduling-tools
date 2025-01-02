@@ -7,11 +7,14 @@ import { Dialog } from "@/components/ui/dialog";
 import { AccountsHeader } from "@/components/social-accounts/AccountsHeader";
 import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccountDialog";
 import { AccountsList } from "@/components/social-accounts/AccountsList";
+import { Tables } from "@/integrations/supabase/types";
+
+type SocialAccount = Tables<"social_accounts">;
 
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: socialAccounts = [], refetch: refetchAccounts } = useQuery({
+  const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -23,8 +26,10 @@ const AddAccount = () => {
         throw error;
       }
       
-      return data || [];
+      // Ensure we always return an array
+      return (data as SocialAccount[]) || [];
     },
+    initialData: [] as SocialAccount[],
   });
 
   const handleSuccess = async () => {
@@ -55,7 +60,10 @@ const AddAccount = () => {
     }
   };
 
-  const instagramAccounts = socialAccounts.filter(account => account.platform === 'instagram');
+  // Ensure we're working with an array and filter it
+  const instagramAccounts = Array.isArray(socialAccounts) 
+    ? socialAccounts.filter(account => account.platform === 'instagram')
+    : [];
 
   return (
     <DashboardLayout>
