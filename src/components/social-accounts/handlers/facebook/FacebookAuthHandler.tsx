@@ -89,7 +89,7 @@ export const FacebookAuthHandler = () => {
 
       window.fbAsyncInit = () => {
         window.FB.init({
-          appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID!,
+          appId: import.meta.env.VITE_FACEBOOK_APP_ID,
           cookie: true,
           xfbml: true,
           version: 'v19.0'

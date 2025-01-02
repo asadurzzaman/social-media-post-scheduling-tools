@@ -13,13 +13,17 @@ serve(async (req) => {
 
   try {
     const instagram_app_id = Deno.env.get('INSTAGRAM_APP_ID')
+    const instagram_app_secret = Deno.env.get('INSTAGRAM_APP_SECRET')
     
-    if (!instagram_app_id) {
-      throw new Error('Instagram app ID not configured')
+    if (!instagram_app_id || !instagram_app_secret) {
+      throw new Error('Instagram credentials not configured')
     }
 
     return new Response(
-      JSON.stringify({ instagram_app_id }),
+      JSON.stringify({ 
+        instagram_app_id,
+        instagram_app_secret 
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
