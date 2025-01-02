@@ -73,7 +73,7 @@ export const MediaItem = ({
 
   return (
     <div className="group relative overflow-hidden border border-border rounded-lg">
-      <div className="p-4">
+      <div>
         <div className="aspect-square rounded-lg bg-muted flex items-center justify-center relative group overflow-hidden">
           <div className="absolute top-2 left-2 z-10">
             <Checkbox
