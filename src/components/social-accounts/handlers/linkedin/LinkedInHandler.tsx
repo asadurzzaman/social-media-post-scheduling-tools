@@ -6,10 +6,6 @@ import {
   showErrorToast 
 } from "./LinkedInToasts";
 import { 
-  checkExistingLinkedInAccount,
-  saveLinkedInAccount 
-} from "./linkedinUtils";
-import { 
   initializeLinkedInAuth, 
   verifyState, 
   createAuthWindow 
