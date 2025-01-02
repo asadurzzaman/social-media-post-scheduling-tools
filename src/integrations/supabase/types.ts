@@ -106,6 +106,7 @@ export type Database = {
           id: string
           metadata: Json | null
           mime_type: string
+          search_vector: unknown | null
           tags: string[] | null
           updated_at: string | null
           user_id: string
@@ -120,6 +121,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           mime_type: string
+          search_vector?: unknown | null
           tags?: string[] | null
           updated_at?: string | null
           user_id: string
@@ -134,6 +136,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           mime_type?: string
+          search_vector?: unknown | null
           tags?: string[] | null
           updated_at?: string | null
           user_id?: string
@@ -207,6 +210,7 @@ export type Database = {
           poll_options: string[] | null
           post_type: string
           scheduled_for: string
+          search_vector: unknown | null
           social_account_id: string
           status: string | null
           timezone: string | null
@@ -222,6 +226,7 @@ export type Database = {
           poll_options?: string[] | null
           post_type?: string
           scheduled_for: string
+          search_vector?: unknown | null
           social_account_id: string
           status?: string | null
           timezone?: string | null
@@ -237,6 +242,7 @@ export type Database = {
           poll_options?: string[] | null
           post_type?: string
           scheduled_for?: string
+          search_vector?: unknown | null
           social_account_id?: string
           status?: string | null
           timezone?: string | null
@@ -367,6 +373,44 @@ export type Database = {
           },
           {
             foreignKeyName: "recurring_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_logs: {
+        Row: {
+          created_at: string
+          filters: Json | null
+          id: string
+          query: string
+          result_count: number | null
+          search_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          query: string
+          result_count?: number | null
+          search_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          query?: string
+          result_count?: number | null
+          search_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_logs_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
