@@ -102,11 +102,16 @@ export const FacebookPageManager = () => {
       variant="outline"
     >
       {isLoading ? (
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+          <span>Connecting...</span>
+        </>
       ) : (
-        <Facebook className="h-5 w-5" />
+        <>
+          <Facebook className="h-5 w-5" />
+          <span>Connect Facebook Pages</span>
+        </>
       )}
-      {isLoading ? 'Connecting...' : 'Connect Facebook Pages'}
     </Button>
   );
 };
