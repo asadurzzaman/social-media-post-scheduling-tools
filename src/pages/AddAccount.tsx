@@ -48,18 +48,31 @@ const AddAccount = () => {
       setIsDialogOpen(false);
       toast.success("Account connected successfully!");
     } catch (error) {
-      console.error("Error refreshing accounts:", error);
+      console.error("Error refreshing accounts list:", error);
       toast.error("Failed to refresh accounts list");
     }
   };
 
-  const handleDisconnect = async (accountId: string) => {
+  const handleDisconnect = async (accountId: string, platform: string) => {
     try {
-      // Try to delete from both tables since we don't know which one it belongs to
-      await Promise.all([
-        supabase.from('social_accounts').delete().eq('id', accountId),
-        supabase.from('facebook_pages').delete().eq('id', accountId)
-      ]);
+      let error;
+      
+      // Delete from the appropriate table based on the platform
+      if (platform === 'facebook') {
+        const { error: fbError } = await supabase
+          .from('facebook_pages')
+          .delete()
+          .eq('id', accountId);
+        error = fbError;
+      } else {
+        const { error: igError } = await supabase
+          .from('social_accounts')
+          .delete()
+          .eq('id', accountId);
+        error = igError;
+      }
+
+      if (error) throw error;
       
       toast.success("Account disconnected successfully");
       await refetchAccounts();

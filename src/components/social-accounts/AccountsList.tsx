@@ -12,7 +12,7 @@ interface SocialAccount {
 interface AccountsListProps {
   instagramAccounts: SocialAccount[];
   facebookAccounts: SocialAccount[];
-  onDisconnect: (accountId: string) => void;
+  onDisconnect: (accountId: string, platform: string) => void;
 }
 
 export const AccountsList = ({
@@ -36,7 +36,7 @@ export const AccountsList = ({
               isConnected={true}
               accountName={account.account_name}
               accountId={account.id}
-              onDisconnect={() => onDisconnect(account.id)}
+              onDisconnect={() => onDisconnect(account.id, 'facebook')}
             >
               {null}
             </SocialAccountCard>
@@ -58,7 +58,7 @@ export const AccountsList = ({
               isConnected={true}
               accountName={account.account_name}
               accountId={account.id}
-              onDisconnect={() => onDisconnect(account.id)}
+              onDisconnect={() => onDisconnect(account.id, 'instagram')}
             >
               {null}
             </SocialAccountCard>
