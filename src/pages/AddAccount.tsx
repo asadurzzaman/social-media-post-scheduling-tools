@@ -17,7 +17,8 @@ const AddAccount = () => {
   const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
-      console.log('Fetching social accounts...');
+      console.log('Starting to fetch social accounts...');
+      
       const { data, error } = await supabase
         .from('social_accounts')
         .select('*');
@@ -28,7 +29,20 @@ const AddAccount = () => {
         throw error;
       }
       
-      console.log('Fetched social accounts:', data);
+      console.log('Raw response from Supabase:', data);
+      console.log('Number of accounts fetched:', data?.length || 0);
+      
+      if (data) {
+        data.forEach((account, index) => {
+          console.log(`Account ${index + 1}:`, {
+            id: account.id,
+            platform: account.platform,
+            accountName: account.account_name,
+            avatarUrl: account.avatar_url
+          });
+        });
+      }
+      
       return (data as SocialAccount[]) || [];
     },
     initialData: [] as SocialAccount[],
@@ -47,6 +61,8 @@ const AddAccount = () => {
 
   const handleDisconnect = async (accountId: string) => {
     try {
+      console.log('Attempting to disconnect account:', accountId);
+      
       const { error } = await supabase
         .from('social_accounts')
         .delete()
@@ -71,8 +87,8 @@ const AddAccount = () => {
     ? socialAccounts.filter(account => account.platform === 'facebook')
     : [];
 
-  console.log('Facebook accounts:', facebookAccounts);
-  console.log('Instagram accounts:', instagramAccounts);
+  console.log('Filtered Facebook accounts:', facebookAccounts);
+  console.log('Filtered Instagram accounts:', instagramAccounts);
 
   return (
     <DashboardLayout>
