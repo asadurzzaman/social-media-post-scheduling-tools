@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Facebook } from "lucide-react";
+import { Facebook, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkExistingAccount } from "@/utils/socialAccounts";
 import { showFacebookError, showFacebookSuccess } from "./FacebookToasts";
 import { handleFacebookAuth } from "./FacebookAuthHandler";
+import { CreateFacebookPostDialog } from "@/components/facebook/CreateFacebookPostDialog";
 
 export const FacebookPageManager = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedPageId, setSelectedPageId] = useState<string>("");
 
   const handleConnect = async () => {
     try {
@@ -94,24 +97,46 @@ export const FacebookPageManager = () => {
     }
   };
 
+  const handleCreatePost = (pageId: string) => {
+    setSelectedPageId(pageId);
+    setIsCreateDialogOpen(true);
+  };
+
   return (
-    <Button 
-      onClick={handleConnect}
-      disabled={isLoading}
-      className="w-full flex items-center justify-center gap-2"
-      variant="outline"
-    >
-      {isLoading ? (
-        <>
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-          <span>Connecting...</span>
-        </>
-      ) : (
-        <>
-          <Facebook className="h-5 w-5" />
-          <span>Connect Facebook Pages</span>
-        </>
-      )}
-    </Button>
+    <div className="space-y-4">
+      <Button 
+        onClick={handleConnect}
+        disabled={isLoading}
+        className="w-full flex items-center justify-center gap-2"
+        variant="outline"
+      >
+        {isLoading ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+            <span>Connecting...</span>
+          </>
+        ) : (
+          <>
+            <Facebook className="h-5 w-5" />
+            <span>Connect Facebook Pages</span>
+          </>
+        )}
+      </Button>
+
+      <Button
+        onClick={() => handleCreatePost("your_page_id")}
+        className="w-full flex items-center justify-center gap-2"
+        variant="default"
+      >
+        <Plus className="h-4 w-4" />
+        Create Post
+      </Button>
+
+      <CreateFacebookPostDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        pageId={selectedPageId}
+      />
+    </div>
   );
 };
