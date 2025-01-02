@@ -11,6 +11,7 @@ export const FacebookAuthButton = () => {
   const handleConnect = async () => {
     try {
       setIsConnecting(true);
+      console.log('Starting Facebook connection process...');
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -30,6 +31,10 @@ export const FacebookAuthButton = () => {
       if (data.error) {
         console.error("Facebook API Error:", data.error);
         throw new Error(data.error.message);
+      }
+
+      if (!data.data || data.data.length === 0) {
+        throw new Error('No Facebook pages found. Make sure you have admin access to at least one Facebook page.');
       }
 
       // Save pages to database
@@ -57,7 +62,11 @@ export const FacebookAuthButton = () => {
         addedPages++;
       }
 
-      toast.success(`Successfully connected ${addedPages} Facebook pages`);
+      if (addedPages > 0) {
+        toast.success(`Successfully connected ${addedPages} Facebook ${addedPages === 1 ? 'page' : 'pages'}`);
+      } else {
+        toast.info('No new Facebook pages were added. Your pages might already be connected.');
+      }
 
     } catch (error: any) {
       console.error('Facebook auth error:', error);

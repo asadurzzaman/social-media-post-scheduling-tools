@@ -50,7 +50,7 @@ export const handleFacebookAuth = async (): Promise<string> => {
     return response.authResponse!.accessToken;
   } catch (error: any) {
     console.error('Facebook auth error:', error);
-    throw error;
+    throw new Error(`Facebook authentication failed: ${error.message}`);
   }
 };
 
