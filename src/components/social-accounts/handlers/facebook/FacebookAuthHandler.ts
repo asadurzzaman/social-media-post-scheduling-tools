@@ -1,5 +1,3 @@
-import { toast } from "sonner";
-
 // Define FB SDK types
 declare global {
   interface Window {
@@ -43,7 +41,6 @@ export const handleFacebookAuth = async (): Promise<string> => {
     return response.authResponse!.accessToken;
   } catch (error: any) {
     console.error('Facebook auth error:', error);
-    toast.error(error.message || 'Failed to connect Facebook account');
     throw error;
   }
 };

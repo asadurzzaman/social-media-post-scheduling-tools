@@ -52,7 +52,7 @@ export const FacebookPageManager = () => {
             user_id: user.id,
             platform: 'facebook',
             account_name: page.name,
-            access_token: page.access_token,
+            access_token: accessToken,
             page_id: page.id,
             page_access_token: page.access_token,
             token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()

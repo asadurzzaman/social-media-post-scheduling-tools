@@ -428,6 +428,8 @@ export type Database = {
           instagram_user_id: string | null
           instagram_username: string | null
           last_error: string | null
+          page_access_token: string | null
+          page_id: string | null
           platform: string
           requires_reconnect: boolean | null
           token_expires_at: string | null
@@ -442,6 +444,8 @@ export type Database = {
           instagram_user_id?: string | null
           instagram_username?: string | null
           last_error?: string | null
+          page_access_token?: string | null
+          page_id?: string | null
           platform: string
           requires_reconnect?: boolean | null
           token_expires_at?: string | null
@@ -456,6 +460,8 @@ export type Database = {
           instagram_user_id?: string | null
           instagram_username?: string | null
           last_error?: string | null
+          page_access_token?: string | null
+          page_id?: string | null
           platform?: string
           requires_reconnect?: boolean | null
           token_expires_at?: string | null
