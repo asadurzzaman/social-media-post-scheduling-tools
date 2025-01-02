@@ -20,12 +20,16 @@ declare global {
 
 export const handleFacebookAuth = async (): Promise<string> => {
   try {
+    console.log('Starting Facebook auth process...');
+    
     // Initialize Facebook SDK
     await initFacebookSDK();
+    console.log('Facebook SDK initialized');
 
     // Trigger Facebook login
     const response = await new Promise<{ authResponse?: { accessToken: string } }>((resolve, reject) => {
       window.FB.login((response) => {
+        console.log('Facebook login response:', response);
         if (response.authResponse) {
           resolve(response);
         } else {
@@ -37,6 +41,7 @@ export const handleFacebookAuth = async (): Promise<string> => {
       });
     });
 
+    console.log('Facebook auth successful, token obtained');
     return response.authResponse!.accessToken;
   } catch (error: any) {
     console.error('Facebook auth error:', error);
@@ -46,15 +51,22 @@ export const handleFacebookAuth = async (): Promise<string> => {
 
 const initFacebookSDK = async (): Promise<void> => {
   return new Promise((resolve) => {
-    // Load the Facebook SDK if it's not already loaded
+    // Check if SDK is already loaded
     if (typeof window.FB !== 'undefined') {
+      console.log('Facebook SDK already loaded');
       resolve();
       return;
     }
 
+    console.log('Loading Facebook SDK...');
+    
+    // Set up the FB init callback
     window.fbAsyncInit = () => {
+      const appId = import.meta.env.VITE_FACEBOOK_APP_ID;
+      console.log('Initializing Facebook SDK with App ID:', appId);
+      
       window.FB.init({
-        appId: import.meta.env.VITE_FACEBOOK_APP_ID,
+        appId: appId,
         cookie: true,
         xfbml: true,
         version: 'v19.0'
