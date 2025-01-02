@@ -4,12 +4,12 @@ import { Facebook } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkExistingAccount } from "@/utils/socialAccounts";
 import { showFacebookError, showFacebookSuccess } from "./FacebookToasts";
-import { FacebookAuthHandler } from "./FacebookAuthHandler";
+import { handleFacebookAuth } from "./FacebookAuthHandler";
 
 export const FacebookPageManager = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleFacebookAuth = async () => {
+  const handleConnect = async () => {
     try {
       setIsLoading(true);
 
@@ -19,9 +19,8 @@ export const FacebookPageManager = () => {
         throw new Error('No authenticated user found');
       }
 
-      // Initialize Facebook SDK and get access token using FacebookAuthHandler
-      const authHandler = new FacebookAuthHandler();
-      const accessToken = await authHandler.handleFacebookAuth();
+      // Get Facebook access token
+      const accessToken = await handleFacebookAuth();
 
       // Fetch pages
       const response = await fetch(
@@ -95,7 +94,7 @@ export const FacebookPageManager = () => {
 
   return (
     <Button 
-      onClick={handleFacebookAuth}
+      onClick={handleConnect}
       disabled={isLoading}
       className="w-full flex items-center justify-center gap-2"
       variant="outline"
