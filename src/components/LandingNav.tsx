@@ -40,7 +40,7 @@ export function LandingNav() {
       if (error) throw error;
       
       toast.success("Logged out successfully");
-      navigate("/");
+      navigate("/login"); // Changed from "/" to "/login"
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Error logging out");
