@@ -17,10 +17,10 @@ Deno.serve(async (req) => {
 
     // Fetch post data
     const { data: post, error: postError } = await supabase
-      .from('posts')
+      .from('facebook_posts')
       .select(`
         *,
-        social_accounts(*)
+        facebook_pages!inner(*)
       `)
       .eq('id', postId)
       .single();
@@ -28,22 +28,21 @@ Deno.serve(async (req) => {
     if (postError) throw postError;
     if (!post) throw new Error('Post not found');
 
-    const socialAccount = post.social_accounts;
-    if (!socialAccount) throw new Error('Social account not found');
+    const page = post.facebook_pages;
+    if (!page) throw new Error('Facebook page not found');
 
-    console.log('Publishing post to Facebook:', { postId, socialAccount: socialAccount.id });
+    console.log('Publishing post to Facebook:', { postId, pageId: page.page_id });
 
     // Prepare the Facebook API request
-    const url = `https://graph.facebook.com/v19.0/${socialAccount.page_id}/feed`;
+    const url = `https://graph.facebook.com/v19.0/${page.page_id}/feed`;
     const body: any = {
       message: post.content,
-      access_token: socialAccount.page_access_token,
+      access_token: page.page_access_token,
     };
 
-    // If there's an image, attach it
-    if (post.image_url) {
-      body.url = post.image_url;
-      body.link = post.image_url;
+    // If there are media URLs, attach them
+    if (post.media_urls && post.media_urls.length > 0) {
+      body.url = post.media_urls[0]; // Facebook only allows one media attachment per post
     }
 
     // Make the request to Facebook
@@ -59,28 +58,19 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       console.error('Facebook API error:', result);
-      
-      // Check if token has expired
-      if (result.error?.code === 190) {
-        await supabase
-          .from('social_accounts')
-          .update({ 
-            requires_reconnect: true,
-            last_error: result.error.message
-          })
-          .eq('id', socialAccount.id);
-        
-        throw new Error('Facebook token has expired');
-      }
       throw new Error(result.error?.message || 'Failed to publish to Facebook');
     }
 
     console.log('Successfully published to Facebook:', result);
 
-    // Update post status
+    // Update post status and store Facebook post ID
     await supabase
-      .from('posts')
-      .update({ status: 'published' })
+      .from('facebook_posts')
+      .update({ 
+        status: 'published',
+        post_id: result.id,
+        published_time: new Date().toISOString()
+      })
       .eq('id', postId);
 
     return new Response(
