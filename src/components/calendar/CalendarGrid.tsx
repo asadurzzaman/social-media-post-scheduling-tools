@@ -5,13 +5,15 @@ import { DraggablePost } from "./DraggablePost";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useEffect, useState } from "react";
 
 interface CalendarGridProps {
   weekDays: Date[];
   dayHours: Date[];
   posts: any[];
   onCreatePost: (date: Date) => void;
-  view: 'week' | 'month';
+  view: 'day' | 'week' | 'month';
   onPostMove?: (postId: string, newDate: Date) => void;
 }
 
@@ -23,6 +25,40 @@ export const CalendarGrid = ({
   view,
   onPostMove 
 }: CalendarGridProps) => {
+  const [conflicts, setConflicts] = useState<string[]>([]);
+
+  // Check for scheduling conflicts
+  const checkConflicts = (date: Date) => {
+    const conflictingPosts = posts.filter(post => {
+      const postDate = new Date(post.scheduled_for);
+      return Math.abs(postDate.getTime() - date.getTime()) < 1800000; // 30 minutes
+    });
+    return conflictingPosts.length > 0;
+  };
+
+  // Real-time updates subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('post-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'posts'
+        },
+        () => {
+          // Refresh posts data when changes occur
+          onPostMove?.("refresh", new Date());
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [onPostMove]);
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -30,6 +66,12 @@ export const CalendarGrid = ({
 
     const postId = active.id as string;
     const newDate = new Date(over.id as string);
+
+    // Check for conflicts before allowing the move
+    if (checkConflicts(newDate)) {
+      toast.error("Schedule conflict detected. Please choose another time slot.");
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -70,6 +112,16 @@ export const CalendarGrid = ({
                 );
               }) || [];
 
+              // Check for conflicts in this day
+              const hasConflicts = dayPosts.some((post, index) => {
+                const postDate = new Date(post.scheduled_for);
+                return dayPosts.some((otherPost, otherIndex) => {
+                  if (index === otherIndex) return false;
+                  const otherDate = new Date(otherPost.scheduled_for);
+                  return Math.abs(postDate.getTime() - otherDate.getTime()) < 1800000;
+                });
+              });
+
               return (
                 <div
                   key={day.toString()}
@@ -80,6 +132,13 @@ export const CalendarGrid = ({
                       {format(day, 'd')}
                     </div>
                     <div className="mt-2 space-y-1">
+                      {hasConflicts && (
+                        <Alert variant="destructive" className="mb-2">
+                          <AlertDescription>
+                            Scheduling conflicts detected
+                          </AlertDescription>
+                        </Alert>
+                      )}
                       {dayPosts.map((post) => (
                         <DraggablePost key={post.id} post={post} />
                       ))}
@@ -102,6 +161,70 @@ export const CalendarGrid = ({
     );
   }
 
+  if (view === 'day') {
+    const selectedDay = weekDays[0];
+    return (
+      <DndContext onDragEnd={handleDragEnd}>
+        <div className="overflow-auto max-h-[calc(100vh-20rem)]">
+          <div className="grid grid-cols-1 divide-x">
+            <div className="flex-1">
+              <div className="h-12 border-b sticky top-0 bg-white">
+                <div className="text-sm font-medium">
+                  {format(selectedDay, 'EEEE')}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {format(selectedDay, 'MMMM d, yyyy')}
+                </div>
+              </div>
+
+              {dayHours.map((hour) => {
+                const slotDate = new Date(selectedDay);
+                slotDate.setHours(hour.getHours(), 0, 0, 0);
+                
+                const slotPosts = posts?.filter(post => {
+                  if (!post?.scheduled_for) return false;
+                  const postDate = new Date(post.scheduled_for);
+                  return (
+                    postDate.getDate() === selectedDay.getDate() &&
+                    postDate.getHours() === hour.getHours()
+                  );
+                }) || [];
+
+                const hasConflicts = checkConflicts(slotDate);
+
+                return (
+                  <div key={hour.toString()}>
+                    {hasConflicts && (
+                      <Alert variant="destructive" className="mb-2">
+                        <AlertDescription>
+                          Scheduling conflicts detected in this time slot
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <DroppableTimeSlot
+                      hour={slotDate}
+                      posts={slotPosts}
+                      onCreatePost={onCreatePost}
+                    >
+                      {slotPosts.map((post) => (
+                        <DraggablePost 
+                          key={post.id} 
+                          post={post}
+                          className="absolute inset-x-1 top-1" 
+                        />
+                      ))}
+                    </DroppableTimeSlot>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </DndContext>
+    );
+  }
+
+  // Week view (default)
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className="overflow-auto max-h-[calc(100vh-20rem)]">
@@ -141,21 +264,31 @@ export const CalendarGrid = ({
                   );
                 }) || [];
 
+                const hasConflicts = checkConflicts(slotDate);
+
                 return (
-                  <DroppableTimeSlot
-                    key={hour.toString()}
-                    hour={slotDate}
-                    posts={slotPosts}
-                    onCreatePost={onCreatePost}
-                  >
-                    {slotPosts.map((post) => (
-                      <DraggablePost 
-                        key={post.id} 
-                        post={post}
-                        className="absolute inset-x-1 top-1" 
-                      />
-                    ))}
-                  </DroppableTimeSlot>
+                  <div key={hour.toString()}>
+                    {hasConflicts && (
+                      <Alert variant="destructive" className="mb-2">
+                        <AlertDescription>
+                          Scheduling conflicts detected in this time slot
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <DroppableTimeSlot
+                      hour={slotDate}
+                      posts={slotPosts}
+                      onCreatePost={onCreatePost}
+                    >
+                      {slotPosts.map((post) => (
+                        <DraggablePost 
+                          key={post.id} 
+                          post={post}
+                          className="absolute inset-x-1 top-1" 
+                        />
+                      ))}
+                    </DroppableTimeSlot>
+                  </div>
                 );
               })}
             </div>

@@ -10,19 +10,25 @@ import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [view, setView] = useState<'week' | 'month'>('week');
+  const [view, setView] = useState<'day' | 'week' | 'month'>('week');
   
   const startDate = view === 'week' 
     ? startOfWeek(currentDate, { weekStartsOn: 0 })
-    : startOfMonth(currentDate);
+    : view === 'month'
+    ? startOfMonth(currentDate)
+    : startOfDay(currentDate);
   
   const endDate = view === 'week'
     ? addDays(startDate, 7)
-    : endOfMonth(currentDate);
+    : view === 'month'
+    ? endOfMonth(currentDate)
+    : endOfDay(currentDate);
   
   const weekDays = view === 'week'
     ? [...Array(7)].map((_, i) => addDays(startDate, i))
-    : [...Array(35)].map((_, i) => addDays(startDate, i));
+    : view === 'month'
+    ? [...Array(35)].map((_, i) => addDays(startDate, i))
+    : [currentDate];
   
   const dayHours = eachHourOfInterval({
     start: startOfDay(currentDate),
@@ -59,16 +65,20 @@ const Calendar = () => {
   const previousPeriod = () => {
     if (view === 'week') {
       setCurrentDate(addDays(currentDate, -7));
-    } else {
+    } else if (view === 'month') {
       setCurrentDate(addMonths(currentDate, -1));
+    } else {
+      setCurrentDate(addDays(currentDate, -1));
     }
   };
 
   const nextPeriod = () => {
     if (view === 'week') {
       setCurrentDate(addDays(currentDate, 7));
-    } else {
+    } else if (view === 'month') {
       setCurrentDate(addMonths(currentDate, 1));
+    } else {
+      setCurrentDate(addDays(currentDate, 1));
     }
   };
 
@@ -85,7 +95,7 @@ const Calendar = () => {
   };
 
   const handleViewChange = (newView: string) => {
-    setView(newView as 'week' | 'month');
+    setView(newView as 'day' | 'week' | 'month');
   };
 
   return (
@@ -107,6 +117,11 @@ const Calendar = () => {
           posts={posts}
           onCreatePost={handleCreatePost}
           view={view}
+          onPostMove={(postId, newDate) => {
+            if (postId === "refresh") {
+              refetch();
+            }
+          }}
         />
       </div>
 
