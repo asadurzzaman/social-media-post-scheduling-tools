@@ -1,9 +1,9 @@
 import { PostTypeSelect, PostType } from './PostTypeSelect';
-import { SocialAccountList } from './SocialAccountList';
 import { RichTextEditor } from './RichTextEditor';
 import { SchedulingOptions } from './SchedulingOptions';
 import { PostFormMedia } from './PostFormMedia';
 import { PostFormActions } from './PostFormActions';
+import { SocialAccountSelect } from './SocialAccountSelect';
 
 interface CreatePostFormContentProps {
   accounts: any[];
@@ -30,7 +30,7 @@ interface CreatePostFormContentProps {
 }
 
 export const CreatePostFormContent = ({
-  accounts,
+  accounts = [],
   content,
   setContent,
   selectedAccounts,
@@ -67,7 +67,7 @@ export const CreatePostFormContent = ({
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <SocialAccountList
+      <SocialAccountSelect
         accounts={accounts}
         selectedAccounts={selectedAccounts}
         onSelect={setSelectedAccounts}
