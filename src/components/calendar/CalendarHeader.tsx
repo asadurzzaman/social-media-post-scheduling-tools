@@ -72,9 +72,19 @@ export const CalendarHeader = ({
         <Button
           variant="outline"
           size="icon"
-          onClick={onRefresh}
+          onClick={() => {
+            // Call onRefresh and provide visual feedback
+            const button = document.querySelector('.rotate-ccw-icon');
+            if (button) {
+              button.classList.add('animate-spin');
+              setTimeout(() => {
+                button.classList.remove('animate-spin');
+              }, 1000);
+            }
+            onRefresh();
+          }}
         >
-          <RotateCcw className="h-4 w-4" />
+          <RotateCcw className="h-4 w-4 rotate-ccw-icon" />
         </Button>
       </div>
     </div>
