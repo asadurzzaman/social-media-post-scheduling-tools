@@ -1,8 +1,8 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
 import { Dialog } from "@/components/ui/dialog";
 import { AccountsHeader } from "@/components/social-accounts/AccountsHeader";
 import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccountDialog";
@@ -27,36 +27,41 @@ const AddAccount = () => {
       }
       console.log('Current user ID:', user.id);
 
-      // First, let's check all social accounts
-      const { data: allSocialAccounts, error: socialError } = await supabase
-        .from('social_accounts')
-        .select('*')
-        .eq('user_id', user.id);
-      
-      console.log('All social accounts:', allSocialAccounts);
-
-      if (socialError) {
-        console.error("Error fetching social accounts:", socialError);
-        toast.error("Failed to fetch social accounts");
-        throw socialError;
-      }
-
-      // Now, let's check Facebook pages specifically
+      // Fetch Facebook pages
       const { data: fbData, error: fbError } = await supabase
         .from('facebook_pages')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active');
-
+      
       if (fbError) {
         console.error("Error fetching Facebook pages:", fbError);
+        console.error("Full error details:", JSON.stringify(fbError, null, 2));
         toast.error("Failed to fetch Facebook pages");
         throw fbError;
       }
       
-      console.log('Facebook pages:', fbData);
+      console.log('Facebook pages raw data:', fbData);
+      console.log('Number of Facebook pages found:', fbData?.length || 0);
 
-      // Convert facebook_pages to social_accounts format
+      // Fetch Instagram accounts
+      const { data: instaData, error: instaError } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('platform', 'instagram');
+
+      if (instaError) {
+        console.error("Error fetching Instagram accounts:", instaError);
+        console.error("Full error details:", JSON.stringify(instaError, null, 2));
+        toast.error("Failed to fetch Instagram accounts");
+        throw instaError;
+      }
+
+      console.log('Instagram accounts raw data:', instaData);
+      console.log('Number of Instagram accounts found:', instaData?.length || 0);
+
+      // Convert facebook_pages to expected format
       const facebookAccounts = fbData?.map(page => ({
         id: page.id,
         platform: 'facebook',
@@ -68,17 +73,14 @@ const AddAccount = () => {
         page_access_token: page.page_access_token
       })) || [];
 
-      // Filter Instagram accounts from social_accounts
-      const instagramAccounts = allSocialAccounts?.filter(account => 
-        account.platform === 'instagram'
-      ) || [];
-
-      const allAccounts = [...instagramAccounts, ...facebookAccounts];
+      const allAccounts = [...(instaData || []), ...facebookAccounts];
       
-      console.log('Combined accounts:', allAccounts);
-      console.log('Number of total accounts:', allAccounts.length);
-      console.log('Number of Instagram accounts:', instagramAccounts.length);
-      console.log('Number of Facebook accounts:', facebookAccounts.length);
+      console.log('Final combined accounts:', allAccounts);
+      console.log('Final number of accounts:', {
+        total: allAccounts.length,
+        facebook: facebookAccounts.length,
+        instagram: instaData?.length || 0
+      });
       
       return allAccounts as SocialAccount[];
     },
