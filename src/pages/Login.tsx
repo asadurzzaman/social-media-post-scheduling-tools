@@ -36,7 +36,7 @@ const Login = () => {
       <div className="flex-1 container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold text-center mb-8">Welcome Back</h1>
-          <div className="bg-white p-8 rounded-lg shadow-md">
+          <div className="bg-card p-8 rounded-lg shadow-md">
             <Auth
               supabaseClient={supabase}
               appearance={{
@@ -48,6 +48,11 @@ const Login = () => {
                       brandAccent: '#1d4ed8',
                     },
                   },
+                },
+                className: {
+                  container: 'w-full',
+                  button: 'w-full',
+                  anchor: 'text-primary hover:text-primary/80',
                 },
               }}
               view="sign_in"
