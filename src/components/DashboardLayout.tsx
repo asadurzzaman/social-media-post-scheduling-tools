@@ -39,27 +39,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (!session || error) {
-        navigate("/login");
-      }
-    };
-
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        navigate("/login");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
       setTheme(savedTheme);
@@ -78,9 +57,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     try {
       await supabase.auth.signOut();
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/auth");
     } catch (error) {
-      console.error("Logout error:", error);
       toast.error("Error logging out");
     }
   };
@@ -162,4 +140,4 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
     </SidebarProvider>
   );
-};
+}
