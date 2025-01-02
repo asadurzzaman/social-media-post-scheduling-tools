@@ -49,18 +49,39 @@ export const MediaGrid = ({
       return data.publicUrl;
     } catch (error) {
       console.error('Error getting public URL:', error);
-      toast.error(`Failed to load image: ${fileName}`);
+      toast.error(`Failed to load file: ${fileName}`);
       return '';
     }
   };
 
-  const renderImage = (file: any, size: "small" | "large") => {
+  const isVideoFile = (fileName: string) => {
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.webm'];
+    return videoExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
+  };
+
+  const renderMedia = (file: any, size: "small" | "large") => {
     const url = getPublicUrl(file.name);
     if (!url) {
       return (
         <div className={`bg-muted flex items-center justify-center ${size === "large" ? "aspect-square" : "w-12 h-12"} rounded-lg`}>
-          <span className="text-sm text-muted-foreground">No image</span>
+          <span className="text-sm text-muted-foreground">No preview</span>
         </div>
+      );
+    }
+
+    if (isVideoFile(file.name)) {
+      return (
+        <video
+          src={url}
+          className={
+            size === "large"
+              ? "object-cover w-full h-full rounded-lg transition-transform group-hover:scale-105"
+              : "w-12 h-12 object-cover rounded"
+          }
+          controls={size === "large"}
+          muted
+          onError={() => toast.error(`Failed to load video: ${file.name}`)}
+        />
       );
     }
 
@@ -128,7 +149,7 @@ export const MediaGrid = ({
                       onCheckedChange={() => onFileSelect(file.name)}
                     />
                   </div>
-                  {renderImage(file, "large")}
+                  {renderMedia(file, "large")}
                   <Button
                     variant="destructive"
                     size="icon"
@@ -166,7 +187,7 @@ export const MediaGrid = ({
                 checked={selectedFiles.includes(file.name)}
                 onCheckedChange={() => onFileSelect(file.name)}
               />
-              {renderImage(file, "small")}
+              {renderMedia(file, "small")}
               <div>
                 <p className="font-medium">{file.name}</p>
                 <p className="text-sm text-muted-foreground">
