@@ -70,13 +70,17 @@ const Auth = () => {
                     },
                   },
                 },
+                style: {
+                  container: {
+                    width: '100%',
+                  },
+                  message: {
+                    color: 'red',
+                  },
+                },
               }}
               providers={["facebook"]}
               redirectTo={`${window.location.origin}/dashboard`}
-              onError={(error) => {
-                console.error("Auth error:", error);
-                toast.error(error.message);
-              }}
             />
           </div>
         </div>
