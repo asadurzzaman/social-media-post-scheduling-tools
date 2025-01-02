@@ -55,11 +55,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
       toast.success("Logged out successfully");
-      navigate("/auth");
+      navigate("/login");
     } catch (error) {
+      console.error("Logout error:", error);
       toast.error("Error logging out");
+      // Even if there's an error, try to redirect to login
+      navigate("/login");
     }
   };
 
