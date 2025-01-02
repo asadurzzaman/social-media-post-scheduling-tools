@@ -14,12 +14,31 @@ const AddAccount = () => {
   const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: instagramAccounts, error: instagramError } = await supabase
         .from('social_accounts')
+        .select('*')
+        .eq('platform', 'instagram');
+      
+      if (instagramError) throw instagramError;
+
+      const { data: facebookPages, error: facebookError } = await supabase
+        .from('facebook_pages')
         .select('*');
       
-      if (error) throw error;
-      return data || [];
+      if (facebookError) throw facebookError;
+
+      // Transform Facebook pages to match social accounts structure
+      const facebookAccounts = facebookPages.map(page => ({
+        id: page.id,
+        platform: 'facebook',
+        account_name: page.page_name,
+        page_id: page.page_id
+      }));
+
+      return {
+        instagram: instagramAccounts || [],
+        facebook: facebookAccounts || []
+      };
     },
   });
 
@@ -36,12 +55,11 @@ const AddAccount = () => {
 
   const handleDisconnect = async (accountId: string) => {
     try {
-      const { error } = await supabase
-        .from('social_accounts')
-        .delete()
-        .eq('id', accountId);
-
-      if (error) throw error;
+      // Try to delete from both tables since we don't know which one it belongs to
+      await Promise.all([
+        supabase.from('social_accounts').delete().eq('id', accountId),
+        supabase.from('facebook_pages').delete().eq('id', accountId)
+      ]);
       
       toast.success("Account disconnected successfully");
       await refetchAccounts();
@@ -51,8 +69,6 @@ const AddAccount = () => {
     }
   };
 
-  const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -61,7 +77,8 @@ const AddAccount = () => {
           <ConnectAccountDialog onSuccess={handleSuccess} />
         </Dialog>
         <AccountsList 
-          instagramAccounts={instagramAccounts}
+          instagramAccounts={socialAccounts?.instagram || []}
+          facebookAccounts={socialAccounts?.facebook || []}
           onDisconnect={handleDisconnect}
         />
       </div>
