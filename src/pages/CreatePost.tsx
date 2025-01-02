@@ -58,11 +58,17 @@ const CreatePost = () => {
   const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
     queryKey: ["social-accounts"],
     queryFn: async () => {
+      console.log("Fetching social accounts for user:", userId);
       const { data, error } = await supabase
         .from("social_accounts")
         .select("*");
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching social accounts:", error);
+        throw error;
+      }
+      
+      console.log("Retrieved social accounts:", data);
       return data;
     },
     enabled: !!userId, // Only fetch if user is authenticated
