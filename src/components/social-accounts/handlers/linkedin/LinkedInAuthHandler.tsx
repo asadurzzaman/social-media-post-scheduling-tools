@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { LinkedIn } from "lucide-react";
+import { Linkedin } from "lucide-react"; // Fixed: LinkedIn -> Linkedin
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccessToast, showErrorToast } from './linkedinUtils';
 
@@ -72,6 +72,10 @@ export const LinkedInAuthHandler = () => {
 
           const { accessToken, profileData } = authData;
 
+          // Get current user
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('No authenticated user found');
+
           // Save account to database
           const { error: dbError } = await supabase
             .from('social_accounts')
@@ -81,6 +85,7 @@ export const LinkedInAuthHandler = () => {
               access_token: accessToken,
               avatar_url: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
               token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+              user_id: user.id
             });
 
           if (dbError) {
@@ -109,7 +114,7 @@ export const LinkedInAuthHandler = () => {
       {isConnecting ? (
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
       ) : (
-        <LinkedIn className="h-5 w-5" />
+        <Linkedin className="h-5 w-5" />
       )}
       {isConnecting ? 'Connecting...' : 'Connect LinkedIn'}
     </Button>

@@ -43,6 +43,10 @@ export const InstagramAuthHandler = () => {
         if (event.data.type === 'instagram_auth') {
           const { code } = event.data;
           
+          // Get current user
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('No authenticated user found');
+
           // Exchange code for access token
           const { data: authData, error: authError } = await supabase.functions.invoke(
             'instagram-auth',
@@ -70,6 +74,7 @@ export const InstagramAuthHandler = () => {
               instagram_user_id: userId,
               instagram_username: username,
               token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+              user_id: user.id
             });
 
           if (dbError) {

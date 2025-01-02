@@ -2,8 +2,15 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Facebook } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { FacebookPageManager } from './FacebookPageManager';
 import { toast } from "sonner";
+
+// Define FB SDK types
+declare global {
+  interface Window {
+    FB: any;
+    fbAsyncInit: () => void;
+  }
+}
 
 export const FacebookAuthHandler = () => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -15,9 +22,13 @@ export const FacebookAuthHandler = () => {
       // Initialize Facebook SDK
       await initFacebookSDK();
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user found');
+
       // Trigger Facebook login
-      const response = await new Promise((resolve, reject) => {
-        FB.login((response) => {
+      const response: any = await new Promise((resolve, reject) => {
+        window.FB.login((response: any) => {
           if (response.authResponse) {
             resolve(response);
           } else {
@@ -31,33 +42,23 @@ export const FacebookAuthHandler = () => {
 
       const { accessToken } = response.authResponse;
 
-      // Fetch pages that the user manages
-      const pages = await FacebookPageManager.fetchPages(accessToken);
+      // Save account to database
+      const { error: dbError } = await supabase
+        .from('social_accounts')
+        .insert({
+          platform: 'facebook',
+          account_name: 'Facebook Page',
+          access_token: accessToken,
+          token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+          user_id: user.id
+        });
 
-      if (!pages?.data?.length) {
-        throw new Error('No Facebook pages found. Please create a Facebook page first.');
+      if (dbError) {
+        throw dbError;
       }
 
-      // Save pages to database
-      const { addedPages, duplicatePages } = await FacebookPageManager.savePagesToDatabase(
-        pages.data,
-        auth.uid(),
-        (added, duplicates) => {
-          if (added > 0) {
-            toast.success(`Added ${added} Facebook page(s)`);
-          }
-          if (duplicates > 0) {
-            toast.info(`${duplicates} page(s) were already connected`);
-          }
-        }
-      );
-
-      if (addedPages === 0 && duplicatePages === pages.data.length) {
-        toast.error('All pages are already connected');
-      } else {
-        toast.success('Facebook pages connected successfully');
-      }
-    } catch (error) {
+      toast.success('Facebook account connected successfully');
+    } catch (error: any) {
       console.error('Facebook auth error:', error);
       toast.error(error.message || 'Failed to connect Facebook account');
     } finally {
@@ -65,16 +66,16 @@ export const FacebookAuthHandler = () => {
     }
   };
 
-  const initFacebookSDK = () => {
-    return new Promise((resolve, reject) => {
+  const initFacebookSDK = (): Promise<void> => {
+    return new Promise((resolve) => {
       // Load the Facebook SDK if it's not already loaded
-      if (typeof FB !== 'undefined') {
+      if (typeof window.FB !== 'undefined') {
         resolve();
         return;
       }
 
       window.fbAsyncInit = () => {
-        FB.init({
+        window.FB.init({
           appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
           cookie: true,
           xfbml: true,
@@ -89,7 +90,7 @@ export const FacebookAuthHandler = () => {
         if (d.getElementById(id)) return;
         js = d.createElement(s); js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
+        fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
     });
   };

@@ -86,6 +86,7 @@ export const usePostsData = (
             user_id: '',
             group_id: null,
             post_type: draft.postType || 'text',
+            search_vector: null,
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
