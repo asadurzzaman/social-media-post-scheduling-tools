@@ -21,12 +21,14 @@ export const FacebookPageManager = () => {
 
       // Get Facebook access token
       const accessToken = await handleFacebookAuth();
+      console.log('Facebook access token obtained:', accessToken);
 
       // Fetch pages
       const response = await fetch(
         `https://graph.facebook.com/v19.0/me/accounts?access_token=${accessToken}`
       );
       const data = await response.json();
+      console.log('Facebook pages data:', data);
       
       if (data.error) {
         console.error("Facebook API Error:", data.error);

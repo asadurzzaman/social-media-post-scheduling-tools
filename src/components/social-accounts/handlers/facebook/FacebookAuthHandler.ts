@@ -1,4 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Define FB SDK types
@@ -24,10 +23,6 @@ declare global {
 
 export const handleFacebookAuth = async (): Promise<string> => {
   try {
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No authenticated user found');
-
     // Initialize Facebook SDK
     await initFacebookSDK();
 
@@ -45,9 +40,7 @@ export const handleFacebookAuth = async (): Promise<string> => {
       });
     });
 
-    const { accessToken } = response.authResponse!;
-    return accessToken;
-
+    return response.authResponse!.accessToken;
   } catch (error: any) {
     console.error('Facebook auth error:', error);
     toast.error(error.message || 'Failed to connect Facebook account');
