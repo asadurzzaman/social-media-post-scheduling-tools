@@ -10,6 +10,7 @@ import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { Tables } from "@/integrations/supabase/types";
 
 type SocialAccount = Tables<"social_accounts">;
+type FacebookPage = Tables<"facebook_pages">;
 
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -19,21 +20,48 @@ const AddAccount = () => {
     queryFn: async () => {
       console.log('Starting to fetch social accounts...');
       
-      const { data, error } = await supabase
+      // Fetch from social_accounts table
+      const { data: socialData, error: socialError } = await supabase
         .from('social_accounts')
         .select('*');
       
-      if (error) {
-        console.error("Error fetching social accounts:", error);
+      if (socialError) {
+        console.error("Error fetching social accounts:", socialError);
         toast.error("Failed to fetch social accounts");
-        throw error;
+        throw socialError;
+      }
+
+      // Fetch from facebook_pages table
+      const { data: fbData, error: fbError } = await supabase
+        .from('facebook_pages')
+        .select('*');
+
+      if (fbError) {
+        console.error("Error fetching Facebook pages:", fbError);
+        toast.error("Failed to fetch Facebook pages");
+        throw fbError;
       }
       
-      console.log('Raw response from Supabase:', data);
-      console.log('Number of accounts fetched:', data?.length || 0);
+      console.log('Raw response from social_accounts:', socialData);
+      console.log('Raw response from facebook_pages:', fbData);
+
+      // Convert facebook_pages to social_accounts format
+      const facebookAccounts = fbData?.map(page => ({
+        id: page.id,
+        platform: 'facebook',
+        account_name: page.page_name,
+        user_id: page.user_id,
+        avatar_url: null, // Facebook pages don't have avatar_url in the table
+        created_at: page.connected_at || new Date().toISOString(),
+      })) || [];
+
+      const allAccounts = [...(socialData || []), ...facebookAccounts];
       
-      if (data) {
-        data.forEach((account, index) => {
+      console.log('Combined accounts:', allAccounts);
+      console.log('Number of total accounts:', allAccounts.length);
+      
+      if (allAccounts.length > 0) {
+        allAccounts.forEach((account, index) => {
           console.log(`Account ${index + 1}:`, {
             id: account.id,
             platform: account.platform,
@@ -43,7 +71,7 @@ const AddAccount = () => {
         });
       }
       
-      return (data as SocialAccount[]) || [];
+      return allAccounts as SocialAccount[];
     },
     initialData: [] as SocialAccount[],
   });
@@ -63,12 +91,23 @@ const AddAccount = () => {
     try {
       console.log('Attempting to disconnect account:', accountId);
       
-      const { error } = await supabase
+      // Try to delete from social_accounts first
+      const { error: socialError } = await supabase
         .from('social_accounts')
         .delete()
         .eq('id', accountId);
 
-      if (error) throw error;
+      if (socialError) {
+        // If not found in social_accounts, try facebook_pages
+        const { error: fbError } = await supabase
+          .from('facebook_pages')
+          .delete()
+          .eq('id', accountId);
+
+        if (fbError) {
+          throw fbError;
+        }
+      }
       
       toast.success("Account disconnected successfully");
       await refetchAccounts();
@@ -78,7 +117,7 @@ const AddAccount = () => {
     }
   };
 
-  // Ensure we're working with an array and filter accounts by platform
+  // Filter accounts by platform
   const instagramAccounts = Array.isArray(socialAccounts) 
     ? socialAccounts.filter(account => account.platform === 'instagram')
     : [];
