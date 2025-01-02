@@ -1,4 +1,4 @@
-import { Instagram, Linkedin } from "lucide-react";
+import { Instagram } from "lucide-react";
 import { SocialAccountCard } from "./SocialAccountCard";
 
 interface SocialAccount {
@@ -10,13 +10,11 @@ interface SocialAccount {
 
 interface AccountsListProps {
   instagramAccounts: SocialAccount[];
-  linkedinAccounts: SocialAccount[];
   onDisconnect: (accountId: string) => void;
 }
 
 export const AccountsList = ({
   instagramAccounts,
-  linkedinAccounts,
   onDisconnect,
 }: AccountsListProps) => {
   return (
@@ -35,29 +33,6 @@ export const AccountsList = ({
               isConnected={true}
               accountName={account.account_name}
               accountId={account.id}
-              onDisconnect={() => onDisconnect(account.id)}
-            >
-              {null}
-            </SocialAccountCard>
-          ))
-        )}
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-4">LinkedIn Pages</h3>
-        {linkedinAccounts.length === 0 ? (
-          <p className="text-muted-foreground">No LinkedIn pages connected</p>
-        ) : (
-          linkedinAccounts.map((account) => (
-            <SocialAccountCard
-              key={account.id}
-              platform="linkedin"
-              icon={<Linkedin className="h-6 w-6 text-[#0A66C2]" />}
-              title="LinkedIn Page"
-              isConnected={true}
-              accountName={account.account_name}
-              accountId={account.id}
-              avatarUrl={account.avatar_url}
               onDisconnect={() => onDisconnect(account.id)}
             >
               {null}

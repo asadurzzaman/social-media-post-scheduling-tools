@@ -1,7 +1,6 @@
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Instagram } from "lucide-react";
-import { LinkedInHandler } from "./handlers/LinkedInHandler";
 
 interface ConnectAccountDialogProps {
   onSuccess: () => void;
@@ -25,7 +24,6 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           <Instagram className="w-5 h-5 text-pink-600" />
           Connect Instagram (Coming soon)
         </Button>
-        <LinkedInHandler onSuccess={onSuccess} />
         <Button className="w-full" variant="outline" disabled>X/Twitter (Coming soon)</Button>
         <Button className="w-full" variant="outline" disabled>TikTok (Coming soon)</Button>
       </div>

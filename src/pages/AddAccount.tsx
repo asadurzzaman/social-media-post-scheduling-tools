@@ -52,7 +52,6 @@ const AddAccount = () => {
   };
 
   const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
-  const linkedinAccounts = socialAccounts?.filter(account => account.platform === 'linkedin') || [];
 
   return (
     <DashboardLayout>
@@ -63,7 +62,6 @@ const AddAccount = () => {
         </Dialog>
         <AccountsList 
           instagramAccounts={instagramAccounts}
-          linkedinAccounts={linkedinAccounts}
           onDisconnect={handleDisconnect}
         />
       </div>
