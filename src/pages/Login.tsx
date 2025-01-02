@@ -3,6 +3,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { LandingNav } from "@/components/LandingNav";
 import { Footer } from "@/components/Footer";
 
@@ -11,9 +12,14 @@ const Login = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard");
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+        toast.error("Error checking authentication status");
       }
     };
 
@@ -60,14 +66,13 @@ const Login = () => {
               providers={["facebook"]}
               redirectTo={`${window.location.origin}/dashboard`}
             />
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              New to SocialManager?{" "}
+              <a href="/pricing" className="text-primary hover:text-primary/80">
+                View our pricing
+              </a>
+            </div>
           </div>
-          <p className="text-center mt-4 text-sm text-gray-600">
-            New to SocialManager? Visit our{" "}
-            <a href="/pricing" className="text-primary hover:underline">
-              pricing page
-            </a>{" "}
-            to get started.
-          </p>
         </div>
       </div>
       <Footer />
