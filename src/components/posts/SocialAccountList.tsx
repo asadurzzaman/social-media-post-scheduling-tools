@@ -1,12 +1,19 @@
-import { Facebook, Instagram } from "lucide-react";
+import { Facebook, Instagram, Check } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface SocialAccount {
   id: string;
@@ -17,64 +24,109 @@ interface SocialAccount {
 
 interface SocialAccountListProps {
   accounts: SocialAccount[];
-  selectedAccount: string;
-  onSelect: (accountId: string) => void;
+  selectedAccounts: string[];
+  onSelect: (accountIds: string[]) => void;
 }
 
 export const SocialAccountList = ({
   accounts,
-  selectedAccount,
+  selectedAccounts,
   onSelect,
 }: SocialAccountListProps) => {
   const facebookAccounts = accounts.filter(account => account.platform === 'facebook');
   const instagramAccounts = accounts.filter(account => account.platform === 'instagram');
 
+  const toggleAccount = (accountId: string) => {
+    if (selectedAccounts.includes(accountId)) {
+      onSelect(selectedAccounts.filter(id => id !== accountId));
+    } else {
+      onSelect([...selectedAccounts, accountId]);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium">
-        Select Social Media Account <span className="text-red-500">*</span>
+        Select Social Media Accounts <span className="text-red-500">*</span>
       </Label>
       
-      <Select value={selectedAccount} onValueChange={onSelect}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an account" />
-        </SelectTrigger>
-        <SelectContent>
-          {facebookAccounts.length > 0 && (
-            <>
-              <div className="px-2 py-1.5 text-sm font-semibold">Facebook Pages</div>
-              {facebookAccounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  <div className="flex items-center gap-2">
-                    <Facebook className="h-4 w-4 text-[#1877F2]" />
-                    <span>{account.account_name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </>
-          )}
-          
-          {instagramAccounts.length > 0 && (
-            <>
-              <div className="px-2 py-1.5 text-sm font-semibold">Instagram Accounts</div>
-              {instagramAccounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  <div className="flex items-center gap-2">
-                    <Instagram className="h-4 w-4 text-[#E4405F]" />
-                    <span>{account.account_name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </>
-          )}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className={cn(
+              "w-full justify-between",
+              selectedAccounts.length > 0 && "text-primary"
+            )}
+          >
+            {selectedAccounts.length === 0
+              ? "Select accounts"
+              : `${selectedAccounts.length} account${selectedAccounts.length === 1 ? "" : "s"} selected`}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full p-0">
+          <Command>
+            <CommandInput placeholder="Search accounts..." />
+            <CommandEmpty>No accounts found.</CommandEmpty>
+            {facebookAccounts.length > 0 && (
+              <CommandGroup heading="Facebook Pages">
+                {facebookAccounts.map((account) => (
+                  <CommandItem
+                    key={account.id}
+                    value={account.account_name}
+                    onSelect={() => toggleAccount(account.id)}
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <Facebook className="h-4 w-4 text-[#1877F2]" />
+                      <span>{account.account_name}</span>
+                    </div>
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        selectedAccounts.includes(account.id)
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            
+            {instagramAccounts.length > 0 && (
+              <CommandGroup heading="Instagram Accounts">
+                {instagramAccounts.map((account) => (
+                  <CommandItem
+                    key={account.id}
+                    value={account.account_name}
+                    onSelect={() => toggleAccount(account.id)}
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <Instagram className="h-4 w-4 text-[#E4405F]" />
+                      <span>{account.account_name}</span>
+                    </div>
+                    <Check
+                      className={cn(
+                        "ml-auto h-4 w-4",
+                        selectedAccounts.includes(account.id)
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
 
-          {accounts.length === 0 && (
-            <div className="px-2 py-1.5 text-sm text-muted-foreground">
-              No social media accounts connected. Please connect an account first.
-            </div>
-          )}
-        </SelectContent>
-      </Select>
+            {accounts.length === 0 && (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                No social media accounts connected. Please connect an account first.
+              </div>
+            )}
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

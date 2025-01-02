@@ -9,8 +9,8 @@ interface CreatePostFormContentProps {
   accounts: any[];
   content: string;
   setContent: (content: string) => void;
-  selectedAccount: string;
-  setSelectedAccount: (account: string) => void;
+  selectedAccounts: string[];
+  setSelectedAccounts: (accounts: string[]) => void;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   postType: PostType;
@@ -33,8 +33,8 @@ export const CreatePostFormContent = ({
   accounts,
   content,
   setContent,
-  selectedAccount,
-  setSelectedAccount,
+  selectedAccounts,
+  setSelectedAccounts,
   date,
   setDate,
   postType,
@@ -69,8 +69,8 @@ export const CreatePostFormContent = ({
     <div className="space-y-6 max-w-2xl">
       <SocialAccountList
         accounts={accounts}
-        selectedAccount={selectedAccount}
-        onSelect={setSelectedAccount}
+        selectedAccounts={selectedAccounts}
+        onSelect={setSelectedAccounts}
       />
 
       <PostTypeSelect 

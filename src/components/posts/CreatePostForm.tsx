@@ -24,8 +24,12 @@ export const CreatePostForm = ({
   const navigate = useNavigate();
   const { userId } = useUser();
   const [content, setContent] = useState(initialPost?.content || "");
-  const [selectedAccount, setSelectedAccount] = useState(initialPost?.social_account_id || "");
-  const [date, setDate] = useState<Date | undefined>(initialPost ? new Date(initialPost.scheduled_for) : initialDate);
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(
+    initialPost ? [initialPost.social_account_id] : []
+  );
+  const [date, setDate] = useState<Date | undefined>(
+    initialPost ? new Date(initialPost.scheduled_for) : initialDate
+  );
   const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
   const [postType, setPostType] = useState<PostType>(() => {
     if (initialPost) {
@@ -48,7 +52,7 @@ export const CreatePostForm = ({
 
   const resetForm = () => {
     setContent("");
-    setSelectedAccount("");
+    setSelectedAccounts([]);
     setDate(undefined);
     setPostType("text");
     setUploadedFiles([]);
@@ -64,7 +68,7 @@ export const CreatePostForm = ({
         const draft = JSON.parse(savedDraft);
         setContent(draft.content || "");
         setPostType(draft.postType || "text");
-        setSelectedAccount(draft.selectedAccount || "");
+        setSelectedAccounts(draft.selectedAccounts || []);
         if (draft.date) setDate(new Date(draft.date));
         if (draft.timezone) setTimezone(draft.timezone);
       }
@@ -72,24 +76,24 @@ export const CreatePostForm = ({
   }, [initialPost]);
 
   useEffect(() => {
-    if (!initialPost && (content || selectedAccount || date || postType !== "text")) {
+    if (!initialPost && (content || selectedAccounts.length > 0 || date || postType !== "text")) {
       const draft = {
         content,
         postType,
-        selectedAccount,
+        selectedAccounts,
         date: date?.toISOString(),
         timezone,
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date, timezone, initialPost]);
+  }, [content, postType, selectedAccounts, date, timezone, initialPost]);
 
   const handleSaveDraft = () => {
     const draft = {
       content,
       postType,
-      selectedAccount,
+      selectedAccounts,
       date: date?.toISOString(),
       timezone,
     };
@@ -116,7 +120,7 @@ export const CreatePostForm = ({
           requires_reconnect: true,
           last_error: errorMessage
         })
-        .eq('id', selectedAccount);
+        .eq('id', selectedAccounts[0]);
       
       toast.error("Social media token has expired. Please reconnect your account.");
     } else {
@@ -131,16 +135,19 @@ export const CreatePostForm = ({
     }
 
     try {
-      await publishPost({
-        content,
-        selectedAccount,
-        userId,
-        postType,
-        uploadedFiles,
-        timezone,
-      });
+      // Publish to all selected accounts
+      for (const accountId of selectedAccounts) {
+        await publishPost({
+          content,
+          selectedAccount: accountId,
+          userId,
+          postType,
+          uploadedFiles,
+          timezone,
+        });
+      }
       
-      toast.success("Post published successfully!");
+      toast.success("Posts published successfully!");
       resetForm();
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
@@ -163,18 +170,21 @@ export const CreatePostForm = ({
     }
 
     try {
-      await publishPost({
-        content,
-        selectedAccount,
-        userId,
-        postType,
-        uploadedFiles,
-        timezone,
-        scheduledFor: date,
-        postId: initialPost?.id,
-      });
+      // Schedule for all selected accounts
+      for (const accountId of selectedAccounts) {
+        await publishPost({
+          content,
+          selectedAccount: accountId,
+          userId,
+          postType,
+          uploadedFiles,
+          timezone,
+          scheduledFor: date,
+          postId: initialPost?.id,
+        });
+      }
       
-      toast.success(initialPost ? "Post updated successfully!" : "Post scheduled successfully!");
+      toast.success(initialPost ? "Post updated successfully!" : "Posts scheduled successfully!");
       resetForm();
       onSuccess?.();
       if (!onSuccess) navigate('/posts');
@@ -188,8 +198,8 @@ export const CreatePostForm = ({
       accounts={accounts}
       content={content}
       setContent={setContent}
-      selectedAccount={selectedAccount}
-      setSelectedAccount={setSelectedAccount}
+      selectedAccounts={selectedAccounts}
+      setSelectedAccounts={setSelectedAccounts}
       date={date}
       setDate={setDate}
       postType={postType}
