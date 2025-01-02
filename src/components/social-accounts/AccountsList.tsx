@@ -36,6 +36,7 @@ export const AccountsList = ({
               accountName={account.account_name}
               accountId={account.id}
               onDisconnect={() => onDisconnect(account.id)}
+              avatarUrl={account.avatar_url}
             >
               {null}
             </SocialAccountCard>
@@ -58,6 +59,7 @@ export const AccountsList = ({
               accountName={account.account_name}
               accountId={account.id}
               onDisconnect={() => onDisconnect(account.id)}
+              avatarUrl={account.avatar_url}
             >
               {null}
             </SocialAccountCard>

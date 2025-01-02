@@ -17,16 +17,18 @@ const AddAccount = () => {
   const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
+      console.log('Fetching social accounts...');
       const { data, error } = await supabase
         .from('social_accounts')
         .select('*');
       
       if (error) {
         console.error("Error fetching social accounts:", error);
+        toast.error("Failed to fetch social accounts");
         throw error;
       }
       
-      // Ensure we always return an array
+      console.log('Fetched social accounts:', data);
       return (data as SocialAccount[]) || [];
     },
     initialData: [] as SocialAccount[],
@@ -68,6 +70,9 @@ const AddAccount = () => {
   const facebookAccounts = Array.isArray(socialAccounts)
     ? socialAccounts.filter(account => account.platform === 'facebook')
     : [];
+
+  console.log('Facebook accounts:', facebookAccounts);
+  console.log('Instagram accounts:', instagramAccounts);
 
   return (
     <DashboardLayout>
