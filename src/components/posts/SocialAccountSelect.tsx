@@ -18,10 +18,11 @@ interface SocialAccount {
   id: string;
   platform: string;
   account_name: string;
+  avatar_url?: string;
 }
 
 interface SocialAccountSelectProps {
-  accounts: SocialAccount[];
+  accounts?: SocialAccount[];
   selectedAccounts: string[];
   onSelect: (accountIds: string[]) => void;
 }
@@ -31,8 +32,11 @@ export const SocialAccountSelect = ({
   selectedAccounts = [],
   onSelect,
 }: SocialAccountSelectProps) => {
-  const facebookAccounts = accounts.filter(account => account.platform === 'facebook') || [];
-  const instagramAccounts = accounts.filter(account => account.platform === 'instagram') || [];
+  // Ensure accounts is an array before filtering
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
+  
+  const facebookAccounts = safeAccounts.filter(account => account.platform === 'facebook');
+  const instagramAccounts = safeAccounts.filter(account => account.platform === 'instagram');
 
   const toggleAccount = (accountId: string) => {
     if (selectedAccounts.includes(accountId)) {
@@ -113,7 +117,7 @@ export const SocialAccountSelect = ({
               </CommandGroup>
             )}
 
-            {accounts.length === 0 && (
+            {safeAccounts.length === 0 && (
               <div className="px-2 py-1.5 text-sm text-muted-foreground">
                 No social media accounts connected. Please connect an account first.
               </div>
