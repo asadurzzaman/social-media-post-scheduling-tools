@@ -52,10 +52,10 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Get basic profile data without requiring r_liteprofile scope
+    // Get basic profile data using the /me endpoint instead of userinfo
     console.log('Fetching profile data...');
     const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/userinfo', {
+      'https://api.linkedin.com/v2/me', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
         },
@@ -75,9 +75,9 @@ serve(async (req) => {
       JSON.stringify({
         accessToken: tokenData.access_token,
         profileData: {
-          id: profileData.sub,
-          localizedFirstName: profileData.given_name || '',
-          localizedLastName: profileData.family_name || ''
+          id: profileData.id,
+          localizedFirstName: profileData.localizedFirstName || '',
+          localizedLastName: profileData.localizedLastName || ''
         },
       }),
       {
