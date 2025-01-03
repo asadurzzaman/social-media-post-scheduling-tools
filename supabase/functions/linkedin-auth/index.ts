@@ -52,7 +52,7 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Get profile data using the /v2/me endpoint with r_liteprofile scope
+    // Get profile data using the /v2/me endpoint
     console.log('Fetching profile data...');
     const profileResponse = await fetch(
       'https://api.linkedin.com/v2/me', {
