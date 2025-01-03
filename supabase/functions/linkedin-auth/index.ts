@@ -52,12 +52,13 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Get basic profile data using the /me endpoint instead of userinfo
+    // Get basic profile data using the /v2/me endpoint with r_basicprofile scope
     console.log('Fetching profile data...');
     const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/me', {
+      'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName)', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
+          'X-Restli-Protocol-Version': '2.0.0',
         },
       }
     );
