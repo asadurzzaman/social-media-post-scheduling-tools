@@ -82,7 +82,7 @@ export const LinkedInAuthHandler = () => {
 
             console.log('Successfully got profile data:', profileData);
 
-            // Save account to database
+            // Save account to database with explicit platform value
             const { error: dbError } = await supabase
               .from('social_accounts')
               .insert({
