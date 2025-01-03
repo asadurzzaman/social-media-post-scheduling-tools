@@ -52,10 +52,10 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Get basic profile data with profile picture
+    // Get basic profile data without requiring r_liteprofile scope
     console.log('Fetching profile data...');
     const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))', {
+      'https://api.linkedin.com/v2/userinfo', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
         },
@@ -74,7 +74,11 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         accessToken: tokenData.access_token,
-        profileData,
+        profileData: {
+          id: profileData.sub,
+          localizedFirstName: profileData.given_name || '',
+          localizedLastName: profileData.family_name || ''
+        },
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -24,8 +24,8 @@ export const LinkedInAuthHandler = () => {
       // Calculate redirect URI
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
 
-      // Construct LinkedIn OAuth URL - using both w_member_social and r_liteprofile scopes
-      const scope = encodeURIComponent('w_member_social r_liteprofile');
+      // Only use w_member_social scope as r_liteprofile is not authorized
+      const scope = encodeURIComponent('w_member_social');
       const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=86uror0q3ruwuf&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
 
       console.log('Opening LinkedIn auth popup...');
@@ -89,11 +89,9 @@ export const LinkedInAuthHandler = () => {
                 platform: 'linkedin',
                 account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
                 access_token: accessToken,
-                avatar_url: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
                 token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
                 user_id: user.id,
-                linkedin_user_id: profileData.id,
-                linkedin_profile_url: `https://www.linkedin.com/in/${profileData.id}`
+                linkedin_user_id: profileData.id
               });
 
             if (dbError) {
