@@ -35,7 +35,7 @@ const AddAccount = () => {
       }
       console.log('Current user ID:', user.id);
 
-      // Fetch Facebook pages
+      // Fetch Facebook pages with status 'active'
       const { data: fbData, error: fbError } = await supabase
         .from('facebook_pages')
         .select('*')
