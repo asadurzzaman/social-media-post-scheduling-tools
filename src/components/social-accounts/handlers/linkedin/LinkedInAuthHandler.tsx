@@ -23,8 +23,8 @@ export const LinkedInAuthHandler = () => {
       // Calculate redirect URI
       const redirectUri = `${window.location.origin}/linkedin-callback.html`;
 
-      // Construct LinkedIn OAuth URL - removed r_emailaddress from scope
-      const scope = encodeURIComponent('r_liteprofile w_member_social');
+      // Construct LinkedIn OAuth URL - only using w_member_social scope
+      const scope = encodeURIComponent('w_member_social');
       const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=86uror0q3ruwuf&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
 
       console.log('Opening LinkedIn auth popup...');
