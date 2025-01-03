@@ -50,6 +50,14 @@ const AddAccount = () => {
       
       console.log('Facebook pages raw data:', fbData);
 
+      // Convert facebook_pages to the format expected by AccountsList
+      const facebookAccounts: SocialAccount[] = (fbData || []).map(page => ({
+        id: page.id,
+        platform: 'facebook',
+        account_name: page.page_name,
+        avatar_url: undefined
+      }));
+
       // Fetch Instagram accounts
       const { data: instaData, error: instaError } = await supabase
         .from('social_accounts')
@@ -60,18 +68,10 @@ const AddAccount = () => {
       if (instaError) {
         console.error("Error fetching Instagram accounts:", instaError);
         toast.error("Failed to fetch Instagram accounts");
-        return { facebookAccounts: [], instagramAccounts: [] };
+        return { facebookAccounts, instagramAccounts: [] };
       }
 
       console.log('Instagram accounts raw data:', instaData);
-
-      // Convert facebook_pages to the format expected by AccountsList
-      const facebookAccounts: SocialAccount[] = (fbData || []).map(page => ({
-        id: page.id,
-        platform: 'facebook',
-        account_name: page.page_name,
-        avatar_url: undefined
-      }));
 
       // Convert instagram accounts to the expected format
       const instagramAccounts: SocialAccount[] = (instaData || []).map(account => ({
@@ -130,8 +130,6 @@ const AddAccount = () => {
     }
   };
 
-  const totalAccounts = accounts.facebookAccounts.length + accounts.instagramAccounts.length;
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -146,7 +144,7 @@ const AddAccount = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-primary/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Accounts</p>
-              <p className="text-2xl font-bold">{totalAccounts}</p>
+              <p className="text-2xl font-bold">{accounts.facebookAccounts.length + accounts.instagramAccounts.length}</p>
             </div>
             <div className="p-4 bg-[#1877F2]/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Facebook Pages</p>

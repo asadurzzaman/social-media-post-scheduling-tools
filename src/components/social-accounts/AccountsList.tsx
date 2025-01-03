@@ -15,8 +15,8 @@ interface AccountsListProps {
 }
 
 export const AccountsList = ({
-  instagramAccounts = [], // Provide default empty array
-  facebookAccounts = [], // Provide default empty array
+  instagramAccounts = [],
+  facebookAccounts = [],
   onDisconnect,
 }: AccountsListProps) => {
   return (
