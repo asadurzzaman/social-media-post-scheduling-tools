@@ -10,6 +10,7 @@ import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUser } from "@/hooks/useUser";
 
 type FacebookPage = Tables<"facebook_pages">;
 type SocialAccount = {
@@ -21,25 +22,24 @@ type SocialAccount = {
 
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { userId } = useUser();
 
   const { data: accounts = { facebookAccounts: [], instagramAccounts: [] }, refetch: refetchAccounts, isLoading } = useQuery({
-    queryKey: ['social-accounts'],
+    queryKey: ['social-accounts', userId],
     queryFn: async () => {
       console.log('Starting to fetch accounts...');
+      console.log('Current user ID from useUser hook:', userId);
       
-      // Get the current user's ID
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!userId) {
         console.log('No authenticated user found');
         return { facebookAccounts: [], instagramAccounts: [] };
       }
-      console.log('Current user ID:', user.id);
 
       // Fetch Facebook pages with status 'active'
       const { data: fbData, error: fbError } = await supabase
         .from('facebook_pages')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('status', 'active');
       
       if (fbError) {
@@ -62,7 +62,7 @@ const AddAccount = () => {
       const { data: instaData, error: instaError } = await supabase
         .from('social_accounts')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('platform', 'instagram');
 
       if (instaError) {
@@ -86,6 +86,7 @@ const AddAccount = () => {
         instagramAccounts
       };
     },
+    enabled: !!userId,
     initialData: { facebookAccounts: [], instagramAccounts: [] }
   });
 
