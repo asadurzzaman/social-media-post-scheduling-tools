@@ -52,10 +52,10 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Get basic profile data
+    // Get basic profile data with profile picture
     console.log('Fetching profile data...');
     const profileResponse = await fetch(
-      'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName)', {
+      'https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~:playableStreams))', {
         headers: {
           'Authorization': `Bearer ${tokenData.access_token}`,
         },
