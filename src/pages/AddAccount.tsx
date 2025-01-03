@@ -1,14 +1,15 @@
-import { DashboardLayout } from "@/components/DashboardLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog } from "@/components/ui/dialog";
+import { DashboardLayout } from "@/components/DashboardLayout";
 import { AccountsHeader } from "@/components/social-accounts/AccountsHeader";
 import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccountDialog";
 import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type FacebookPage = Tables<"facebook_pages">;
 type SocialAccount = {
@@ -150,10 +151,32 @@ const AddAccount = () => {
             <div className="p-4 bg-[#1877F2]/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Facebook Pages</p>
               <p className="text-2xl font-bold">{accounts.facebookAccounts.length}</p>
+              {accounts.facebookAccounts.length > 0 && (
+                <ScrollArea className="h-20 mt-2">
+                  <div className="space-y-1">
+                    {accounts.facebookAccounts.map((account) => (
+                      <p key={account.id} className="text-sm text-muted-foreground">
+                        {account.account_name}
+                      </p>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </div>
             <div className="p-4 bg-[#E4405F]/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Instagram Accounts</p>
               <p className="text-2xl font-bold">{accounts.instagramAccounts.length}</p>
+              {accounts.instagramAccounts.length > 0 && (
+                <ScrollArea className="h-20 mt-2">
+                  <div className="space-y-1">
+                    {accounts.instagramAccounts.map((account) => (
+                      <p key={account.id} className="text-sm text-muted-foreground">
+                        {account.account_name}
+                      </p>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </div>
           </div>
         </Card>
