@@ -12,7 +12,6 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUser } from "@/hooks/useUser";
 
-type FacebookPage = Tables<"facebook_pages">;
 type SocialAccount = {
   id: string;
   platform: string;
@@ -24,7 +23,7 @@ const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { userId } = useUser();
 
-  const { data: accounts = { facebookAccounts: [], instagramAccounts: [] }, refetch: refetchAccounts, isLoading } = useQuery({
+  const { data: accounts = { instagramAccounts: [] }, refetch: refetchAccounts, isLoading } = useQuery({
     queryKey: ['social-accounts', userId],
     queryFn: async () => {
       console.log('Starting to fetch accounts...');
@@ -32,31 +31,8 @@ const AddAccount = () => {
       
       if (!userId) {
         console.log('No authenticated user found');
-        return { facebookAccounts: [], instagramAccounts: [] };
+        return { instagramAccounts: [] };
       }
-
-      // Fetch Facebook pages with status 'active'
-      const { data: fbData, error: fbError } = await supabase
-        .from('facebook_pages')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'active');
-      
-      if (fbError) {
-        console.error("Error fetching Facebook pages:", fbError);
-        toast.error("Failed to fetch Facebook pages");
-        return { facebookAccounts: [], instagramAccounts: [] };
-      }
-      
-      console.log('Facebook pages raw data:', fbData);
-
-      // Convert facebook_pages to the format expected by AccountsList
-      const facebookAccounts: SocialAccount[] = (fbData || []).map(page => ({
-        id: page.id,
-        platform: 'facebook',
-        account_name: page.page_name,
-        avatar_url: undefined
-      }));
 
       // Fetch Instagram accounts
       const { data: instaData, error: instaError } = await supabase
@@ -68,7 +44,7 @@ const AddAccount = () => {
       if (instaError) {
         console.error("Error fetching Instagram accounts:", instaError);
         toast.error("Failed to fetch Instagram accounts");
-        return { facebookAccounts, instagramAccounts: [] };
+        return { instagramAccounts: [] };
       }
 
       console.log('Instagram accounts raw data:', instaData);
@@ -82,12 +58,11 @@ const AddAccount = () => {
       }));
 
       return {
-        facebookAccounts,
         instagramAccounts
       };
     },
     enabled: !!userId,
-    initialData: { facebookAccounts: [], instagramAccounts: [] }
+    initialData: { instagramAccounts: [] }
   });
 
   const handleSuccess = async () => {
@@ -105,22 +80,13 @@ const AddAccount = () => {
     try {
       console.log('Attempting to disconnect account:', accountId);
       
-      // Try to delete from social_accounts first (for Instagram)
       const { error: socialError } = await supabase
         .from('social_accounts')
         .delete()
         .eq('id', accountId);
 
       if (socialError) {
-        // If not found in social_accounts, try facebook_pages
-        const { error: fbError } = await supabase
-          .from('facebook_pages')
-          .delete()
-          .eq('id', accountId);
-
-        if (fbError) {
-          throw fbError;
-        }
+        throw socialError;
       }
       
       toast.success("Account disconnected successfully");
@@ -142,25 +108,10 @@ const AddAccount = () => {
         {/* Account Summary Card */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Connected Accounts Summary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-primary/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Accounts</p>
-              <p className="text-2xl font-bold">{accounts.facebookAccounts.length + accounts.instagramAccounts.length}</p>
-            </div>
-            <div className="p-4 bg-[#1877F2]/10 rounded-lg">
-              <p className="text-sm text-muted-foreground">Facebook Pages</p>
-              <p className="text-2xl font-bold">{accounts.facebookAccounts.length}</p>
-              {accounts.facebookAccounts.length > 0 && (
-                <ScrollArea className="h-20 mt-2">
-                  <div className="space-y-1">
-                    {accounts.facebookAccounts.map((account) => (
-                      <p key={account.id} className="text-sm text-muted-foreground">
-                        {account.account_name}
-                      </p>
-                    ))}
-                  </div>
-                </ScrollArea>
-              )}
+              <p className="text-2xl font-bold">{accounts.instagramAccounts.length}</p>
             </div>
             <div className="p-4 bg-[#E4405F]/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Instagram Accounts</p>
@@ -187,7 +138,6 @@ const AddAccount = () => {
         ) : (
           <AccountsList 
             instagramAccounts={accounts.instagramAccounts}
-            facebookAccounts={accounts.facebookAccounts}
             onDisconnect={handleDisconnect}
           />
         )}
