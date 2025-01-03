@@ -26,7 +26,7 @@ export const LinkedInAuthHandler = () => {
       localStorage.setItem('linkedin_auth_state', state);
 
       // Calculate redirect URI
-      const redirectUri = `${window.location.origin}/linkedin-callback`;
+      const redirectUri = `${window.location.origin}/linkedin-callback.html`;
 
       // Construct LinkedIn OAuth URL
       const scope = encodeURIComponent('r_liteprofile r_emailaddress w_member_social');
@@ -81,7 +81,7 @@ export const LinkedInAuthHandler = () => {
             .from('social_accounts')
             .insert({
               platform: 'linkedin',
-              account_name: profileData.localizedFirstName + ' ' + profileData.localizedLastName,
+              account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
               access_token: accessToken,
               avatar_url: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
               token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
@@ -96,6 +96,9 @@ export const LinkedInAuthHandler = () => {
 
           toast.success('LinkedIn account connected successfully');
           popup.close();
+          window.location.reload(); // Refresh to show the new account
+        } else if (event.data.type === 'linkedin_auth_error') {
+          throw new Error(event.data.error);
         }
       });
     } catch (error) {
@@ -115,7 +118,7 @@ export const LinkedInAuthHandler = () => {
       variant="outline"
     >
       {isConnecting ? (
-        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
       ) : (
         <Linkedin className="h-5 w-5" />
       )}
