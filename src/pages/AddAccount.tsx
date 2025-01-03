@@ -20,7 +20,7 @@ type SocialAccount = {
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: accounts, refetch: refetchAccounts } = useQuery({
+  const { data: accounts = { facebookAccounts: [], instagramAccounts: [] }, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
       console.log('Starting to fetch accounts...');
@@ -28,7 +28,8 @@ const AddAccount = () => {
       // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        throw new Error('No authenticated user found');
+        console.log('No authenticated user found');
+        return { facebookAccounts: [], instagramAccounts: [] };
       }
       console.log('Current user ID:', user.id);
 
@@ -42,7 +43,7 @@ const AddAccount = () => {
       if (fbError) {
         console.error("Error fetching Facebook pages:", fbError);
         toast.error("Failed to fetch Facebook pages");
-        throw fbError;
+        return { facebookAccounts: [], instagramAccounts: [] };
       }
       
       console.log('Facebook pages raw data:', fbData);
@@ -57,7 +58,7 @@ const AddAccount = () => {
       if (instaError) {
         console.error("Error fetching Instagram accounts:", instaError);
         toast.error("Failed to fetch Instagram accounts");
-        throw instaError;
+        return { facebookAccounts: [], instagramAccounts: [] };
       }
 
       console.log('Instagram accounts raw data:', instaData);
@@ -78,14 +79,6 @@ const AddAccount = () => {
         avatar_url: account.avatar_url
       }));
 
-      const allAccounts = [...instagramAccounts, ...facebookAccounts];
-      
-      console.log('Final accounts breakdown:', {
-        total: allAccounts.length,
-        facebook: facebookAccounts.length,
-        instagram: instagramAccounts.length
-      });
-      
       return {
         facebookAccounts,
         instagramAccounts
