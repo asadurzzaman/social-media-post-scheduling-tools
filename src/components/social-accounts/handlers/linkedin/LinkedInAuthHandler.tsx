@@ -16,12 +16,6 @@ export const LinkedInAuthHandler = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user found');
 
-      // Get LinkedIn credentials from environment
-      const clientId = '86uror0q3ruwuf';  // Temporarily hardcoded for testing
-      if (!clientId) {
-        throw new Error('LinkedIn client ID not configured');
-      }
-
       // Generate random state for CSRF protection
       const state = Math.random().toString(36).substring(7);
       localStorage.setItem('linkedin_auth_state', state);
@@ -31,7 +25,7 @@ export const LinkedInAuthHandler = () => {
 
       // Construct LinkedIn OAuth URL
       const scope = encodeURIComponent('r_liteprofile r_emailaddress w_member_social');
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${process.env.LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
 
       console.log('Opening LinkedIn auth popup...');
 
