@@ -52,7 +52,7 @@ serve(async (req) => {
       throw new Error('No access token received');
     }
 
-    // Get basic profile data using the /v2/me endpoint with r_liteprofile scope
+    // Get profile data using the /v2/me endpoint with r_liteprofile scope
     console.log('Fetching profile data...');
     const profileResponse = await fetch(
       'https://api.linkedin.com/v2/me', {
@@ -73,13 +73,37 @@ serve(async (req) => {
     const profileData = await profileResponse.json();
     console.log('Received profile data:', profileData);
 
+    // Get email address using the /v2/emailAddress endpoint
+    console.log('Fetching email address...');
+    const emailResponse = await fetch(
+      'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202401',
+        },
+      }
+    );
+
+    if (!emailResponse.ok) {
+      console.warn('Failed to fetch email address:', await emailResponse.text());
+      // Continue without email, it's not critical
+    } else {
+      const emailData = await emailResponse.json();
+      console.log('Received email data:', emailData);
+      if (emailData.elements?.[0]?.['handle~']?.emailAddress) {
+        profileData.emailAddress = emailData.elements[0]['handle~'].emailAddress;
+      }
+    }
+
     return new Response(
       JSON.stringify({
         accessToken: tokenData.access_token,
         profileData: {
           id: profileData.id,
           localizedFirstName: profileData.localizedFirstName || '',
-          localizedLastName: profileData.localizedLastName || ''
+          localizedLastName: profileData.localizedLastName || '',
+          emailAddress: profileData.emailAddress || null
         },
       }),
       {
