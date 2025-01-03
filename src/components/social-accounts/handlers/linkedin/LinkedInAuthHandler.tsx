@@ -10,13 +10,14 @@ export const LinkedInAuthHandler = () => {
   const handleLinkedInAuth = async () => {
     try {
       setIsConnecting(true);
+      console.log('Starting LinkedIn auth process...');
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user found');
 
       // Get LinkedIn credentials from environment
-      const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
+      const clientId = '86uror0q3ruwuf';  // Temporarily hardcoded for testing
       if (!clientId) {
         throw new Error('LinkedIn client ID not configured');
       }
@@ -31,6 +32,8 @@ export const LinkedInAuthHandler = () => {
       // Construct LinkedIn OAuth URL
       const scope = encodeURIComponent('r_liteprofile r_emailaddress w_member_social');
       const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
+
+      console.log('Opening LinkedIn auth popup...');
 
       // Open LinkedIn auth in popup
       const width = 600;
@@ -59,6 +62,8 @@ export const LinkedInAuthHandler = () => {
             throw new Error('Invalid state parameter');
           }
 
+          console.log('Received auth code, exchanging for token...');
+
           // Exchange code for access token using edge function
           const { data: authData, error: authError } = await supabase.functions.invoke(
             'linkedin-auth',
@@ -75,6 +80,8 @@ export const LinkedInAuthHandler = () => {
           }
 
           const { accessToken, profileData } = authData;
+
+          console.log('Successfully got profile data:', profileData);
 
           // Save account to database
           const { error: dbError } = await supabase
