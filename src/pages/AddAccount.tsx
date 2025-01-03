@@ -1,5 +1,5 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -9,8 +9,13 @@ import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccoun
 import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { Tables } from "@/integrations/supabase/types";
 
-type SocialAccount = Tables<"social_accounts">;
 type FacebookPage = Tables<"facebook_pages">;
+type SocialAccount = {
+  id: string;
+  platform: string;
+  account_name: string;
+  avatar_url?: string;
+};
 
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -36,13 +41,11 @@ const AddAccount = () => {
       
       if (fbError) {
         console.error("Error fetching Facebook pages:", fbError);
-        console.error("Full error details:", JSON.stringify(fbError, null, 2));
         toast.error("Failed to fetch Facebook pages");
         throw fbError;
       }
       
       console.log('Facebook pages raw data:', fbData);
-      console.log('Number of Facebook pages found:', fbData?.length || 0);
 
       // Fetch Instagram accounts
       const { data: instaData, error: instaError } = await supabase
@@ -53,38 +56,42 @@ const AddAccount = () => {
 
       if (instaError) {
         console.error("Error fetching Instagram accounts:", instaError);
-        console.error("Full error details:", JSON.stringify(instaError, null, 2));
         toast.error("Failed to fetch Instagram accounts");
         throw instaError;
       }
 
       console.log('Instagram accounts raw data:', instaData);
-      console.log('Number of Instagram accounts found:', instaData?.length || 0);
 
-      // Convert facebook_pages to expected format
-      const facebookAccounts = fbData?.map(page => ({
+      // Convert facebook_pages to the format expected by AccountsList
+      const facebookAccounts: SocialAccount[] = (fbData || []).map(page => ({
         id: page.id,
         platform: 'facebook',
         account_name: page.page_name,
-        user_id: page.user_id,
-        created_at: page.connected_at || new Date().toISOString(),
-        avatar_url: null,
-        page_id: page.page_id,
-        page_access_token: page.page_access_token
-      })) || [];
+        avatar_url: undefined
+      }));
 
-      const allAccounts = [...(instaData || []), ...facebookAccounts];
+      // Convert instagram accounts to the expected format
+      const instagramAccounts: SocialAccount[] = (instaData || []).map(account => ({
+        id: account.id,
+        platform: 'instagram',
+        account_name: account.account_name,
+        avatar_url: account.avatar_url
+      }));
+
+      const allAccounts = [...instagramAccounts, ...facebookAccounts];
       
-      console.log('Final combined accounts:', allAccounts);
-      console.log('Final number of accounts:', {
+      console.log('Final accounts breakdown:', {
         total: allAccounts.length,
         facebook: facebookAccounts.length,
-        instagram: instaData?.length || 0
+        instagram: instagramAccounts.length
       });
       
-      return allAccounts as SocialAccount[];
+      return {
+        facebookAccounts,
+        instagramAccounts
+      };
     },
-    initialData: [] as SocialAccount[],
+    initialData: { facebookAccounts: [], instagramAccounts: [] }
   });
 
   const handleSuccess = async () => {
@@ -128,13 +135,6 @@ const AddAccount = () => {
     }
   };
 
-  // Filter accounts by platform
-  const instagramAccounts = accounts?.filter(account => account.platform === 'instagram') || [];
-  const facebookAccounts = accounts?.filter(account => account.platform === 'facebook') || [];
-
-  console.log('Filtered Facebook accounts:', facebookAccounts);
-  console.log('Filtered Instagram accounts:', instagramAccounts);
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -143,8 +143,8 @@ const AddAccount = () => {
           <ConnectAccountDialog onSuccess={handleSuccess} />
         </Dialog>
         <AccountsList 
-          instagramAccounts={instagramAccounts}
-          facebookAccounts={facebookAccounts}
+          instagramAccounts={accounts.instagramAccounts}
+          facebookAccounts={accounts.facebookAccounts}
           onDisconnect={handleDisconnect}
         />
       </div>
