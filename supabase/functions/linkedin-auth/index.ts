@@ -73,29 +73,6 @@ serve(async (req) => {
     const profileData = await profileResponse.json();
     console.log('Received profile data:', profileData);
 
-    // Get email address using the /v2/emailAddress endpoint
-    console.log('Fetching email address...');
-    const emailResponse = await fetch(
-      'https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
-        headers: {
-          'Authorization': `Bearer ${tokenData.access_token}`,
-          'X-Restli-Protocol-Version': '2.0.0',
-          'LinkedIn-Version': '202401',
-        },
-      }
-    );
-
-    if (!emailResponse.ok) {
-      console.warn('Failed to fetch email address:', await emailResponse.text());
-      // Continue without email, it's not critical
-    } else {
-      const emailData = await emailResponse.json();
-      console.log('Received email data:', emailData);
-      if (emailData.elements?.[0]?.['handle~']?.emailAddress) {
-        profileData.emailAddress = emailData.elements[0]['handle~'].emailAddress;
-      }
-    }
-
     return new Response(
       JSON.stringify({
         accessToken: tokenData.access_token,
@@ -103,7 +80,6 @@ serve(async (req) => {
           id: profileData.id,
           localizedFirstName: profileData.localizedFirstName || '',
           localizedLastName: profileData.localizedLastName || '',
-          emailAddress: profileData.emailAddress || null
         },
       }),
       {
