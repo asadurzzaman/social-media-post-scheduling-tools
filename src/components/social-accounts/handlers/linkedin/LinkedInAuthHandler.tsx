@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Linkedin } from "lucide-react"; // Fixed: LinkedIn -> Linkedin
+import { Linkedin } from "lucide-react"; 
 import { supabase } from "@/integrations/supabase/client";
-import { showSuccessToast, showErrorToast } from './linkedinUtils';
+import { toast } from "sonner";
 
 export const LinkedInAuthHandler = () => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -85,20 +85,22 @@ export const LinkedInAuthHandler = () => {
               access_token: accessToken,
               avatar_url: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
               token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
-              user_id: user.id
+              user_id: user.id,
+              linkedin_user_id: profileData.id,
+              linkedin_profile_url: `https://www.linkedin.com/in/${profileData.id}`
             });
 
           if (dbError) {
             throw dbError;
           }
 
-          showSuccessToast();
+          toast.success('LinkedIn account connected successfully');
           popup.close();
         }
       });
     } catch (error) {
       console.error('LinkedIn auth error:', error);
-      showErrorToast(error.message || 'Failed to connect LinkedIn account');
+      toast.error(error.message || 'Failed to connect LinkedIn account');
     } finally {
       setIsConnecting(false);
       localStorage.removeItem('linkedin_auth_state');
@@ -110,6 +112,7 @@ export const LinkedInAuthHandler = () => {
       onClick={handleLinkedInAuth}
       disabled={isConnecting}
       className="w-full flex items-center justify-center gap-2"
+      variant="outline"
     >
       {isConnecting ? (
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

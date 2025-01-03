@@ -428,6 +428,8 @@ export type Database = {
           instagram_user_id: string | null
           instagram_username: string | null
           last_error: string | null
+          linkedin_profile_url: string | null
+          linkedin_user_id: string | null
           page_access_token: string | null
           page_id: string | null
           platform: string
@@ -444,6 +446,8 @@ export type Database = {
           instagram_user_id?: string | null
           instagram_username?: string | null
           last_error?: string | null
+          linkedin_profile_url?: string | null
+          linkedin_user_id?: string | null
           page_access_token?: string | null
           page_id?: string | null
           platform: string
@@ -460,6 +464,8 @@ export type Database = {
           instagram_user_id?: string | null
           instagram_username?: string | null
           last_error?: string | null
+          linkedin_profile_url?: string | null
+          linkedin_user_id?: string | null
           page_access_token?: string | null
           page_id?: string | null
           platform?: string
