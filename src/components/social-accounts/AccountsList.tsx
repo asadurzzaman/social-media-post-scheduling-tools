@@ -9,14 +9,14 @@ interface SocialAccount {
 }
 
 interface AccountsListProps {
-  instagramAccounts: SocialAccount[];
-  facebookAccounts: SocialAccount[];
+  instagramAccounts?: SocialAccount[];
+  facebookAccounts?: SocialAccount[];
   onDisconnect: (accountId: string) => void;
 }
 
 export const AccountsList = ({
-  instagramAccounts,
-  facebookAccounts,
+  instagramAccounts = [], // Provide default empty array
+  facebookAccounts = [], // Provide default empty array
   onDisconnect,
 }: AccountsListProps) => {
   return (
