@@ -8,6 +8,7 @@ import { AccountsHeader } from "@/components/social-accounts/AccountsHeader";
 import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccountDialog";
 import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { Tables } from "@/integrations/supabase/types";
+import { Card } from "@/components/ui/card";
 
 type FacebookPage = Tables<"facebook_pages">;
 type SocialAccount = {
@@ -20,7 +21,7 @@ type SocialAccount = {
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: accounts = { facebookAccounts: [], instagramAccounts: [] }, refetch: refetchAccounts } = useQuery({
+  const { data: accounts = { facebookAccounts: [], instagramAccounts: [] }, refetch: refetchAccounts, isLoading } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
       console.log('Starting to fetch accounts...');
@@ -128,6 +129,8 @@ const AddAccount = () => {
     }
   };
 
+  const totalAccounts = accounts.facebookAccounts.length + accounts.instagramAccounts.length;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -135,11 +138,37 @@ const AddAccount = () => {
           <AccountsHeader onOpenDialog={() => setIsDialogOpen(true)} />
           <ConnectAccountDialog onSuccess={handleSuccess} />
         </Dialog>
-        <AccountsList 
-          instagramAccounts={accounts.instagramAccounts}
-          facebookAccounts={accounts.facebookAccounts}
-          onDisconnect={handleDisconnect}
-        />
+
+        {/* Account Summary Card */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Connected Accounts Summary</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-primary/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Total Accounts</p>
+              <p className="text-2xl font-bold">{totalAccounts}</p>
+            </div>
+            <div className="p-4 bg-[#1877F2]/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Facebook Pages</p>
+              <p className="text-2xl font-bold">{accounts.facebookAccounts.length}</p>
+            </div>
+            <div className="p-4 bg-[#E4405F]/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Instagram Accounts</p>
+              <p className="text-2xl font-bold">{accounts.instagramAccounts.length}</p>
+            </div>
+          </div>
+        </Card>
+
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading accounts...</p>
+          </div>
+        ) : (
+          <AccountsList 
+            instagramAccounts={accounts.instagramAccounts}
+            facebookAccounts={accounts.facebookAccounts}
+            onDisconnect={handleDisconnect}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
