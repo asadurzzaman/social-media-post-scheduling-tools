@@ -18,6 +18,7 @@ export const LinkedInAuthHandler = () => {
 
       // Generate random state for CSRF protection
       const state = Math.random().toString(36).substring(7);
+      console.log('Generated state:', state);
       localStorage.setItem('linkedin_auth_state', state);
 
       // Calculate redirect URI
@@ -46,68 +47,94 @@ export const LinkedInAuthHandler = () => {
       }
 
       // Listen for the callback
-      window.addEventListener('message', async (event) => {
-        if (event.data.type === 'linkedin_auth') {
-          const { code, state: returnedState } = event.data;
+      const handleMessage = async (event) => {
+        try {
+          if (event.data.type === 'linkedin_auth') {
+            const { code, state: returnedState } = event.data;
+            console.log('Received auth callback with state:', returnedState);
 
-          // Verify state
-          const savedState = localStorage.getItem('linkedin_auth_state');
-          if (returnedState !== savedState) {
-            throw new Error('Invalid state parameter');
-          }
-
-          console.log('Received auth code, exchanging for token...');
-
-          // Exchange code for access token using edge function
-          const { data: authData, error: authError } = await supabase.functions.invoke(
-            'linkedin-auth',
-            {
-              body: { 
-                code,
-                redirectUri
-              }
+            // Verify state
+            const savedState = localStorage.getItem('linkedin_auth_state');
+            console.log('Saved state:', savedState);
+            
+            if (returnedState !== savedState) {
+              throw new Error('Invalid state parameter');
             }
-          );
 
-          if (authError) {
-            throw new Error('Failed to authenticate with LinkedIn');
+            console.log('Received auth code, exchanging for token...');
+
+            // Exchange code for access token using edge function
+            const { data: authData, error: authError } = await supabase.functions.invoke(
+              'linkedin-auth',
+              {
+                body: { 
+                  code,
+                  redirectUri
+                }
+              }
+            );
+
+            if (authError) {
+              throw new Error('Failed to authenticate with LinkedIn');
+            }
+
+            const { accessToken, profileData } = authData;
+
+            console.log('Successfully got profile data:', profileData);
+
+            // Save account to database
+            const { error: dbError } = await supabase
+              .from('social_accounts')
+              .insert({
+                platform: 'linkedin',
+                account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+                access_token: accessToken,
+                avatar_url: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
+                token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+                user_id: user.id,
+                linkedin_user_id: profileData.id,
+                linkedin_profile_url: `https://www.linkedin.com/in/${profileData.id}`
+              });
+
+            if (dbError) {
+              throw dbError;
+            }
+
+            toast.success('LinkedIn account connected successfully');
+            popup.close();
+            window.location.reload(); // Refresh to show the new account
+          } else if (event.data.type === 'linkedin_auth_error') {
+            throw new Error(event.data.error);
           }
-
-          const { accessToken, profileData } = authData;
-
-          console.log('Successfully got profile data:', profileData);
-
-          // Save account to database
-          const { error: dbError } = await supabase
-            .from('social_accounts')
-            .insert({
-              platform: 'linkedin',
-              account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
-              access_token: accessToken,
-              avatar_url: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier,
-              token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
-              user_id: user.id,
-              linkedin_user_id: profileData.id,
-              linkedin_profile_url: `https://www.linkedin.com/in/${profileData.id}`
-            });
-
-          if (dbError) {
-            throw dbError;
-          }
-
-          toast.success('LinkedIn account connected successfully');
-          popup.close();
-          window.location.reload(); // Refresh to show the new account
-        } else if (event.data.type === 'linkedin_auth_error') {
-          throw new Error(event.data.error);
+        } catch (error) {
+          console.error('Error in message handler:', error);
+          toast.error(error.message || 'Failed to connect LinkedIn account');
+          popup?.close();
         }
-      });
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Cleanup
+      const cleanup = () => {
+        window.removeEventListener('message', handleMessage);
+        localStorage.removeItem('linkedin_auth_state');
+      };
+
+      // Set a timeout to cleanup if the popup is closed
+      const checkPopupClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkPopupClosed);
+          cleanup();
+          setIsConnecting(false);
+        }
+      }, 1000);
+
     } catch (error) {
       console.error('LinkedIn auth error:', error);
       toast.error(error.message || 'Failed to connect LinkedIn account');
     } finally {
       setIsConnecting(false);
-      localStorage.removeItem('linkedin_auth_state');
     }
   };
 
