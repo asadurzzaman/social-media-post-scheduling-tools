@@ -16,7 +16,7 @@ export const LinkedInAuthHandler = () => {
       if (!user) throw new Error('No authenticated user found');
 
       // Get LinkedIn credentials from environment
-      const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
+      const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
       if (!clientId) {
         throw new Error('LinkedIn client ID not configured');
       }
