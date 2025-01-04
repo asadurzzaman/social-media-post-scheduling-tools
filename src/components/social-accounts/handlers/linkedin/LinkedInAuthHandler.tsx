@@ -3,8 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Linkedin } from "lucide-react"; 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { checkExistingLinkedInAccount } from './linkedinUtils';
 
-export const LinkedInAuthHandler = () => {
+interface LinkedInAuthHandlerProps {
+  onSuccess?: () => void;
+}
+
+export const LinkedInAuthHandler = ({ onSuccess }: LinkedInAuthHandlerProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleLinkedInAuth = async () => {
@@ -15,6 +20,19 @@ export const LinkedInAuthHandler = () => {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No authenticated user found');
+
+      // Check if user already has a LinkedIn account
+      const { data: existingAccounts } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('platform', 'linkedin');
+
+      if (existingAccounts && existingAccounts.length > 0) {
+        toast.error('You already have a LinkedIn account connected');
+        setIsConnecting(false);
+        return;
+      }
 
       // Generate random state for CSRF protection
       const state = Math.random().toString(36).substring(7);
@@ -99,6 +117,9 @@ export const LinkedInAuthHandler = () => {
             }
 
             toast.success('LinkedIn account connected successfully');
+            if (onSuccess) {
+              onSuccess();
+            }
             popup.close();
           } else if (event.data.type === 'linkedin_auth_error') {
             throw new Error(event.data.error);
