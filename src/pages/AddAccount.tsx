@@ -7,7 +7,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { AccountsHeader } from "@/components/social-accounts/AccountsHeader";
 import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccountDialog";
 import { AccountsList } from "@/components/social-accounts/AccountsList";
-import { Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUser } from "@/hooks/useUser";
@@ -19,11 +18,21 @@ type SocialAccount = {
   avatar_url?: string;
 };
 
+type AccountsData = {
+  instagramAccounts: SocialAccount[];
+  linkedinAccounts: SocialAccount[];
+};
+
+const defaultAccounts: AccountsData = {
+  instagramAccounts: [],
+  linkedinAccounts: []
+};
+
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { userId } = useUser();
 
-  const { data: accounts = { instagramAccounts: [], linkedinAccounts: [] }, refetch: refetchAccounts, isLoading } = useQuery({
+  const { data: accounts = defaultAccounts, refetch: refetchAccounts, isLoading } = useQuery({
     queryKey: ['social-accounts', userId],
     queryFn: async () => {
       console.log('Starting to fetch accounts...');
@@ -31,61 +40,61 @@ const AddAccount = () => {
       
       if (!userId) {
         console.log('No authenticated user found');
-        return { instagramAccounts: [], linkedinAccounts: [] };
+        return defaultAccounts;
       }
 
-      // Fetch Instagram accounts
-      const { data: instaData, error: instaError } = await supabase
-        .from('social_accounts')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('platform', 'instagram');
+      try {
+        // Fetch Instagram accounts
+        const { data: instaData, error: instaError } = await supabase
+          .from('social_accounts')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('platform', 'instagram');
 
-      if (instaError) {
-        console.error("Error fetching Instagram accounts:", instaError);
-        toast.error("Failed to fetch Instagram accounts");
-        return { instagramAccounts: [], linkedinAccounts: [] };
+        if (instaError) {
+          console.error("Error fetching Instagram accounts:", instaError);
+          toast.error("Failed to fetch Instagram accounts");
+          return defaultAccounts;
+        }
+
+        // Fetch LinkedIn accounts
+        const { data: linkedinData, error: linkedinError } = await supabase
+          .from('social_accounts')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('platform', 'linkedin');
+
+        if (linkedinError) {
+          console.error("Error fetching LinkedIn accounts:", linkedinError);
+          toast.error("Failed to fetch LinkedIn accounts");
+          return defaultAccounts;
+        }
+
+        console.log('Instagram accounts raw data:', instaData);
+        console.log('LinkedIn accounts raw data:', linkedinData);
+
+        return {
+          instagramAccounts: (instaData || []).map(account => ({
+            id: account.id,
+            platform: 'instagram',
+            account_name: account.account_name,
+            avatar_url: account.avatar_url
+          })),
+          linkedinAccounts: (linkedinData || []).map(account => ({
+            id: account.id,
+            platform: 'linkedin',
+            account_name: account.account_name,
+            avatar_url: account.avatar_url
+          }))
+        };
+      } catch (error) {
+        console.error("Error fetching accounts:", error);
+        toast.error("Failed to fetch accounts");
+        return defaultAccounts;
       }
-
-      // Fetch LinkedIn accounts
-      const { data: linkedinData, error: linkedinError } = await supabase
-        .from('social_accounts')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('platform', 'linkedin');
-
-      if (linkedinError) {
-        console.error("Error fetching LinkedIn accounts:", linkedinError);
-        toast.error("Failed to fetch LinkedIn accounts");
-        return { instagramAccounts: [], linkedinAccounts: [] };
-      }
-
-      console.log('Instagram accounts raw data:', instaData);
-      console.log('LinkedIn accounts raw data:', linkedinData);
-
-      // Convert instagram accounts to the expected format
-      const instagramAccounts: SocialAccount[] = (instaData || []).map(account => ({
-        id: account.id,
-        platform: 'instagram',
-        account_name: account.account_name,
-        avatar_url: account.avatar_url
-      }));
-
-      // Convert linkedin accounts to the expected format
-      const linkedinAccounts: SocialAccount[] = (linkedinData || []).map(account => ({
-        id: account.id,
-        platform: 'linkedin',
-        account_name: account.account_name,
-        avatar_url: account.avatar_url
-      }));
-
-      return {
-        instagramAccounts,
-        linkedinAccounts
-      };
     },
     enabled: !!userId,
-    initialData: { instagramAccounts: [], linkedinAccounts: [] }
+    initialData: defaultAccounts
   });
 
   const handleSuccess = async () => {
@@ -120,6 +129,8 @@ const AddAccount = () => {
     }
   };
 
+  const totalAccounts = (accounts?.instagramAccounts?.length || 0) + (accounts?.linkedinAccounts?.length || 0);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -134,14 +145,12 @@ const AddAccount = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-primary/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Total Accounts</p>
-              <p className="text-2xl font-bold">
-                {accounts.instagramAccounts.length + accounts.linkedinAccounts.length}
-              </p>
+              <p className="text-2xl font-bold">{totalAccounts}</p>
             </div>
             <div className="p-4 bg-[#E4405F]/10 rounded-lg">
               <p className="text-sm text-muted-foreground">Instagram Accounts</p>
-              <p className="text-2xl font-bold">{accounts.instagramAccounts.length}</p>
-              {accounts.instagramAccounts.length > 0 && (
+              <p className="text-2xl font-bold">{accounts?.instagramAccounts?.length || 0}</p>
+              {accounts?.instagramAccounts?.length > 0 && (
                 <ScrollArea className="h-20 mt-2">
                   <div className="space-y-1">
                     {accounts.instagramAccounts.map((account) => (
@@ -155,8 +164,8 @@ const AddAccount = () => {
             </div>
             <div className="p-4 bg-[#0A66C2]/10 rounded-lg">
               <p className="text-sm text-muted-foreground">LinkedIn Accounts</p>
-              <p className="text-2xl font-bold">{accounts.linkedinAccounts.length}</p>
-              {accounts.linkedinAccounts.length > 0 && (
+              <p className="text-2xl font-bold">{accounts?.linkedinAccounts?.length || 0}</p>
+              {accounts?.linkedinAccounts?.length > 0 && (
                 <ScrollArea className="h-20 mt-2">
                   <div className="space-y-1">
                     {accounts.linkedinAccounts.map((account) => (
