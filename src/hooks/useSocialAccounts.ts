@@ -58,8 +58,8 @@ export const useSocialAccounts = (userId: string | null) => {
           return defaultAccounts;
         }
 
-        console.log('Instagram accounts raw data:', instaData);
         console.log('LinkedIn accounts raw data:', linkedinData);
+        console.log('Instagram accounts raw data:', instaData);
 
         return {
           instagramAccounts: (instaData || []).map(account => ({

@@ -19,15 +19,17 @@ export const AccountsList = ({
   linkedinAccounts = [],
   onDisconnect,
 }: AccountsListProps) => {
+  console.log('LinkedIn accounts:', linkedinAccounts); // Debug log
+
   return (
     <div className="space-y-8">
       <div>
         <h3 className="text-xl font-semibold mb-4">Instagram Business Accounts</h3>
-        {instagramAccounts.length === 0 ? (
+        {instagramAccounts?.length === 0 ? (
           <p className="text-muted-foreground">No Instagram accounts connected</p>
         ) : (
           <div className="space-y-4">
-            {instagramAccounts.map((account) => (
+            {instagramAccounts?.map((account) => (
               <SocialAccountCard
                 key={account.id}
                 platform="instagram"
@@ -46,11 +48,11 @@ export const AccountsList = ({
 
       <div>
         <h3 className="text-xl font-semibold mb-4">LinkedIn Accounts</h3>
-        {linkedinAccounts.length === 0 ? (
+        {linkedinAccounts?.length === 0 ? (
           <p className="text-muted-foreground">No LinkedIn accounts connected</p>
         ) : (
           <div className="space-y-4">
-            {linkedinAccounts.map((account) => (
+            {linkedinAccounts?.map((account) => (
               <SocialAccountCard
                 key={account.id}
                 platform="linkedin"
