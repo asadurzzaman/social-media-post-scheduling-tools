@@ -73,6 +73,12 @@ export const LinkedInAuthHandler = ({ onSuccess }: LinkedInAuthHandlerProps) => 
 
   const handleConnect = () => {
     const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
+    
+    if (!clientId) {
+      toast.error('LinkedIn client ID is not configured');
+      return;
+    }
+
     const redirectUri = `${window.location.origin}/linkedin-callback.html`;
     const scope = 'r_liteprofile r_emailaddress w_member_social';
     
