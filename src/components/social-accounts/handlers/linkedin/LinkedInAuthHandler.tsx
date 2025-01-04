@@ -100,7 +100,6 @@ export const LinkedInAuthHandler = () => {
 
             toast.success('LinkedIn account connected successfully');
             popup.close();
-            window.location.reload(); // Refresh to show the new account
           } else if (event.data.type === 'linkedin_auth_error') {
             throw new Error(event.data.error);
           }
