@@ -21,6 +21,37 @@ export const IdeaManager = () => {
 
   useEffect(() => {
     fetchIdeas();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('ideas-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ideas'
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          
+          // Refresh ideas when changes occur
+          fetchIdeas();
+          
+          const eventMessages = {
+            INSERT: 'New idea created',
+            UPDATE: 'Idea updated',
+            DELETE: 'Idea deleted'
+          };
+          
+          toast.info(eventMessages[payload.eventType as keyof typeof eventMessages]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchIdeas = async () => {
@@ -157,12 +188,6 @@ export const IdeaManager = () => {
           .eq('id', idea.id);
 
         if (error) throw error;
-
-        setIdeas(ideas.map(i => 
-          i.id === idea.id 
-            ? { ...i, ...idea }
-            : i
-        ));
       } else {
         // Create new idea
         const { data, error } = await supabase
@@ -179,7 +204,6 @@ export const IdeaManager = () => {
           .single();
 
         if (error) throw error;
-        setIdeas([data, ...ideas]);
       }
 
       setSelectedIdea(null);
