@@ -18,10 +18,9 @@ const AddAccount = () => {
   const handleSuccess = async () => {
     try {
       await refetchAccounts();
-      setIsDialogOpen(false);
       toast.success("Account connected successfully!");
     } catch (error) {
-      console.error("Error refreshing accounts:", error);
+      console.error("Error refreshing accounts list:", error);
       toast.error("Failed to refresh accounts list");
     }
   };
@@ -52,7 +51,10 @@ const AddAccount = () => {
       <div className="space-y-6">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <AccountsHeader onOpenDialog={() => setIsDialogOpen(true)} />
-          <ConnectAccountDialog onSuccess={handleSuccess} />
+          <ConnectAccountDialog 
+            onSuccess={handleSuccess} 
+            onOpenChange={setIsDialogOpen}
+          />
         </Dialog>
 
         <AccountSummary 

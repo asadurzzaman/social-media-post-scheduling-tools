@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/button";
 
 interface ConnectAccountDialogProps {
   onSuccess: () => void;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) => {
+export const ConnectAccountDialog = ({ onSuccess, onOpenChange }: ConnectAccountDialogProps) => {
+  const handleSuccess = () => {
+    onSuccess();
+    onOpenChange(false); // Close the dialog on success
+  };
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -19,7 +25,7 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
       </DialogHeader>
       <div className="space-y-4 py-4">
         <InstagramAuthHandler />
-        <LinkedInAuthHandler />
+        <LinkedInAuthHandler onSuccess={handleSuccess} />
         <Button className="w-full flex items-center justify-center gap-2" variant="outline" disabled>
           <Twitter className="h-5 w-5" />
           Twitter (Coming soon)
