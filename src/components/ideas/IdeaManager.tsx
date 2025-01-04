@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { IdeaColumn } from "./IdeaColumn";
 import { CreateIdeaDialog } from "./CreateIdeaDialog";
 import { DragDropContext } from '@hello-pangea/dnd';
+import { reorderIdeas } from "@/utils/sortUtils";
 
 export const IdeaManager = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
