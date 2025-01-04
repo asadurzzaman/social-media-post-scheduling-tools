@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { IdeaColumn } from "./IdeaColumn";
 import { CreateIdeaDialog } from "./CreateIdeaDialog";
-import { reorderIdeas } from "@/utils/sortUtils";
+import { DragDropContext } from '@hello-pangea/dnd';
 
 export const IdeaManager = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -40,6 +40,45 @@ export const IdeaManager = () => {
       setIdeas(data || []);
     } catch (error) {
       toast.error('Failed to fetch ideas');
+    }
+  };
+
+  const handleDragEnd = async (result: any) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const sourceColumn = columns.find(col => col.id === source.droppableId);
+    const destinationColumn = columns.find(col => col.id === destination.droppableId);
+
+    if (!sourceColumn || !destinationColumn) return;
+
+    try {
+      const updatedIdea = ideas.find(idea => idea.id === draggableId);
+      if (!updatedIdea) return;
+
+      // Update idea status if moving between columns
+      if (sourceColumn.id !== destinationColumn.id) {
+        await handleUpdateIdea(draggableId, {
+          status: destinationColumn.status
+        });
+      }
+
+      // Reorder ideas within the same column
+      const newIdeas = Array.from(ideas);
+      const [removed] = newIdeas.splice(source.index, 1);
+      newIdeas.splice(destination.index, 0, removed);
+      setIdeas(newIdeas);
+
+    } catch (error) {
+      toast.error('Failed to move idea');
     }
   };
 
@@ -177,31 +216,32 @@ export const IdeaManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4">
-        {columns.map((column, index) => (
-          <IdeaColumn
-            key={column.id}
-            column={column}
-            ideas={ideas}
-            index={index}
-            onRename={handleRenameColumn}
-            onDelete={handleDeleteColumn}
-            onMove={moveColumn}
-            onCreateIdea={() => {
-              setSelectedIdea(null);
-              setIsCreateDialogOpen(true);
-            }}
-            onUpdateIdea={handleUpdateIdea}
-            onDeleteIdea={handleDeleteIdea}
-            onEditIdea={(idea) => {
-              const ideaToEdit = ideas.find(i => i.id === idea.id);
-              setSelectedIdea(ideaToEdit);
-              setIsCreateDialogOpen(true);
-            }}
-            onReorderIdeas={handleReorderIdeas}
-          />
-        ))}
-      </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((column, index) => (
+            <IdeaColumn
+              key={column.id}
+              column={column}
+              ideas={ideas}
+              index={index}
+              onRename={handleRenameColumn}
+              onDelete={handleDeleteColumn}
+              onMove={moveColumn}
+              onCreateIdea={() => {
+                setSelectedIdea(null);
+                setIsCreateDialogOpen(true);
+              }}
+              onUpdateIdea={handleUpdateIdea}
+              onDeleteIdea={handleDeleteIdea}
+              onEditIdea={(idea) => {
+                const ideaToEdit = ideas.find(i => i.id === idea.id);
+                setSelectedIdea(ideaToEdit);
+                setIsCreateDialogOpen(true);
+              }}
+            />
+          ))}
+        </div>
+      </DragDropContext>
 
       <CreateIdeaDialog
         isOpen={isCreateDialogOpen}
