@@ -1,112 +1,153 @@
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Linkedin } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { Linkedin } from "lucide-react"; 
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@/hooks/useUser";
+import { toast } from "sonner";
 
-interface LinkedInAuthHandlerProps {
-  onSuccess: () => void;
-}
+export const LinkedInAuthHandler = () => {
+  const [isConnecting, setIsConnecting] = useState(false);
 
-export const LinkedInAuthHandler = ({ onSuccess }: LinkedInAuthHandlerProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { userId } = useUser();
-  const [authWindow, setAuthWindow] = useState<Window | null>(null);
+  const handleLinkedInAuth = async () => {
+    try {
+      setIsConnecting(true);
+      console.log('Starting LinkedIn auth process...');
 
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.data?.type === 'linkedin_auth_success') {
-        const { code } = event.data;
-        
-        try {
-          setIsLoading(true);
-          const response = await fetch('/api/linkedin-auth', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ code, userId }),
-          });
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No authenticated user found');
 
-          if (!response.ok) {
-            throw new Error('Failed to authenticate with LinkedIn');
-          }
+      // Generate random state for CSRF protection
+      const state = Math.random().toString(36).substring(7);
+      console.log('Generated state:', state);
+      localStorage.setItem('linkedin_auth_state', state);
 
-          const data = await response.json();
-          
-          // Insert the account data into Supabase
-          const { error: dbError } = await supabase
-            .from('social_accounts')
-            .insert({
-              user_id: userId,
-              platform: 'linkedin',
-              account_name: data.name,
-              access_token: data.accessToken,
-              linkedin_user_id: data.id,
-              linkedin_profile_url: data.profileUrl,
-              avatar_url: data.pictureUrl,
-            });
+      // Calculate redirect URI
+      const redirectUri = `${window.location.origin}/linkedin-callback.html`;
 
-          if (dbError) {
-            throw dbError;
-          }
+      // Request all required OpenID scopes along with w_member_social for posting
+      const scope = encodeURIComponent('openid profile email w_member_social');
+      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=86uror0q3ruwuf&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scope}`;
 
-          toast.success('LinkedIn account connected successfully');
-          onSuccess();
-          
-        } catch (error) {
-          console.error('Error connecting LinkedIn account:', error);
-          toast.error('Failed to connect LinkedIn account');
-        } finally {
-          setIsLoading(false);
-          if (authWindow) {
-            authWindow.close();
-          }
-        }
+      console.log('Opening LinkedIn auth popup...');
+
+      // Open LinkedIn auth in popup
+      const width = 600;
+      const height = 600;
+      const left = window.innerWidth / 2 - width / 2;
+      const top = window.innerHeight / 2 - height / 2;
+
+      const popup = window.open(
+        linkedInAuthUrl,
+        'linkedin-auth',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!popup) {
+        throw new Error('Failed to open popup window');
       }
-    };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [userId, onSuccess]);
+      // Listen for the callback
+      const handleMessage = async (event) => {
+        try {
+          if (event.data.type === 'linkedin_auth') {
+            const { code, state: returnedState } = event.data;
+            console.log('Received auth callback with state:', returnedState);
 
-  const handleConnect = () => {
-    const clientId = import.meta.env.VITE_LINKEDIN_CLIENT_ID;
-    
-    if (!clientId) {
-      toast.error('LinkedIn client ID is not configured');
-      return;
+            // Verify state
+            const savedState = localStorage.getItem('linkedin_auth_state');
+            console.log('Saved state:', savedState);
+            
+            if (returnedState !== savedState) {
+              throw new Error('Invalid state parameter');
+            }
+
+            console.log('Received auth code, exchanging for token...');
+
+            // Exchange code for access token using edge function
+            const { data: authData, error: authError } = await supabase.functions.invoke(
+              'linkedin-auth',
+              {
+                body: { 
+                  code,
+                  redirectUri
+                }
+              }
+            );
+
+            if (authError) {
+              throw new Error('Failed to authenticate with LinkedIn');
+            }
+
+            const { accessToken, profileData } = authData;
+
+            console.log('Successfully got profile data:', profileData);
+
+            // Save account to database with explicit platform value
+            const { error: dbError } = await supabase
+              .from('social_accounts')
+              .insert({
+                platform: 'linkedin',
+                account_name: `${profileData.localizedFirstName} ${profileData.localizedLastName}`,
+                access_token: accessToken,
+                token_expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days
+                user_id: user.id,
+                linkedin_user_id: profileData.id
+              });
+
+            if (dbError) {
+              throw dbError;
+            }
+
+            toast.success('LinkedIn account connected successfully');
+            popup.close();
+          } else if (event.data.type === 'linkedin_auth_error') {
+            throw new Error(event.data.error);
+          }
+        } catch (error) {
+          console.error('Error in message handler:', error);
+          toast.error(error.message || 'Failed to connect LinkedIn account');
+          popup?.close();
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+
+      // Cleanup
+      const cleanup = () => {
+        window.removeEventListener('message', handleMessage);
+        localStorage.removeItem('linkedin_auth_state');
+      };
+
+      // Set a timeout to cleanup if the popup is closed
+      const checkPopupClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkPopupClosed);
+          cleanup();
+          setIsConnecting(false);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('LinkedIn auth error:', error);
+      toast.error(error.message || 'Failed to connect LinkedIn account');
+    } finally {
+      setIsConnecting(false);
     }
-
-    const redirectUri = `${window.location.origin}/linkedin-callback.html`;
-    const scope = 'r_liteprofile r_emailaddress w_member_social';
-    
-    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=random_state_string`;
-    
-    const width = 600;
-    const height = 700;
-    const left = window.innerWidth / 2 - width / 2;
-    const top = window.innerHeight / 2 - height / 2;
-
-    const newWindow = window.open(
-      authUrl,
-      'LinkedIn Login',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-    
-    setAuthWindow(newWindow);
   };
 
   return (
-    <Button
+    <Button 
+      onClick={handleLinkedInAuth}
+      disabled={isConnecting}
       className="w-full flex items-center justify-center gap-2"
       variant="outline"
-      onClick={handleConnect}
-      disabled={isLoading}
     >
-      <Linkedin className="h-5 w-5" />
-      {isLoading ? 'Connecting...' : 'Connect LinkedIn'}
+      {isConnecting ? (
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+      ) : (
+        <Linkedin className="h-5 w-5" />
+      )}
+      {isConnecting ? 'Connecting...' : 'Connect LinkedIn'}
     </Button>
   );
 };
