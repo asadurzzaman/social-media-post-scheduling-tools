@@ -6,14 +6,18 @@ import { Plus } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUser } from "@/hooks/useUser";
 
 export const Chat = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const { userId } = useUser();
 
   // Fetch conversations
   const { data: conversations = [], refetch } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
+      if (!userId) return [];
+      
       const { data, error } = await supabase
         .from('conversations')
         .select('*')
@@ -22,14 +26,19 @@ export const Chat = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!userId,
   });
 
   // Create new conversation
   const { mutate: createConversation } = useMutation({
     mutationFn: async () => {
+      if (!userId) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('conversations')
-        .insert({})
+        .insert({
+          user_id: userId
+        })
         .select()
         .single();
       
@@ -45,6 +54,16 @@ export const Chat = () => {
       toast.error("Failed to create conversation");
     },
   });
+
+  if (!userId) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+          Please sign in to use the chat
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

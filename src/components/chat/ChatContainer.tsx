@@ -5,6 +5,7 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
+import { useUser } from "@/hooks/useUser";
 
 interface Message {
   id: string;
@@ -19,6 +20,7 @@ interface ChatContainerProps {
 
 export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { userId } = useUser();
   
   // Fetch messages
   const { data: messages = [], isLoading } = useQuery({
@@ -38,6 +40,8 @@ export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
   // Send message mutation
   const { mutate: sendMessage, isPending } = useMutation({
     mutationFn: async (content: string) => {
+      if (!userId) throw new Error('User not authenticated');
+
       // First, insert user message
       const { data: userMessage, error: userError } = await supabase
         .from('messages')
@@ -45,6 +49,7 @@ export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
           conversation_id: conversationId,
           content,
           role: 'user',
+          user_id: userId
         })
         .select()
         .single();
@@ -77,6 +82,7 @@ export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
           conversation_id: conversationId,
           content: claudeResponse.content,
           role: 'assistant',
+          user_id: userId
         });
 
       if (assistantError) throw assistantError;
@@ -93,6 +99,10 @@ export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  if (!userId) {
+    return <div className="flex items-center justify-center h-full">Please sign in to continue</div>;
+  }
 
   return (
     <div className="flex flex-col h-full">
