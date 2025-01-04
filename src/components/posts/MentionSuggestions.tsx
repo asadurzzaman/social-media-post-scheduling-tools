@@ -12,7 +12,8 @@ interface MentionSuggestionsProps {
   triggerRef: React.RefObject<HTMLSpanElement>;
 }
 
-const demoMentions = [
+// Define mentions outside component to avoid recreating on each render
+const DEFAULT_MENTIONS = [
   "@john.doe",
   "@jane.smith",
   "@marketing.team",
@@ -26,8 +27,8 @@ export const MentionSuggestions = ({
   onSelect,
   triggerRef,
 }: MentionSuggestionsProps) => {
-  // Ensure we have valid mentions to iterate over
-  const mentions = demoMentions || [];
+  // Ensure we always have a valid array to map over
+  const mentions = DEFAULT_MENTIONS || [];
 
   return (
     <Popover open={isOpen} onOpenChange={onClose}>
@@ -42,19 +43,29 @@ export const MentionSuggestions = ({
       >
         <Command>
           <Command.List>
-            {mentions.map((mention) => (
+            {mentions.length > 0 ? (
+              mentions.map((mention) => (
+                <Command.Item
+                  key={mention}
+                  value={mention}
+                  onSelect={() => {
+                    onSelect(mention);
+                    onClose();
+                  }}
+                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
+                >
+                  {mention}
+                </Command.Item>
+              ))
+            ) : (
               <Command.Item
-                key={mention}
-                value={mention}
-                onSelect={() => {
-                  onSelect(mention);
-                  onClose();
-                }}
-                className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
+                value="no-mentions"
+                className="px-2 py-1.5 text-sm text-muted-foreground"
+                disabled
               >
-                {mention}
+                No mentions available
               </Command.Item>
-            ))}
+            )}
           </Command.List>
         </Command>
       </PopoverContent>
