@@ -38,13 +38,12 @@ export const SocialAccountSelect = ({
   const facebookAccounts = safeAccounts.filter(account => account.platform === 'facebook');
   const instagramAccounts = safeAccounts.filter(account => account.platform === 'instagram');
 
-  const toggleAccount = (accountId: string) => {
-    if (selectedAccounts.includes(accountId)) {
-      onSelect(selectedAccounts.filter(id => id !== accountId));
-    } else {
-      onSelect([...selectedAccounts, accountId]);
-    }
+  const handleSelect = (accountId: string) => {
+    onSelect([accountId]); // Now only passing a single account ID
   };
+
+  // Find the selected account name for display
+  const selectedAccount = safeAccounts.find(account => account.id === selectedAccounts[0]);
 
   return (
     <div className="space-y-2">
@@ -58,9 +57,7 @@ export const SocialAccountSelect = ({
               selectedAccounts.length > 0 && "text-primary"
             )}
           >
-            {selectedAccounts.length === 0
-              ? "Select accounts"
-              : `${selectedAccounts.length} account${selectedAccounts.length === 1 ? "" : "s"} selected`}
+            {selectedAccount ? selectedAccount.account_name : "Select an account"}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
@@ -73,7 +70,7 @@ export const SocialAccountSelect = ({
                   <CommandItem
                     key={account.id}
                     value={account.account_name}
-                    onSelect={() => toggleAccount(account.id)}
+                    onSelect={() => handleSelect(account.id)}
                   >
                     <div className="flex items-center gap-2 flex-1">
                       <Facebook className="h-4 w-4 text-[#1877F2]" />
@@ -82,7 +79,7 @@ export const SocialAccountSelect = ({
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id)
+                        selectedAccounts[0] === account.id
                           ? "opacity-100"
                           : "opacity-0"
                       )}
@@ -98,7 +95,7 @@ export const SocialAccountSelect = ({
                   <CommandItem
                     key={account.id}
                     value={account.account_name}
-                    onSelect={() => toggleAccount(account.id)}
+                    onSelect={() => handleSelect(account.id)}
                   >
                     <div className="flex items-center gap-2 flex-1">
                       <Instagram className="h-4 w-4 text-[#E4405F]" />
@@ -107,7 +104,7 @@ export const SocialAccountSelect = ({
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id)
+                        selectedAccounts[0] === account.id
                           ? "opacity-100"
                           : "opacity-0"
                       )}
