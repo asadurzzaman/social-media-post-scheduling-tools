@@ -95,7 +95,8 @@ export const LinkedInAuthHandler = () => {
               });
 
             if (dbError) {
-              throw dbError;
+              console.error('Database error:', dbError);
+              throw new Error('Failed to save LinkedIn account');
             }
 
             toast.success('LinkedIn account connected successfully');
