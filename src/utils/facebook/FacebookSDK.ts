@@ -27,11 +27,13 @@ export class FacebookSDK {
 
           // Disable all tracking and logging
           if (window.FB.Event && window.FB.Event.unsubscribe) {
-            window.FB.Event.unsubscribe('edge.create');
-            window.FB.Event.unsubscribe('edge.remove');
-            window.FB.Event.unsubscribe('auth.login');
-            window.FB.Event.unsubscribe('auth.logout');
-            window.FB.Event.unsubscribe('xfbml.render');
+            // Create empty functions for each event type
+            const emptyHandler = () => {};
+            window.FB.Event.unsubscribe('edge.create', emptyHandler);
+            window.FB.Event.unsubscribe('edge.remove', emptyHandler);
+            window.FB.Event.unsubscribe('auth.login', emptyHandler);
+            window.FB.Event.unsubscribe('auth.logout', emptyHandler);
+            window.FB.Event.unsubscribe('xfbml.render', emptyHandler);
           }
 
           // Mock all tracking functions
