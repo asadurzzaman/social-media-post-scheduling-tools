@@ -21,11 +21,6 @@ interface FacebookAuthResponse {
 interface FacebookLoginStatusResponse {
   status: 'connected' | 'not_authorized' | 'unknown';
   authResponse: FacebookAuthResponse | null;
-  error?: {
-    message: string;
-    type: string;
-    code: number;
-  };
 }
 
 interface FacebookLoginButtonProps {
@@ -85,6 +80,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           js.id = id;
           js.src = "https://connect.facebook.net/en_US/sdk.js";
           js.crossOrigin = "anonymous";
+          js.async = true;
+          js.defer = true;
           js.onerror = () => {
             console.error('Failed to load Facebook SDK script');
             toast.error('Failed to load Facebook SDK. Please check your internet connection and try again.');
