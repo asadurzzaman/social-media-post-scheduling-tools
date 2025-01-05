@@ -50,11 +50,11 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
 
     try {
       console.log('Initiating Facebook login...');
-      const loginResponse = await new Promise<fb.AuthResponse>((resolve, reject) => {
+      const loginResponse = await new Promise<FacebookLoginStatus>((resolve, reject) => {
         window.FB.login((response) => {
           console.log('Facebook login response:', response);
           if (response.status === 'connected' && response.authResponse) {
-            resolve(response.authResponse);
+            resolve(response);
           } else {
             reject(new Error(response.status === 'not_authorized' 
               ? 'Please authorize the application to continue'
@@ -68,11 +68,11 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
         });
       });
 
-      if (loginResponse) {
+      if (loginResponse.authResponse) {
         console.log('Facebook login successful');
         onSuccess({
-          accessToken: loginResponse.accessToken,
-          userId: loginResponse.userID
+          accessToken: loginResponse.authResponse.accessToken,
+          userId: loginResponse.authResponse.userID
         });
       } else {
         throw new Error('No auth response received');

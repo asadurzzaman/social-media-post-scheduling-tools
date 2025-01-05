@@ -54,6 +54,7 @@ interface FacebookSDKInterface {
     options?: FacebookLoginOptions
   ) => void;
   logout: (callback: (response: any) => void) => void;
+  getLoginStatus: (callback: (response: FacebookLoginStatus) => void) => void;
   Event: FacebookEventSubscription;
   AppEvents: FacebookAppEvents;
   XFBML: FacebookXFBML;

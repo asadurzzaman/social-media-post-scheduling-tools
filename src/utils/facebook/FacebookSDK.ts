@@ -33,6 +33,7 @@ export class FacebookSDK {
 
           // Check login status after initialization
           window.FB.getLoginStatus((response) => {
+            console.log('Facebook login status:', response);
             if (response.status === 'connected') {
               console.log('Already connected to Facebook');
             } else {
