@@ -9,6 +9,23 @@ import { SocialAccountCard } from "@/components/social-accounts/SocialAccountCar
 import { useQuery } from "@tanstack/react-query";
 
 const AddAccount = () => {
+  const [facebookAppId, setFacebookAppId] = useState<string>("");
+
+  useEffect(() => {
+    const fetchFacebookAppId = async () => {
+      const { data: { FACEBOOK_APP_ID } } = await supabase.functions.invoke('get-secret', {
+        body: { secretName: 'FACEBOOK_APP_ID' }
+      });
+      if (FACEBOOK_APP_ID) {
+        setFacebookAppId(FACEBOOK_APP_ID);
+      } else {
+        toast.error("Failed to load Facebook configuration");
+      }
+    };
+
+    fetchFacebookAppId();
+  }, []);
+
   const { data: socialAccounts, refetch: refetchAccounts } = useQuery({
     queryKey: ['social-accounts'],
     queryFn: async () => {
@@ -121,14 +138,17 @@ const AddAccount = () => {
             accountId={facebookAccount?.id}
             onDisconnect={facebookAccount ? () => handleDisconnectFacebook(facebookAccount.id) : undefined}
           >
-            <FacebookLoginButton
-              appId="1294294115054311"
-              onSuccess={handleFacebookSuccess}
-              onError={handleFacebookError}
-            />
+            {facebookAppId ? (
+              <FacebookLoginButton
+                appId={facebookAppId}
+                onSuccess={handleFacebookSuccess}
+                onError={handleFacebookError}
+              />
+            ) : (
+              <Button variant="outline" disabled>Loading...</Button>
+            )}
           </SocialAccountCard>
 
-          {/* Instagram */}
           <SocialAccountCard
             platform="Instagram"
             icon={
