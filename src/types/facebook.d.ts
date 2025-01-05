@@ -35,6 +35,7 @@ interface FacebookLoginOptions {
 
 interface FacebookXFBML {
   parse: () => void;
+  parseElement: () => void;
 }
 
 interface FacebookSDKInterface {
@@ -45,6 +46,8 @@ interface FacebookSDKInterface {
     version: string;
     autoLogAppEvents?: boolean;
     status?: boolean;
+    frictionlessRequests?: boolean;
+    logging?: boolean;
   }) => void;
   login: (
     callback: (response: FacebookLoginStatus) => void,

@@ -13,34 +13,43 @@ export class FacebookSDK {
           existingScript.remove();
         }
 
-        // Remove any existing FB cookies
-        document.cookie = `fblo_${config.appId}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+        // Clear all Facebook cookies
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+          if (cookie.includes('fb') || cookie.includes('FB')) {
+            const name = cookie.split('=')[0].trim();
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+          }
+        }
         
         // Initialize SDK with absolute minimal features
         window.fbAsyncInit = function() {
-          // Override FB.init before it's called
+          // Override FB.init to prevent tracking initialization
           const originalInit = window.FB.init;
           window.FB.init = function(...args: any[]) {
-            // Call original init with modified config
-            return originalInit.call(this, {
+            const modifiedConfig = {
               ...args[0],
               xfbml: false,
               autoLogAppEvents: false,
-              status: false
-            });
+              status: false,
+              frictionlessRequests: false,
+              logging: false
+            };
+            return originalInit.call(this, modifiedConfig);
           };
 
           // Initialize with minimal config
           window.FB.init({
             appId: config.appId,
-            cookie: true,
+            cookie: false, // Disable cookie creation
             xfbml: false,
             version: config.version,
             autoLogAppEvents: false,
-            status: false
+            status: false,
+            frictionlessRequests: false
           });
 
-          // Completely disable all tracking and logging functions
+          // Disable all tracking and logging functions
           if (window.FB.AppEvents) {
             window.FB.AppEvents = {
               ...window.FB.AppEvents,
@@ -67,7 +76,10 @@ export class FacebookSDK {
 
           // Disable XFBML parsing
           if (window.FB.XFBML) {
-            window.FB.XFBML.parse = () => {};
+            window.FB.XFBML = {
+              parse: () => {},
+              parseElement: () => {}
+            };
           }
 
           console.log('Facebook SDK initialized with all tracking disabled');
@@ -77,7 +89,7 @@ export class FacebookSDK {
         // Load SDK with debug and logging disabled
         const js = document.createElement('script');
         js.id = 'facebook-jssdk';
-        js.src = `https://connect.facebook.net/en_US/sdk.js?debug=false`;
+        js.src = 'https://connect.facebook.net/en_US/sdk.js?debug=false&logging=false&autoLogAppEvents=false';
         js.async = true;
         js.defer = true;
         js.crossOrigin = 'anonymous';
@@ -96,9 +108,17 @@ export class FacebookSDK {
       existingScript.remove();
     }
 
-    // Clear FB instance and cookies
+    // Clear FB instance
     delete window.FB;
     delete window.fbAsyncInit;
-    document.cookie = `fblo_${appId}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+
+    // Clear all Facebook cookies
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      if (cookie.includes('fb') || cookie.includes('FB')) {
+        const name = cookie.split('=')[0].trim();
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+      }
+    }
   }
 }
