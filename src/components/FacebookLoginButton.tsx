@@ -21,6 +21,11 @@ interface FacebookAuthResponse {
 interface FacebookLoginStatusResponse {
   status: 'connected' | 'not_authorized' | 'unknown';
   authResponse: FacebookAuthResponse | null;
+  error?: {
+    message: string;
+    type: string;
+    code: number;
+  };
 }
 
 interface FacebookLoginButtonProps {
