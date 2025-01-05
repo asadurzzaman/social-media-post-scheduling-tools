@@ -15,29 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Post } from "@/types/post";
 
 type SortOption = 'newest' | 'oldest' | 'scheduled';
 
-interface Post {
-  id: string;
-  content: string;
-  status: string;
-  created_at: string;
-  scheduled_for: string;
-  hashtags: string[];
-  image_url: string | null;
-  poll_options: string[];
-  social_account_id: string;
-  timezone: string;
-  user_id: string;
-  group_id?: string | null;  // Made optional and allow null
-  social_accounts: {
-    platform: string;
-  };
-}
-
 const Posts = () => {
-  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -85,7 +68,7 @@ const Posts = () => {
         const draftJson = localStorage.getItem('postDraft');
         if (draftJson) {
           const draft = JSON.parse(draftJson);
-          allPosts = [{
+          const draftPost: Post = {
             id: 'draft-' + Date.now(),
             content: draft.content || '',
             status: 'draft',
@@ -97,9 +80,12 @@ const Posts = () => {
             social_account_id: draft.selectedAccount || '',
             timezone: draft.timezone || 'UTC',
             user_id: '',
-            group_id: null,  // Add group_id as null for drafts
+            group_id: null,
+            post_type: draft.postType || 'text',
+            search_vector: null,
             social_accounts: { platform: 'draft' }
-          }, ...allPosts];
+          };
+          allPosts = [draftPost, ...allPosts];
         }
       }
       
@@ -107,7 +93,6 @@ const Posts = () => {
     }
   });
 
-  // Query to get social accounts for the edit dialog
   const { data: accounts } = useQuery({
     queryKey: ["social-accounts"],
     queryFn: async () => {

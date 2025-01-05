@@ -41,6 +41,29 @@ const AddAccount = () => {
     }
   };
 
+  const handleFacebookSuccess = async (response: { accessToken: string; userId: string }) => {
+    try {
+      // Store the Facebook credentials
+      const { error } = await supabase
+        .from('social_accounts')
+        .insert({
+          platform: 'facebook',
+          account_name: 'Facebook Page',
+          access_token: response.accessToken,
+          user_id: response.userId
+        });
+
+      if (error) throw error;
+      
+      setIsDialogOpen(false);
+      await refetchAccounts();
+      toast.success("Facebook account connected successfully");
+    } catch (error) {
+      console.error("Error connecting Facebook account:", error);
+      toast.error("Failed to connect Facebook account");
+    }
+  };
+
   const facebookAccounts = socialAccounts?.filter(account => account.platform === 'facebook') || [];
   const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
   const linkedinAccounts = socialAccounts?.filter(account => account.platform === 'linkedin') || [];
@@ -61,10 +84,7 @@ const AddAccount = () => {
               onDisconnect={handleDisconnectFacebook}
             />
           </div>
-          <ConnectAccountDialog onSuccess={() => {
-            setIsDialogOpen(false);
-            refetchAccounts();
-          }} />
+          <ConnectAccountDialog onSuccess={handleFacebookSuccess} />
         </Dialog>
       </div>
     </DashboardLayout>
