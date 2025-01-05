@@ -1,5 +1,5 @@
-import { Check, Facebook, Instagram } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Facebook, Instagram, Check } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   Command,
   CommandEmpty,
@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface SocialAccount {
   id: string;
@@ -47,6 +48,10 @@ export const SocialAccountSelect = ({
 
   return (
     <div className="space-y-2">
+      <Label className="text-sm font-medium">
+        Select Social Media Account <span className="text-red-500">*</span>
+      </Label>
+      
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -57,7 +62,19 @@ export const SocialAccountSelect = ({
               selectedAccounts.length > 0 && "text-primary"
             )}
           >
-            {selectedAccount ? selectedAccount.account_name : "Select an account"}
+            {selectedAccount ? (
+              <div className="flex items-center gap-2">
+                {selectedAccount.platform === 'facebook' && (
+                  <Facebook className="h-4 w-4 text-[#1877F2]" />
+                )}
+                {selectedAccount.platform === 'instagram' && (
+                  <Instagram className="h-4 w-4 text-[#E4405F]" />
+                )}
+                <span>{selectedAccount.account_name}</span>
+              </div>
+            ) : (
+              "Select an account"
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
