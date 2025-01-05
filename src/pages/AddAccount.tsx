@@ -9,6 +9,16 @@ import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccoun
 import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { AccountsSummary } from "@/components/social-accounts/AccountsSummary";
 
+interface FacebookPage {
+  id: string;
+  name: string;
+  access_token: string;
+}
+
+interface FacebookPagesResponse {
+  data: FacebookPage[];
+}
+
 const AddAccount = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -57,13 +67,13 @@ const AddAccount = () => {
       console.log('Facebook login success:', response);
       
       // Get user's Facebook pages
-      const pagesResponse = await new Promise((resolve) => {
-        window.FB.api('/me/accounts', { access_token: response.accessToken }, (result: any) => {
+      const pagesResponse = await new Promise<FacebookPagesResponse>((resolve) => {
+        window.FB.api('/me/accounts', { access_token: response.accessToken }, (result: FacebookPagesResponse) => {
           resolve(result);
         });
       });
 
-      if (!pagesResponse || !pagesResponse.data || pagesResponse.data.length === 0) {
+      if (!pagesResponse.data || pagesResponse.data.length === 0) {
         toast.error("No Facebook pages found. Please create a Facebook page first.");
         return;
       }
