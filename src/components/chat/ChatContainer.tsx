@@ -57,30 +57,23 @@ export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
       if (userError) throw userError;
 
       // Then, get Claude's response
-      const response = await fetch('/functions/v1/chat-with-claude', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('chat-with-claude', {
+        body: {
           messages: [...messages, { role: 'user', content }],
           conversationId,
-        }),
+        }
       });
 
-      if (!response.ok) {
+      if (!response.data) {
         throw new Error('Failed to get response from Claude');
       }
-
-      const claudeResponse = await response.json();
 
       // Finally, save Claude's response
       const { error: assistantError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
-          content: claudeResponse.content,
+          content: response.data.content,
           role: 'assistant',
           user_id: userId
         });
