@@ -5,5 +5,5 @@ enabled = true
 url = "https://czuhcymoqjgsmwzimlzd.supabase.co"
 
 [functions]
-[functions.publish-facebook-post]
+[functions.get-secret]
 verify_jwt = true

@@ -10,16 +10,33 @@ import { useQuery } from "@tanstack/react-query";
 
 const AddAccount = () => {
   const [facebookAppId, setFacebookAppId] = useState<string>("");
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true);
 
   useEffect(() => {
     const fetchFacebookAppId = async () => {
-      const { data: { FACEBOOK_APP_ID } } = await supabase.functions.invoke('get-secret', {
-        body: { secretName: 'FACEBOOK_APP_ID' }
-      });
-      if (FACEBOOK_APP_ID) {
-        setFacebookAppId(FACEBOOK_APP_ID);
-      } else {
+      try {
+        setIsLoadingConfig(true);
+        const { data, error } = await supabase.functions.invoke('get-secret', {
+          body: { secretName: 'FACEBOOK_APP_ID' }
+        });
+
+        if (error) {
+          console.error('Error fetching Facebook App ID:', error);
+          toast.error("Failed to load Facebook configuration");
+          return;
+        }
+
+        if (data?.FACEBOOK_APP_ID) {
+          setFacebookAppId(data.FACEBOOK_APP_ID);
+        } else {
+          console.error('Facebook App ID not found in response:', data);
+          toast.error("Failed to load Facebook configuration");
+        }
+      } catch (error) {
+        console.error('Error in fetchFacebookAppId:', error);
         toast.error("Failed to load Facebook configuration");
+      } finally {
+        setIsLoadingConfig(false);
       }
     };
 
@@ -124,7 +141,6 @@ const AddAccount = () => {
         </div>
 
         <div className="space-y-4">
-          {/* Facebook */}
           <SocialAccountCard
             platform="Facebook"
             icon={
@@ -138,14 +154,16 @@ const AddAccount = () => {
             accountId={facebookAccount?.id}
             onDisconnect={facebookAccount ? () => handleDisconnectFacebook(facebookAccount.id) : undefined}
           >
-            {facebookAppId ? (
+            {isLoadingConfig ? (
+              <Button variant="outline" disabled>Loading configuration...</Button>
+            ) : facebookAppId ? (
               <FacebookLoginButton
                 appId={facebookAppId}
                 onSuccess={handleFacebookSuccess}
                 onError={handleFacebookError}
               />
             ) : (
-              <Button variant="outline" disabled>Loading...</Button>
+              <Button variant="outline" disabled>Facebook configuration not available</Button>
             )}
           </SocialAccountCard>
 
