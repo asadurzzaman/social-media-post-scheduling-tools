@@ -56,7 +56,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
             appId: appId,
             cookie: true,
             xfbml: true,
-            version: 'v18.0'
+            version: 'v18.0',
+            status: true
           });
           console.log('Facebook SDK initialized successfully');
           setIsSDKLoaded(true);
@@ -83,6 +84,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           js = d.createElement(s) as HTMLScriptElement;
           js.id = id;
           js.src = "https://connect.facebook.net/en_US/sdk.js";
+          js.crossOrigin = "anonymous";
           js.onerror = () => {
             console.error('Failed to load Facebook SDK script');
             toast.error('Failed to load Facebook SDK. Please check your internet connection and try again.');
@@ -124,14 +126,10 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       }
 
       console.log('Initiating Facebook login...');
-      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve, reject) => {
+      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
           console.log('Login response:', response);
-          if (response.error) {
-            reject(response.error);
-          } else {
-            resolve(response);
-          }
+          resolve(response);
         }, {
           scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
           return_scopes: true,
