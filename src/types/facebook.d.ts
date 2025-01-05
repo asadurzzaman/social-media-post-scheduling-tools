@@ -7,6 +7,8 @@ interface FacebookAppEvents {
   logEvent: (name: string, ...args: any[]) => void;
   EventNames: Record<string, string>;
   ParameterNames: Record<string, string>;
+  activateApp: () => void;
+  logPageView: () => void;
 }
 
 interface FacebookLoginStatus {
