@@ -86,6 +86,29 @@ const AddAccount = () => {
     }
   };
 
+  const handleInstagramSuccess = async (response: { accessToken: string; userId: string }) => {
+    try {
+      const { error } = await supabase
+        .from('social_accounts')
+        .insert({
+          platform: 'instagram',
+          account_name: 'Instagram Business Account',
+          access_token: response.accessToken,
+          user_id: response.userId,
+          instagram_user_id: response.userId
+        });
+
+      if (error) throw error;
+      
+      setIsDialogOpen(false);
+      await refetchAccounts();
+      toast.success("Instagram account connected successfully");
+    } catch (error) {
+      console.error("Error connecting Instagram account:", error);
+      toast.error("Failed to connect Instagram account");
+    }
+  };
+
   const facebookAccounts = socialAccounts?.filter(account => account.platform === 'facebook') || [];
   const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
   const linkedinAccounts = socialAccounts?.filter(account => account.platform === 'linkedin') || [];
@@ -104,12 +127,14 @@ const AddAccount = () => {
             <AccountsList 
               facebookAccounts={facebookAccounts}
               linkedinAccounts={linkedinAccounts}
+              instagramAccounts={instagramAccounts}
               onDisconnect={handleDisconnectAccount}
             />
           </div>
           <ConnectAccountDialog 
             onSuccess={handleFacebookSuccess}
             onLinkedInSuccess={handleLinkedInSuccess}
+            onInstagramSuccess={handleInstagramSuccess}
           />
         </Dialog>
       </div>

@@ -2,19 +2,29 @@ import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/c
 import { Button } from "@/components/ui/button";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
 import LinkedInLoginButton from "@/components/LinkedInLoginButton";
+import InstagramLoginButton from "@/components/InstagramLoginButton";
 import { toast } from "sonner";
 
 interface ConnectAccountDialogProps {
   onSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
   onLinkedInSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
+  onInstagramSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
 }
 
-export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAccountDialogProps) => {
+export const ConnectAccountDialog = ({ 
+  onSuccess, 
+  onLinkedInSuccess,
+  onInstagramSuccess 
+}: ConnectAccountDialogProps) => {
   const handleFacebookError = (error: string) => {
     toast.error(error);
   };
 
   const handleLinkedInError = (error: string) => {
+    toast.error(error);
+  };
+
+  const handleInstagramError = (error: string) => {
     toast.error(error);
   };
 
@@ -37,7 +47,11 @@ export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAc
           onSuccess={onLinkedInSuccess}
           onError={handleLinkedInError}
         />
-        <Button className="w-full" variant="outline" disabled>Instagram (Coming soon)</Button>
+        <InstagramLoginButton
+          appId="1294294115054311"
+          onSuccess={onInstagramSuccess}
+          onError={handleInstagramError}
+        />
         <Button className="w-full" variant="outline" disabled>X/Twitter (Coming soon)</Button>
         <Button className="w-full" variant="outline" disabled>TikTok (Coming soon)</Button>
       </div>
