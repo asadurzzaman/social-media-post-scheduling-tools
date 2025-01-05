@@ -6,21 +6,28 @@ declare global {
 }
 
 export const initializeFacebookSDK = (appId: string, onLoad: () => void) => {
+  // Clear any existing FB instance
+  if (window.FB) {
+    delete window.FB;
+  }
+
   window.fbAsyncInit = function() {
     window.FB.init({
       appId: appId,
       cookie: true,
-      xfbml: true,
+      xfbml: false, // Disable XFBML parsing
       version: 'v18.0'
     });
     
-    // Disable impression logging
+    // Disable ALL tracking and logging
     if (window.FB.Event && window.FB.Event.subscribe) {
-      window.FB.Event.subscribe('edge.create', () => {});
-      window.FB.Event.subscribe('edge.remove', () => {});
+      window.FB.Event.unsubscribe('edge.create');
+      window.FB.Event.unsubscribe('edge.remove');
+      window.FB.Event.unsubscribe('auth.login');
+      window.FB.Event.unsubscribe('auth.logout');
     }
 
-    // Disable all tracking and logging
+    // Mock all tracking functions
     window.FB.AppEvents = {
       logEvent: () => {},
       logPageView: () => {},
@@ -30,8 +37,15 @@ export const initializeFacebookSDK = (appId: string, onLoad: () => void) => {
       activateApp: () => {},
       logPurchase: () => {}
     };
+
+    // Disable impression logging
+    window.FB.Event = {
+      ...window.FB.Event,
+      subscribe: () => {},
+      unsubscribe: () => {}
+    };
     
-    console.log('Facebook SDK initialized successfully');
+    console.log('Facebook SDK initialized with tracking disabled');
     onLoad();
   };
 
@@ -44,7 +58,7 @@ export const initializeFacebookSDK = (appId: string, onLoad: () => void) => {
   // Clear any existing FB cookies
   document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
-  // Load the SDK
+  // Load the SDK asynchronously
   (function(d, s, id) {
     let js: HTMLScriptElement;
     const fjs = d.getElementsByTagName(s)[0];
