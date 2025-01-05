@@ -28,7 +28,7 @@ export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAc
       </DialogHeader>
       <div className="space-y-4 py-4">
         <FacebookLoginButton
-          appId="1294294115054311"
+          appId="2579075792280951"
           onSuccess={onSuccess}
           onError={handleFacebookError}
         />
