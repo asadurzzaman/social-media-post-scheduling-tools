@@ -1,15 +1,10 @@
 import { useState, useEffect } from 'react';
 import { FacebookSDK } from '@/utils/facebook/FacebookSDK';
-import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
-
-interface FacebookLoginResponse {
-  accessToken: string;
-  userId: string;
-}
+import { toast } from "sonner";
 
 interface UseFacebookLoginProps {
   appId: string;
-  onSuccess: (response: FacebookLoginResponse) => void;
+  onSuccess: (response: { accessToken: string; userId: string }) => void;
   onError: (error: string) => void;
 }
 
@@ -28,6 +23,7 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
       } catch (error) {
         console.error('Failed to initialize Facebook SDK:', error);
         onError('Failed to initialize Facebook SDK');
+        toast.error('Failed to initialize Facebook connection');
       }
     };
 
@@ -41,15 +37,20 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
   const handleLogin = async () => {
     if (!isSDKLoaded) {
       onError('Facebook SDK not loaded yet');
+      toast.error('Facebook connection not ready. Please try again.');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      const loginResponse = await new Promise<any>((resolve) => {
+      const loginResponse = await new Promise<any>((resolve, reject) => {
         window.FB.login((response) => {
-          resolve(response);
+          if (response.status === 'connected' && response.authResponse) {
+            resolve(response);
+          } else {
+            reject(new Error('Facebook login failed or was cancelled'));
+          }
         }, {
           scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
           return_scopes: true,
@@ -58,17 +59,20 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
         });
       });
 
-      if (loginResponse.status === 'connected' && loginResponse.authResponse) {
+      if (loginResponse.authResponse) {
         onSuccess({
           accessToken: loginResponse.authResponse.accessToken,
           userId: loginResponse.authResponse.userID
         });
+        toast.success('Successfully connected to Facebook');
       } else {
-        onError('Login failed or was cancelled');
+        throw new Error('No auth response received');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Facebook login error:', error);
-      await FacebookErrorHandler.handleError(error);
+      const errorMessage = error.message || 'Failed to connect with Facebook';
+      onError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }

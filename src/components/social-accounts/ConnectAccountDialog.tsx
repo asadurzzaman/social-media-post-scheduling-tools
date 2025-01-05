@@ -11,11 +11,13 @@ interface ConnectAccountDialogProps {
 
 export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAccountDialogProps) => {
   const handleFacebookError = (error: string) => {
-    toast.error(error);
+    console.error('Facebook connection error:', error);
+    toast.error('Failed to connect Facebook account. Please try again.');
   };
 
   const handleLinkedInError = (error: string) => {
-    toast.error(error);
+    console.error('LinkedIn connection error:', error);
+    toast.error('Failed to connect LinkedIn account. Please try again.');
   };
 
   return (
