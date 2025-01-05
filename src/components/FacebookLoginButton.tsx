@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
+import { toast } from "sonner";
 
 declare global {
   interface Window {
@@ -39,15 +40,25 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   useEffect(() => {
     const loadFacebookSDK = () => {
       console.log('Starting Facebook SDK initialization...');
+      
+      // Clear any existing FB instance
+      delete window.FB;
+      delete window.fbAsyncInit;
+
       window.fbAsyncInit = function() {
-        window.FB.init({
-          appId: appId,
-          cookie: true,
-          xfbml: true,
-          version: 'v18.0'
-        });
-        console.log('Facebook SDK initialized successfully');
-        setIsSDKLoaded(true);
+        try {
+          window.FB.init({
+            appId: appId,
+            cookie: true,
+            xfbml: true,
+            version: 'v18.0'
+          });
+          console.log('Facebook SDK initialized successfully');
+          setIsSDKLoaded(true);
+        } catch (error) {
+          console.error('Facebook SDK initialization error:', error);
+          onError('Failed to initialize Facebook SDK');
+        }
       };
 
       // Remove existing Facebook SDK if present
@@ -59,30 +70,37 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       // Clear any existing FB cookies
       document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
-      (function(d, s, id) {
-        let js: HTMLScriptElement;
-        const fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s) as HTMLScriptElement;
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode?.insertBefore(js, fjs);
-      }(document, 'script', 'facebook-jssdk'));
+      try {
+        (function(d, s, id) {
+          let js: HTMLScriptElement;
+          const fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s) as HTMLScriptElement;
+          js.id = id;
+          js.src = "https://connect.facebook.net/en_US/sdk.js";
+          js.onerror = () => {
+            console.error('Failed to load Facebook SDK script');
+            toast.error('Failed to load Facebook SDK. Please check your internet connection and try again.');
+          };
+          fjs.parentNode?.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+      } catch (error) {
+        console.error('Error loading Facebook SDK script:', error);
+        onError('Failed to load Facebook SDK');
+      }
     };
 
     loadFacebookSDK();
 
-    // Cleanup function to ensure proper SDK cleanup
     return () => {
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
         existingScript.remove();
       }
-      // Clear FB instance
       delete window.FB;
       delete window.fbAsyncInit;
     };
-  }, [appId]);
+  }, [appId, onError]);
 
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
@@ -95,16 +113,25 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      // Force a new login attempt instead of checking status first
+      // Check if FB object exists and is properly initialized
+      if (!window.FB) {
+        throw new Error('Facebook SDK not properly initialized');
+      }
+
       console.log('Initiating Facebook login...');
-      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
+      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve, reject) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
           console.log('Login response:', response);
-          resolve(response);
+          if (response.error) {
+            reject(response.error);
+          } else {
+            resolve(response);
+          }
         }, {
           scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
           return_scopes: true,
-          auth_type: 'rerequest'
+          auth_type: 'rerequest',
+          enable_profile_selector: true
         });
       });
 
@@ -123,7 +150,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       try {
         await FacebookErrorHandler.handleError(error);
       } catch (handledError: any) {
-        onError(handledError.message);
+        onError(handledError.message || 'An error occurred during Facebook login');
       }
     } finally {
       setIsProcessing(false);
