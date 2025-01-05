@@ -4,6 +4,8 @@ import FacebookLoginButton from "@/components/FacebookLoginButton";
 import LinkedInLoginButton from "@/components/LinkedInLoginButton";
 import InstagramLoginButton from "@/components/InstagramLoginButton";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConnectAccountDialogProps {
   onSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
@@ -16,6 +18,20 @@ export const ConnectAccountDialog = ({
   onLinkedInSuccess,
   onInstagramSuccess 
 }: ConnectAccountDialogProps) => {
+  const { data: socialAccounts } = useQuery({
+    queryKey: ['social-accounts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('platform', 'facebook')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
   const handleFacebookError = (error: string) => {
     toast.error(error);
   };
@@ -27,6 +43,8 @@ export const ConnectAccountDialog = ({
   const handleInstagramError = (error: string) => {
     toast.error(error);
   };
+
+  const needsReconnect = socialAccounts?.requires_reconnect || false;
 
   return (
     <DialogContent>
@@ -41,6 +59,7 @@ export const ConnectAccountDialog = ({
           appId="1294294115054311"
           onSuccess={onSuccess}
           onError={handleFacebookError}
+          isReconnect={needsReconnect}
         />
         <LinkedInLoginButton
           clientId={import.meta.env.VITE_LINKEDIN_CLIENT_ID || ''}
