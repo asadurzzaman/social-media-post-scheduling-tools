@@ -1,14 +1,19 @@
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
+import LinkedInLoginButton from "@/components/LinkedInLoginButton";
 import { toast } from "sonner";
 
 interface ConnectAccountDialogProps {
   onSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
+  onLinkedInSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
 }
 
-export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) => {
+export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAccountDialogProps) => {
   const handleFacebookError = (error: string) => {
+    toast.error(error);
+  };
+
+  const handleLinkedInError = (error: string) => {
     toast.error(error);
   };
 
@@ -26,8 +31,12 @@ export const ConnectAccountDialog = ({ onSuccess }: ConnectAccountDialogProps) =
           onSuccess={onSuccess}
           onError={handleFacebookError}
         />
+        <LinkedInLoginButton
+          clientId={process.env.LINKEDIN_CLIENT_ID || ''}
+          onSuccess={onLinkedInSuccess}
+          onError={handleLinkedInError}
+        />
         <Button className="w-full" variant="outline" disabled>Instagram (Coming soon)</Button>
-        <Button className="w-full" variant="outline" disabled>LinkedIn (Coming soon)</Button>
         <Button className="w-full" variant="outline" disabled>X/Twitter (Coming soon)</Button>
         <Button className="w-full" variant="outline" disabled>TikTok (Coming soon)</Button>
       </div>

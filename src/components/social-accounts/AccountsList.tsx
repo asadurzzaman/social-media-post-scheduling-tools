@@ -1,6 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { SocialAccountCard } from "@/components/social-accounts/SocialAccountCard";
+import { Linkedin } from "lucide-react";
 
 interface Account {
   id: string;
@@ -10,10 +11,11 @@ interface Account {
 
 interface AccountsListProps {
   facebookAccounts: Account[];
+  linkedinAccounts: Account[];
   onDisconnect: (accountId: string) => Promise<void>;
 }
 
-export const AccountsList = ({ facebookAccounts, onDisconnect }: AccountsListProps) => {
+export const AccountsList = ({ facebookAccounts, linkedinAccounts, onDisconnect }: AccountsListProps) => {
   return (
     <ScrollArea className="h-[calc(100vh-20rem)]">
       <div className="space-y-8">
@@ -22,10 +24,29 @@ export const AccountsList = ({ facebookAccounts, onDisconnect }: AccountsListPro
           <p className="text-muted-foreground mb-4">No Instagram accounts connected</p>
         </div>
 
-        <div>
-          <h3 className="text-xl font-semibold mb-4">LinkedIn Accounts</h3>
-          <p className="text-muted-foreground mb-4">No LinkedIn accounts connected</p>
-        </div>
+        {linkedinAccounts.length > 0 && (
+          <div>
+            <h3 className="text-xl font-semibold mb-4">LinkedIn Accounts</h3>
+            <div className="space-y-4">
+              {linkedinAccounts.map((account) => (
+                <SocialAccountCard
+                  key={account.id}
+                  platform="LinkedIn"
+                  icon={<Linkedin className="w-8 h-8 text-[#0077B5]" />}
+                  title="LinkedIn profile"
+                  isConnected={true}
+                  accountName={account.account_name}
+                  accountId={account.id}
+                  onDisconnect={() => onDisconnect(account.id)}
+                >
+                  <Button variant="destructive" onClick={() => onDisconnect(account.id)}>
+                    Disconnect
+                  </Button>
+                </SocialAccountCard>
+              ))}
+            </div>
+          </div>
+        )}
 
         {facebookAccounts.length > 0 && (
           <div>

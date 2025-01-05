@@ -24,7 +24,7 @@ const AddAccount = () => {
     },
   });
 
-  const handleDisconnectFacebook = async (accountId: string) => {
+  const handleDisconnectAccount = async (accountId: string) => {
     try {
       const { error } = await supabase
         .from('social_accounts')
@@ -43,7 +43,6 @@ const AddAccount = () => {
 
   const handleFacebookSuccess = async (response: { accessToken: string; userId: string }) => {
     try {
-      // Store the Facebook credentials
       const { error } = await supabase
         .from('social_accounts')
         .insert({
@@ -64,6 +63,29 @@ const AddAccount = () => {
     }
   };
 
+  const handleLinkedInSuccess = async (response: { accessToken: string; userId: string }) => {
+    try {
+      const { error } = await supabase
+        .from('social_accounts')
+        .insert({
+          platform: 'linkedin',
+          account_name: 'LinkedIn Profile',
+          access_token: response.accessToken,
+          user_id: response.userId,
+          linkedin_user_id: response.userId
+        });
+
+      if (error) throw error;
+      
+      setIsDialogOpen(false);
+      await refetchAccounts();
+      toast.success("LinkedIn account connected successfully");
+    } catch (error) {
+      console.error("Error connecting LinkedIn account:", error);
+      toast.error("Failed to connect LinkedIn account");
+    }
+  };
+
   const facebookAccounts = socialAccounts?.filter(account => account.platform === 'facebook') || [];
   const instagramAccounts = socialAccounts?.filter(account => account.platform === 'instagram') || [];
   const linkedinAccounts = socialAccounts?.filter(account => account.platform === 'linkedin') || [];
@@ -81,10 +103,14 @@ const AddAccount = () => {
           <div className="bg-white rounded-lg border p-6">
             <AccountsList 
               facebookAccounts={facebookAccounts}
-              onDisconnect={handleDisconnectFacebook}
+              linkedinAccounts={linkedinAccounts}
+              onDisconnect={handleDisconnectAccount}
             />
           </div>
-          <ConnectAccountDialog onSuccess={handleFacebookSuccess} />
+          <ConnectAccountDialog 
+            onSuccess={handleFacebookSuccess}
+            onLinkedInSuccess={handleLinkedInSuccess}
+          />
         </Dialog>
       </div>
     </DashboardLayout>
