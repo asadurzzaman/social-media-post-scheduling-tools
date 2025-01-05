@@ -1,4 +1,5 @@
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import FacebookLoginButton from "@/components/FacebookLoginButton";
 import LinkedInLoginButton from "@/components/LinkedInLoginButton";
 import { toast } from "sonner";
