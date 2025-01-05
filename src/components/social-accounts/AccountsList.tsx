@@ -1,7 +1,7 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { SocialAccountCard } from "@/components/social-accounts/SocialAccountCard";
-import { Linkedin, Instagram } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 interface Account {
   id: string;
@@ -12,42 +12,17 @@ interface Account {
 interface AccountsListProps {
   facebookAccounts: Account[];
   linkedinAccounts: Account[];
-  instagramAccounts: Account[];
   onDisconnect: (accountId: string) => Promise<void>;
 }
 
-export const AccountsList = ({ 
-  facebookAccounts, 
-  linkedinAccounts, 
-  instagramAccounts,
-  onDisconnect 
-}: AccountsListProps) => {
+export const AccountsList = ({ facebookAccounts, linkedinAccounts, onDisconnect }: AccountsListProps) => {
   return (
     <ScrollArea className="h-[calc(100vh-20rem)]">
       <div className="space-y-8">
-        {instagramAccounts.length > 0 && (
-          <div>
-            <h3 className="text-xl font-semibold mb-4">Instagram Business Accounts</h3>
-            <div className="space-y-4">
-              {instagramAccounts.map((account) => (
-                <SocialAccountCard
-                  key={account.id}
-                  platform="Instagram"
-                  icon={<Instagram className="w-8 h-8 text-[#E4405F]" />}
-                  title="Instagram business account"
-                  isConnected={true}
-                  accountName={account.account_name}
-                  accountId={account.id}
-                  onDisconnect={() => onDisconnect(account.id)}
-                >
-                  <Button variant="destructive" onClick={() => onDisconnect(account.id)}>
-                    Disconnect
-                  </Button>
-                </SocialAccountCard>
-              ))}
-            </div>
-          </div>
-        )}
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Instagram Business Accounts</h3>
+          <p className="text-muted-foreground mb-4">No Instagram accounts connected</p>
+        </div>
 
         {linkedinAccounts.length > 0 && (
           <div>

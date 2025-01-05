@@ -26,7 +26,7 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    // Fetch the post details with social account info
+    // Fetch the post details
     const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
@@ -34,8 +34,7 @@ serve(async (req) => {
         image_url,
         social_accounts!inner(
           page_id,
-          page_access_token,
-          requires_reconnect
+          page_access_token
         )
       `)
       .eq('id', postId)
@@ -55,35 +54,6 @@ serve(async (req) => {
       throw new Error('Missing Facebook page credentials');
     }
 
-    // Check if account needs reconnection
-    if (post.social_accounts.requires_reconnect) {
-      throw new Error('Facebook account needs to be reconnected');
-    }
-
-    // Verify token validity
-    try {
-      const debugTokenResponse = await fetch(
-        `https://graph.facebook.com/debug_token?input_token=${pageAccessToken}&access_token=${pageAccessToken}`
-      );
-      const tokenData = await debugTokenResponse.json();
-      
-      if (!tokenData.data?.is_valid) {
-        // Update account status in database
-        await supabaseClient
-          .from('social_accounts')
-          .update({ 
-            requires_reconnect: true,
-            last_error: 'Token validation failed'
-          })
-          .eq('page_id', pageId);
-          
-        throw new Error('Facebook token is invalid. Please reconnect your account.');
-      }
-    } catch (error) {
-      console.error('Token validation error:', error);
-      throw new Error('Failed to validate Facebook token');
-    }
-
     // Prepare the post data
     let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
     let postData: Record<string, any> = {
@@ -96,7 +66,7 @@ serve(async (req) => {
       endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
     } else {
       // Clean and validate image URL
-      const imageUrl = post.image_url.split(',')[0].trim();
+      const imageUrl = post.image_url.split(',')[0].trim(); // Use the first image URL
       if (!imageUrl.startsWith('http')) {
         throw new Error('Invalid image URL format');
       }
@@ -118,19 +88,6 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Facebook API Error:', errorData);
-      
-      // Check if error is related to authentication
-      if (errorData.error?.code === 190) {
-        // Update account status in database
-        await supabaseClient
-          .from('social_accounts')
-          .update({ 
-            requires_reconnect: true,
-            last_error: errorData.error.message
-          })
-          .eq('page_id', pageId);
-      }
-      
       throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
     }
 
