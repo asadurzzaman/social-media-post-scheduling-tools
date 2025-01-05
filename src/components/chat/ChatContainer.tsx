@@ -56,29 +56,34 @@ export const ChatContainer = ({ conversationId }: ChatContainerProps) => {
 
       if (userError) throw userError;
 
-      // Then, get Claude's response
-      const response = await supabase.functions.invoke('chat-with-claude', {
-        body: {
-          messages: [...messages, { role: 'user', content }],
-          conversationId,
-        }
-      });
-
-      if (!response.data) {
-        throw new Error('Failed to get response from Claude');
-      }
-
-      // Finally, save Claude's response
-      const { error: assistantError } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          content: response.data.content,
-          role: 'assistant',
-          user_id: userId
+      try {
+        // Get Claude's response using Edge Function
+        const { data, error } = await supabase.functions.invoke('chat-with-claude', {
+          body: {
+            messages: [...messages, { role: 'user', content }],
+            conversationId,
+          }
         });
 
-      if (assistantError) throw assistantError;
+        if (error) throw error;
+        if (!data) throw new Error('No response from Claude');
+
+        // Save Claude's response
+        const { error: assistantError } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversationId,
+            content: data.content,
+            role: 'assistant',
+            user_id: userId
+          });
+
+        if (assistantError) throw assistantError;
+      } catch (error) {
+        console.error('Error getting Claude response:', error);
+        toast.error("Failed to get response from Claude");
+        throw error;
+      }
     },
     onError: (error) => {
       toast.error("Failed to send message");
