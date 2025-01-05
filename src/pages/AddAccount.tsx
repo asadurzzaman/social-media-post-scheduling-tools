@@ -8,6 +8,7 @@ import { AccountsHeader } from "@/components/social-accounts/AccountsHeader";
 import { ConnectAccountDialog } from "@/components/social-accounts/ConnectAccountDialog";
 import { AccountsList } from "@/components/social-accounts/AccountsList";
 import { AccountsSummary } from "@/components/social-accounts/AccountsSummary";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface FacebookPage {
   id: string;
@@ -30,7 +31,7 @@ const AddAccount = () => {
         .select('*');
       
       if (error) throw error;
-      return data || [];
+      return (data || []) as Tables<'social_accounts'>[];
     },
   });
 
