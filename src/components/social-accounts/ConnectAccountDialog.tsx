@@ -12,7 +12,7 @@ interface ConnectAccountDialogProps {
 export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAccountDialogProps) => {
   const handleFacebookError = (error: string) => {
     console.error('Facebook connection error:', error);
-    toast.error('Failed to connect Facebook account. Please check your internet connection and try again.');
+    toast.error('Failed to connect Facebook account. Please check your permissions and try again.');
   };
 
   const handleLinkedInError = (error: string) => {
@@ -30,7 +30,7 @@ export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAc
       </DialogHeader>
       <div className="space-y-4 py-4">
         <FacebookLoginButton
-          appId="2579075792280951"
+          appId={import.meta.env.VITE_FACEBOOK_APP_ID || '2579075792280951'}
           onSuccess={onSuccess}
           onError={handleFacebookError}
         />

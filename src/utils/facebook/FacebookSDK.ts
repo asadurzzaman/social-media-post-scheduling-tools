@@ -22,6 +22,7 @@ export class FacebookSDK {
           }
         }
         
+        // Define async init function
         window.fbAsyncInit = function() {
           window.FB.init({
             appId: config.appId,
@@ -30,8 +31,15 @@ export class FacebookSDK {
             version: config.version
           });
 
-          console.log('Facebook SDK initialized successfully');
-          resolve();
+          // Check login status after initialization
+          window.FB.getLoginStatus((response) => {
+            if (response.status === 'connected') {
+              console.log('Already connected to Facebook');
+            } else {
+              console.log('Not connected to Facebook:', response.status);
+            }
+            resolve();
+          });
         };
 
         // Load SDK
@@ -45,8 +53,13 @@ export class FacebookSDK {
           console.error('Failed to load Facebook SDK script');
           reject(new Error('Failed to load Facebook SDK'));
         };
+        
         const fjs = document.getElementsByTagName('script')[0];
-        fjs.parentNode?.insertBefore(js, fjs);
+        if (!fjs?.parentNode) {
+          reject(new Error('Could not find parent node for script'));
+          return;
+        }
+        fjs.parentNode.insertBefore(js, fjs);
       } catch (error) {
         console.error('Error initializing Facebook SDK:', error);
         reject(error);
@@ -55,23 +68,29 @@ export class FacebookSDK {
   }
 
   static cleanup(appId: string): void {
-    // Remove SDK script
-    const existingScript = document.getElementById('facebook-jssdk');
-    if (existingScript) {
-      existingScript.remove();
-    }
-
-    // Clear FB instance
-    delete window.FB;
-    delete window.fbAsyncInit;
-
-    // Clear all Facebook cookies
-    const cookies = document.cookie.split(';');
-    for (let cookie of cookies) {
-      if (cookie.includes('fb') || cookie.includes('FB')) {
-        const name = cookie.split('=')[0].trim();
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+    try {
+      // Remove SDK script
+      const existingScript = document.getElementById('facebook-jssdk');
+      if (existingScript) {
+        existingScript.remove();
       }
+
+      // Clear FB instance
+      delete window.FB;
+      delete window.fbAsyncInit;
+
+      // Clear all Facebook cookies
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        if (cookie.includes('fb') || cookie.includes('FB')) {
+          const name = cookie.split('=')[0].trim();
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+        }
+      }
+
+      console.log('Facebook SDK cleanup completed');
+    } catch (error) {
+      console.error('Error during Facebook SDK cleanup:', error);
     }
   }
 }

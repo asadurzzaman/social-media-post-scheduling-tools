@@ -20,15 +20,18 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
           version: 'v18.0'
         });
         setIsSDKLoaded(true);
-        console.log('Facebook SDK initialized and ready');
+        console.log('Facebook SDK initialized successfully');
       } catch (error) {
         console.error('Failed to initialize Facebook SDK:', error);
         setIsSDKLoaded(false);
         onError('Failed to initialize Facebook SDK');
-        toast.error('Failed to initialize Facebook connection. Please refresh and try again.');
       }
     };
 
+    // Clean up any existing SDK instance first
+    FacebookSDK.cleanup(appId);
+    
+    // Initialize new SDK instance
     initializeSDK();
 
     return () => {
@@ -37,9 +40,8 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
   }, [appId, onError]);
 
   const handleLogin = async () => {
-    if (!isSDKLoaded) {
+    if (!isSDKLoaded || !window.FB) {
       console.error('Facebook SDK not loaded');
-      onError('Facebook SDK not loaded yet');
       toast.error('Facebook connection not ready. Please refresh and try again.');
       return;
     }
@@ -48,11 +50,11 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
 
     try {
       console.log('Initiating Facebook login...');
-      const loginResponse = await new Promise<any>((resolve, reject) => {
+      const loginResponse = await new Promise<fb.AuthResponse>((resolve, reject) => {
         window.FB.login((response) => {
           console.log('Facebook login response:', response);
           if (response.status === 'connected' && response.authResponse) {
-            resolve(response);
+            resolve(response.authResponse);
           } else {
             reject(new Error(response.status === 'not_authorized' 
               ? 'Please authorize the application to continue'
@@ -66,13 +68,12 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
         });
       });
 
-      if (loginResponse.authResponse) {
+      if (loginResponse) {
         console.log('Facebook login successful');
         onSuccess({
-          accessToken: loginResponse.authResponse.accessToken,
-          userId: loginResponse.authResponse.userID
+          accessToken: loginResponse.accessToken,
+          userId: loginResponse.userID
         });
-        toast.success('Successfully connected to Facebook');
       } else {
         throw new Error('No auth response received');
       }
