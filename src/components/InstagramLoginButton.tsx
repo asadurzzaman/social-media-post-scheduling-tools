@@ -9,6 +9,30 @@ interface InstagramLoginButtonProps {
   onError: (error: string) => void;
 }
 
+// Define Facebook SDK response types
+interface FacebookAuthResponse {
+  authResponse: {
+    accessToken: string;
+    userID: string;
+    expiresIn: number;
+    signedRequest: string;
+    graphDomain: string;
+    data_access_expiration_time: number;
+  };
+  status: string;
+}
+
+interface InstagramBusinessAccount {
+  id: string;
+  username: string;
+}
+
+interface FacebookPagesResponse {
+  data: Array<{
+    instagram_business_account?: InstagramBusinessAccount;
+  }>;
+}
+
 const InstagramLoginButton: React.FC<InstagramLoginButtonProps> = ({
   appId,
   onSuccess,
@@ -59,7 +83,7 @@ const InstagramLoginButton: React.FC<InstagramLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      const response = await new Promise((resolve) => {
+      const response = await new Promise<FacebookAuthResponse>((resolve) => {
         window.FB.login((response) => {
           resolve(response);
         }, {
@@ -70,7 +94,7 @@ const InstagramLoginButton: React.FC<InstagramLoginButtonProps> = ({
 
       if (response.status === 'connected') {
         // Get Instagram account info
-        const instagramAccountResponse = await new Promise((resolve) => {
+        const instagramAccountResponse = await new Promise<FacebookPagesResponse>((resolve) => {
           window.FB.api(
             '/me/accounts',
             'GET',
