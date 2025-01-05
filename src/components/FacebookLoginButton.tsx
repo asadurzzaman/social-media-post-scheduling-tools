@@ -1,27 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
-import { supabase } from "@/integrations/supabase/client";
-
-declare global {
-  interface Window {
-    FB: any;
-    fbAsyncInit: () => void;
-  }
-}
-
-interface FacebookAuthResponse {
-  accessToken: string;
-  userID: string;
-  expiresIn: number;
-  signedRequest: string;
-  graphDomain: string;
-  data_access_expiration_time: number;
-}
-
-interface FacebookLoginStatusResponse {
-  status: 'connected' | 'not_authorized' | 'unknown';
-  authResponse: FacebookAuthResponse | null;
-}
+import React from 'react';
+import { useFacebookLogin } from '@/hooks/useFacebookLogin';
 
 interface FacebookLoginButtonProps {
   appId: string;
@@ -34,153 +12,15 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   onSuccess,
   onError
 }) => {
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  useEffect(() => {
-    const loadFacebookSDK = () => {
-      console.log('Starting Facebook SDK initialization...');
-      window.fbAsyncInit = function() {
-        window.FB.init({
-          appId: appId,
-          cookie: true,
-          xfbml: true,
-          version: 'v18.0'
-        });
-        
-        // Completely disable impression logging
-        if (window.FB.Event && window.FB.Event.subscribe) {
-          window.FB.Event.unsubscribe('edge.create');
-          window.FB.Event.unsubscribe('edge.remove');
-          window.FB.Event.unsubscribe('auth.login');
-          window.FB.Event.unsubscribe('auth.logout');
-        }
-
-        // Mock impression logging functions
-        window.FB.AppEvents = {
-          logEvent: () => {},
-          EventNames: {},
-          ParameterNames: {}
-        };
-        
-        console.log('Facebook SDK initialized successfully');
-        setIsSDKLoaded(true);
-      };
-
-      // Remove existing Facebook SDK if present
-      const existingScript = document.getElementById('facebook-jssdk');
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      // Clear any existing FB cookies
-      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-
-      // Load the SDK
-      (function(d, s, id) {
-        let js: HTMLScriptElement;
-        const fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s) as HTMLScriptElement;
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode?.insertBefore(js, fjs);
-      }(document, 'script', 'facebook-jssdk'));
-    };
-
-    loadFacebookSDK();
-
-    // Cleanup function
-    return () => {
-      const existingScript = document.getElementById('facebook-jssdk');
-      if (existingScript) {
-        existingScript.remove();
-      }
-      // Clear FB instance and cookies
-      delete window.FB;
-      delete window.fbAsyncInit;
-      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    };
-  }, [appId]);
-
-  const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
-    try {
-      const expirationDate = new Date();
-      expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
-
-      const { error } = await supabase
-        .from('social_accounts')
-        .update({
-          access_token: accessToken,
-          token_expires_at: expirationDate.toISOString()
-        })
-        .eq('platform', 'facebook');
-
-      if (error) {
-        console.error('Error updating token in database:', error);
-        throw error;
-      }
-    } catch (error) {
-      console.error('Failed to update token in database:', error);
-      throw error;
-    }
-  };
-
-  const handleFacebookLogin = async () => {
-    console.log('Starting Facebook login process...');
-    if (!isSDKLoaded) {
-      console.error('Facebook SDK not loaded yet');
-      onError('Facebook SDK not loaded yet');
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      // Force a new login attempt with disabled tracking
-      console.log('Initiating Facebook login...');
-      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
-        window.FB.login((response: FacebookLoginStatusResponse) => {
-          console.log('Login response:', response);
-          resolve(response);
-        }, {
-          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
-          return_scopes: true,
-          auth_type: 'rerequest',
-          enable_profile_selector: true
-        });
-      });
-
-      if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-        console.log('Login successful, updating token in database');
-        await updateTokenInDatabase(
-          loginResponse.authResponse.accessToken,
-          loginResponse.authResponse.expiresIn
-        );
-        
-        onSuccess({
-          accessToken: loginResponse.authResponse.accessToken,
-          userId: loginResponse.authResponse.userID
-        });
-      } else {
-        console.error('Login failed or was cancelled');
-        onError('Login failed or was cancelled');
-      }
-    } catch (error) {
-      console.error('Facebook login error:', error);
-      try {
-        await FacebookErrorHandler.handleError(error);
-      } catch (handledError: any) {
-        onError(handledError.message);
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  const { isSDKLoaded, isProcessing, handleLogin } = useFacebookLogin({
+    appId,
+    onSuccess,
+    onError
+  });
 
   return (
     <button
-      onClick={handleFacebookLogin}
+      onClick={handleLogin}
       disabled={!isSDKLoaded || isProcessing}
       className={`
         flex items-center justify-center gap-2 
@@ -190,6 +30,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         transition-colors
         w-full max-w-sm
       `}
+      aria-busy={isProcessing}
     >
       <svg
         className="w-5 h-5 fill-current"
