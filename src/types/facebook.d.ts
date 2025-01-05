@@ -1,6 +1,7 @@
 interface FacebookEventSubscription {
   subscribe: (callback: Function) => void;
   unsubscribe: (eventName: string, callback: Function) => void;
+  clear: () => void;
 }
 
 interface FacebookAppEvents {
@@ -9,6 +10,10 @@ interface FacebookAppEvents {
   ParameterNames: Record<string, string>;
   activateApp: () => void;
   logPageView: () => void;
+  clearUserID: () => void;
+  setUserID: (userID: string) => void;
+  updateUserProperties: (properties: object) => void;
+  setAppVersion: (version: string) => void;
 }
 
 interface FacebookLoginStatus {
@@ -28,12 +33,18 @@ interface FacebookLoginOptions {
   auth_type?: string;
 }
 
+interface FacebookXFBML {
+  parse: () => void;
+}
+
 interface FacebookSDKInterface {
   init: (params: {
     appId: string;
     cookie?: boolean;
     xfbml?: boolean;
     version: string;
+    autoLogAppEvents?: boolean;
+    status?: boolean;
   }) => void;
   login: (
     callback: (response: FacebookLoginStatus) => void,
@@ -42,6 +53,7 @@ interface FacebookSDKInterface {
   logout: (callback: (response: any) => void) => void;
   Event: FacebookEventSubscription;
   AppEvents: FacebookAppEvents;
+  XFBML: FacebookXFBML;
 }
 
 interface Window {

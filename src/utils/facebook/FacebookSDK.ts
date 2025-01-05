@@ -13,38 +13,74 @@ export class FacebookSDK {
           existingScript.remove();
         }
 
-        // Initialize SDK with minimal tracking
+        // Remove any existing FB cookies
+        document.cookie = `fblo_${config.appId}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
+        
+        // Initialize SDK with absolute minimal features
         window.fbAsyncInit = function() {
+          // Override FB.init before it's called
+          const originalInit = window.FB.init;
+          window.FB.init = function(...args: any[]) {
+            // Call original init with modified config
+            return originalInit.call(this, {
+              ...args[0],
+              xfbml: false,
+              autoLogAppEvents: false,
+              status: false
+            });
+          };
+
+          // Initialize with minimal config
           window.FB.init({
             appId: config.appId,
             cookie: true,
-            xfbml: false, // Disable XFBML parsing
-            version: config.version
+            xfbml: false,
+            version: config.version,
+            autoLogAppEvents: false,
+            status: false
           });
 
-          // Disable all tracking functions
+          // Completely disable all tracking and logging functions
           if (window.FB.AppEvents) {
-            window.FB.AppEvents.logEvent = () => {};
-            window.FB.AppEvents.activateApp = () => {};
-            window.FB.AppEvents.logPageView = () => {};
+            window.FB.AppEvents = {
+              ...window.FB.AppEvents,
+              logEvent: () => {},
+              activateApp: () => {},
+              logPageView: () => {},
+              clearUserID: () => {},
+              setUserID: () => {},
+              updateUserProperties: () => {},
+              setAppVersion: () => {},
+              EventNames: {},
+              ParameterNames: {}
+            };
           }
 
-          // Disable event subscriptions
+          // Disable all event subscriptions
           if (window.FB.Event) {
-            window.FB.Event.subscribe = () => {};
-            window.FB.Event.unsubscribe = () => {};
+            window.FB.Event = {
+              subscribe: () => {},
+              unsubscribe: () => {},
+              clear: () => {}
+            };
           }
 
-          console.log('Facebook SDK initialized with minimal tracking');
+          // Disable XFBML parsing
+          if (window.FB.XFBML) {
+            window.FB.XFBML.parse = () => {};
+          }
+
+          console.log('Facebook SDK initialized with all tracking disabled');
           resolve();
         };
 
-        // Load SDK with minimal features
+        // Load SDK with debug and logging disabled
         const js = document.createElement('script');
         js.id = 'facebook-jssdk';
         js.src = `https://connect.facebook.net/en_US/sdk.js?debug=false`;
         js.async = true;
         js.defer = true;
+        js.crossOrigin = 'anonymous';
         const fjs = document.getElementsByTagName('script')[0];
         fjs.parentNode?.insertBefore(js, fjs);
       } catch (error) {
