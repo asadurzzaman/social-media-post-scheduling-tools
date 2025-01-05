@@ -6,28 +6,30 @@ declare global {
 }
 
 export const initializeFacebookSDK = (appId: string, onLoad: () => void) => {
-  // Clear any existing FB instance
+  // Clear any existing FB instance and related objects
   if (window.FB) {
     delete window.FB;
   }
+  
+  // Remove any existing FB cookies
+  document.cookie.split(';').forEach(cookie => {
+    const name = cookie.split('=')[0].trim();
+    if (name.startsWith('fb') || name.startsWith('_fb')) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    }
+  });
 
   window.fbAsyncInit = function() {
     window.FB.init({
       appId: appId,
-      cookie: true,
+      cookie: false, // Disable cookies
       xfbml: false, // Disable XFBML parsing
-      version: 'v18.0'
+      version: 'v18.0',
+      status: false, // Disable status check
+      autoLogAppEvents: false // Disable automatic event logging
     });
     
-    // Disable ALL tracking and logging
-    if (window.FB.Event && window.FB.Event.subscribe) {
-      window.FB.Event.unsubscribe('edge.create');
-      window.FB.Event.unsubscribe('edge.remove');
-      window.FB.Event.unsubscribe('auth.login');
-      window.FB.Event.unsubscribe('auth.logout');
-    }
-
-    // Mock all tracking functions
+    // Mock all tracking and event functions
     window.FB.AppEvents = {
       logEvent: () => {},
       logPageView: () => {},
@@ -38,14 +40,37 @@ export const initializeFacebookSDK = (appId: string, onLoad: () => void) => {
       logPurchase: () => {}
     };
 
-    // Disable impression logging
+    // Mock Event system
     window.FB.Event = {
-      ...window.FB.Event,
       subscribe: () => {},
-      unsubscribe: () => {}
+      unsubscribe: () => {},
+      clear: () => {}
     };
-    
-    console.log('Facebook SDK initialized with tracking disabled');
+
+    // Mock impression logging
+    window.FB.Impressions = {
+      log: () => {},
+      impression: () => {}
+    };
+
+    // Mock tracking
+    window.FB.tracking = false;
+    window.FB.trackingEnabled = () => false;
+    window.FB.Tracking = {
+      enabled: false,
+      enable: () => {},
+      disable: () => {}
+    };
+
+    // Disable all event subscriptions
+    const events = ['edge.create', 'edge.remove', 'auth.login', 'auth.logout', 'auth.prompt', 'auth.authResponseChange', 'auth.statusChange', 'xfbml.render'];
+    events.forEach(event => {
+      if (window.FB.Event && window.FB.Event.unsubscribe) {
+        window.FB.Event.unsubscribe(event);
+      }
+    });
+
+    console.log('Facebook SDK initialized with all tracking disabled');
     onLoad();
   };
 
@@ -54,9 +79,6 @@ export const initializeFacebookSDK = (appId: string, onLoad: () => void) => {
   if (existingScript) {
     existingScript.remove();
   }
-
-  // Clear any existing FB cookies
-  document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
   // Load the SDK asynchronously
   (function(d, s, id) {
