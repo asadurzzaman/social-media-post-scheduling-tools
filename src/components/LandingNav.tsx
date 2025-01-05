@@ -65,6 +65,9 @@ export function LandingNav() {
             <span className="text-xl font-bold">SocialManager</span>
           </Link>
           <div className="hidden md:flex gap-6">
+            <Link to="/pricing" className="text-sm font-medium hover:text-primary">
+              Pricing
+            </Link>
             <Link to="/privacy-policy" className="text-sm font-medium hover:text-primary">
               Privacy Policy
             </Link>

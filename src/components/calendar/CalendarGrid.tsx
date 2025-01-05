@@ -29,10 +29,10 @@ export const CalendarGrid = ({ weekDays, dayHours, posts, onCreatePost }: Calend
           <div key={day.toString()} className="flex-1 min-w-[8rem]">
             <div className="h-12 border-b p-2 sticky top-0 bg-white">
               <div className="text-sm font-medium">
-                {format(day, 'EEEE')}
+                {format(day, 'EEE')} {/* Changed from 'EEEE' to 'EEE' for short day name */}
               </div>
               <div className="text-sm text-muted-foreground">
-                {format(day, 'd')}
+                {format(day, 'MMM d')} {/* Changed to include short month name */}
               </div>
             </div>
 

@@ -45,7 +45,7 @@ serve(async (req) => {
       throw new Error('Failed to fetch post details');
     }
 
-    console.log('Post details:', post);
+    console.log('Post details:', { ...post, social_accounts: { ...post.social_accounts, page_access_token: '[REDACTED]' } });
 
     const pageId = post.social_accounts.page_id;
     const pageAccessToken = post.social_accounts.page_access_token;
@@ -65,8 +65,12 @@ serve(async (req) => {
     if (!post.image_url) {
       endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
     } else {
-      // Add image URL if present
-      postData.url = post.image_url.split(',')[0]; // Use the first image URL
+      // Clean and validate image URL
+      const imageUrl = post.image_url.split(',')[0].trim(); // Use the first image URL
+      if (!imageUrl.startsWith('http')) {
+        throw new Error('Invalid image URL format');
+      }
+      postData.url = imageUrl;
     }
 
     console.log('Making Facebook API request to:', endpoint);
@@ -111,7 +115,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in edge function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

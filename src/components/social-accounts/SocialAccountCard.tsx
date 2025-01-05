@@ -31,13 +31,13 @@ export const SocialAccountCard = ({
   const [newName, setNewName] = useState(accountName || '');
 
   const handleDisconnect = async () => {
-    if (!onDisconnect) return;
+    if (!accountId) return;
     
     try {
       setIsDisconnecting(true);
       
       // If it's a Facebook account, logout from Facebook SDK
-      if (platform === 'Facebook' && window.FB) {
+      if (platform === 'facebook' && window.FB) {
         await new Promise<void>((resolve) => {
           window.FB.logout(() => {
             console.log('Logged out from Facebook SDK');
@@ -46,11 +46,34 @@ export const SocialAccountCard = ({
         });
       }
 
-      await onDisconnect();
+      // First, delete all posts associated with this social account
+      const { error: postsError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('social_account_id', accountId);
+
+      if (postsError) {
+        console.error('Error deleting associated posts:', postsError);
+        throw new Error('Failed to delete associated posts');
+      }
+
+      // Then delete the social account
+      const { error: accountError } = await supabase
+        .from('social_accounts')
+        .delete()
+        .eq('id', accountId);
+
+      if (accountError) throw accountError;
+
       toast.success(`${platform} account disconnected successfully`);
 
+      // Call the onDisconnect callback if provided
+      if (onDisconnect) {
+        onDisconnect();
+      }
+
       // Reinitialize Facebook SDK if it was a Facebook account
-      if (platform === 'Facebook' && window.FB) {
+      if (platform === 'facebook' && window.FB) {
         window.FB.init({
           appId: '1294294115054311',
           cookie: true,
@@ -143,7 +166,7 @@ export const SocialAccountCard = ({
       </div>
       {isConnected ? (
         <Button 
-          variant="outline" 
+          variant="destructive" 
           onClick={handleDisconnect}
           disabled={isDisconnecting}
         >

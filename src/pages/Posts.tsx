@@ -1,34 +1,135 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw, Pencil, Trash2, Facebook } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
-import { EditPostForm } from "@/components/posts/EditPostForm";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { PostList } from "@/components/posts/PostList";
+import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type SortOption = 'newest' | 'oldest' | 'scheduled';
+
+interface Post {
+  id: string;
+  content: string;
+  status: string;
+  created_at: string;
+  scheduled_for: string;
+  hashtags: string[];
+  image_url: string | null;
+  poll_options: string[];
+  social_account_id: string;
+  timezone: string;
+  user_id: string;
+  group_id?: string | null;  // Made optional and allow null
+  social_accounts: {
+    platform: string;
+  };
+}
 
 const Posts = () => {
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ['posts'],
+    queryKey: ['posts', statusFilter, sortBy],
+    queryFn: async () => {
+      let query = supabase
+        .from('posts')
+        .select('*, social_accounts(platform)');
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      
+      switch (sortBy) {
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'oldest':
+          query = query.order('created_at', { ascending: true });
+          break;
+        case 'scheduled':
+          query = query.order('scheduled_for', { ascending: true });
+          break;
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      
+      let allPosts = data || [];
+      
+      if (statusFilter === 'all' || statusFilter === 'draft') {
+        const draftJson = localStorage.getItem('postDraft');
+        if (draftJson) {
+          const draft = JSON.parse(draftJson);
+          allPosts = [{
+            id: 'draft-' + Date.now(),
+            content: draft.content || '',
+            status: 'draft',
+            created_at: new Date().toISOString(),
+            scheduled_for: draft.date || new Date().toISOString(),
+            hashtags: [],
+            image_url: null,
+            poll_options: [],
+            social_account_id: draft.selectedAccount || '',
+            timezone: draft.timezone || 'UTC',
+            user_id: '',
+            group_id: null,  // Add group_id as null for drafts
+            social_accounts: { platform: 'draft' }
+          }, ...allPosts];
+        }
+      }
+      
+      return allPosts as Post[];
+    }
+  });
+
+  // Query to get social accounts for the edit dialog
+  const { data: accounts } = useQuery({
+    queryKey: ["social-accounts"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('posts')
-        .select('*, social_accounts(platform)')
-        .order('created_at', { ascending: false });
+        .from("social_accounts")
+        .select("*")
+        .eq("platform", "facebook");
       
       if (error) throw error;
-      return data || [];
-    }
+      return data;
+    },
   });
 
   const handleDelete = async (postId: string) => {
     try {
+      if (postId.startsWith('draft-')) {
+        localStorage.removeItem('postDraft');
+        toast.success("Draft deleted successfully");
+        refetch();
+        return;
+      }
+
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -60,6 +161,34 @@ const Posts = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Select
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Posts</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={sortBy}
+              onValueChange={(value: SortOption) => setSortBy(value)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="scheduled">Schedule Date</SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               variant="outline"
               size="sm"
@@ -78,86 +207,28 @@ const Posts = () => {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {posts?.map((post) => (
-              <div
-                key={post.id}
-                className="flex items-start gap-4 p-4 rounded-lg border bg-card"
-              >
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        {format(new Date(post.scheduled_for), 'PPP p')}
-                      </span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {post.status}
-                      </span>
-                      {post.social_accounts?.platform === 'facebook' && (
-                        <Facebook className="h-4 w-4 text-blue-600" />
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(post)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(post.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{post.content}</p>
-                  {post.image_url && (
-                    <img
-                      src={post.image_url}
-                      alt="Post preview"
-                      className="mt-2 rounded-md max-w-[200px] h-auto"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-            {posts?.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No posts found</p>
-                <Button asChild className="mt-4">
-                  <Link to="/create-post">Create your first post</Link>
-                </Button>
-              </div>
-            )}
-          </div>
+        <PostList
+          posts={posts}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        {selectedPost && (
+          <CreatePostDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => {
+              setIsEditDialogOpen(false);
+              setSelectedPost(null);
+              refetch();
+            }}
+            selectedDate={selectedPost.scheduled_for ? new Date(selectedPost.scheduled_for) : null}
+            accounts={accounts || []}
+            userId={userId}
+            initialPost={selectedPost}
+          />
         )}
       </div>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Edit Post</DialogTitle>
-          </DialogHeader>
-          {selectedPost && (
-            <EditPostForm
-              post={selectedPost}
-              onSuccess={() => {
-                setIsEditDialogOpen(false);
-                refetch();
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };

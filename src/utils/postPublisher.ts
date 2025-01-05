@@ -16,6 +16,7 @@ interface PublishPostParams {
   pollOptions: PollOption[];
   timezone: string;
   scheduledFor?: Date;
+  postId?: string; // Added this parameter for editing existing posts
 }
 
 export const publishPost = async ({
@@ -27,6 +28,7 @@ export const publishPost = async ({
   pollOptions,
   timezone,
   scheduledFor,
+  postId,
 }: PublishPostParams) => {
   // Validate required fields with specific error messages
   if (!selectedAccount) {
@@ -73,33 +75,51 @@ export const publishPost = async ({
   // Set initial status based on whether it's immediate or scheduled
   const initialStatus = scheduledFor ? 'scheduled' : 'pending';
 
-  // Insert the post
-  const { data: post, error } = await supabase
-    .from("posts")
-    .insert({
-      content,
-      social_account_id: selectedAccount,
-      image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
-      user_id: userId,
-      scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
-      status: initialStatus,
-      timezone,
-      poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
-    })
-    .select()
-    .single();
+  // If postId exists, update the existing post
+  if (postId) {
+    const { error } = await supabase
+      .from("posts")
+      .update({
+        content,
+        social_account_id: selectedAccount,
+        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+        scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
+        status: initialStatus,
+        timezone,
+        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+      })
+      .eq('id', postId);
 
-  if (error) throw error;
+    if (error) throw error;
+  } else {
+    // Insert new post
+    const { data: post, error } = await supabase
+      .from("posts")
+      .insert({
+        content,
+        social_account_id: selectedAccount,
+        image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+        user_id: userId,
+        scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
+        status: initialStatus,
+        timezone,
+        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+      })
+      .select()
+      .single();
 
-  // If it's an immediate publish, trigger the edge function
-  if (!scheduledFor) {
-    const { error: publishError } = await supabase.functions.invoke(
-      'publish-facebook-post',
-      {
-        body: { postId: post.id }
-      }
-    );
-    
-    if (publishError) throw publishError;
+    if (error) throw error;
+
+    // If it's an immediate publish, trigger the edge function
+    if (!scheduledFor) {
+      const { error: publishError } = await supabase.functions.invoke(
+        'publish-facebook-post',
+        {
+          body: { postId: post.id }
+        }
+      );
+      
+      if (publishError) throw publishError;
+    }
   }
 };
