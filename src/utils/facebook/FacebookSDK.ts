@@ -13,62 +13,36 @@ export class FacebookSDK {
           existingScript.remove();
         }
 
-        // Clear FB cookies
-        document.cookie = `fblo_${config.appId}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.facebook.com`;
-        
-        // Initialize SDK
+        // Initialize SDK with minimal tracking
         window.fbAsyncInit = function() {
           window.FB.init({
             appId: config.appId,
             cookie: true,
-            xfbml: true,
+            xfbml: false, // Disable XFBML parsing
             version: config.version
           });
 
-          // Create empty function for event handlers
-          const emptyHandler = () => {};
-
-          // Disable all tracking and logging
-          if (window.FB.Event && window.FB.Event.unsubscribe) {
-            window.FB.Event.unsubscribe('edge.create', emptyHandler);
-            window.FB.Event.unsubscribe('edge.remove', emptyHandler);
-            window.FB.Event.unsubscribe('auth.login', emptyHandler);
-            window.FB.Event.unsubscribe('auth.logout', emptyHandler);
-            window.FB.Event.unsubscribe('xfbml.render', emptyHandler);
-          }
-
-          // Mock all tracking functions
+          // Disable all tracking functions
           if (window.FB.AppEvents) {
             window.FB.AppEvents.logEvent = () => {};
             window.FB.AppEvents.activateApp = () => {};
             window.FB.AppEvents.logPageView = () => {};
           }
 
-          // Disable impression logging
-          const originalInit = window.FB.init;
-          window.FB.init = function(...args: any[]) {
-            const result = originalInit.apply(this, args);
-            if (window.FB.Event && window.FB.Event.subscribe) {
-              window.FB.Event.subscribe = () => {};
-            }
-            return result;
-          };
+          // Disable event subscriptions
+          if (window.FB.Event) {
+            window.FB.Event.subscribe = () => {};
+            window.FB.Event.unsubscribe = () => {};
+          }
 
-          // Mock additional tracking functions
-          window.FB.Event = {
-            ...window.FB.Event,
-            subscribe: () => {},
-            unsubscribe: () => {}
-          };
-
-          console.log('Facebook SDK initialized successfully with tracking disabled');
+          console.log('Facebook SDK initialized with minimal tracking');
           resolve();
         };
 
-        // Load SDK
+        // Load SDK with minimal features
         const js = document.createElement('script');
         js.id = 'facebook-jssdk';
-        js.src = 'https://connect.facebook.net/en_US/sdk.js';
+        js.src = `https://connect.facebook.net/en_US/sdk.js?debug=false`;
         js.async = true;
         js.defer = true;
         const fjs = document.getElementsByTagName('script')[0];
