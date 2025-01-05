@@ -6,4 +6,4 @@ url = "https://czuhcymoqjgsmwzimlzd.supabase.co"
 
 [functions]
 [functions.get-secret]
-verify_jwt = true
+verify_jwt = false
