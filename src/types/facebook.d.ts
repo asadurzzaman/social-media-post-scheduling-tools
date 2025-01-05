@@ -1,6 +1,6 @@
 interface FacebookEventSubscription {
   subscribe: (callback: Function) => void;
-  unsubscribe: (callback: Function) => void;
+  unsubscribe: (eventName: string, callback: Function) => void;
 }
 
 interface FacebookAppEvents {
