@@ -1,16 +1,22 @@
+import { useState } from "react";
 import { PostTypeSelect, PostType } from './PostTypeSelect';
+import { SocialAccountList } from './SocialAccountList';
 import { RichTextEditor } from './RichTextEditor';
 import { SchedulingOptions } from './SchedulingOptions';
 import { PostFormMedia } from './PostFormMedia';
 import { PostFormActions } from './PostFormActions';
-import { SocialAccountSelect } from './SocialAccountSelect';
+
+interface PollOption {
+  id: string;
+  text: string;
+}
 
 interface CreatePostFormContentProps {
   accounts: any[];
   content: string;
   setContent: (content: string) => void;
-  selectedAccounts: string[];
-  setSelectedAccounts: (accounts: string[]) => void;
+  selectedAccount: string;
+  setSelectedAccount: (account: string) => void;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   postType: PostType;
@@ -22,19 +28,19 @@ interface CreatePostFormContentProps {
   isDraft: boolean;
   onSubmit: (e: React.FormEvent) => void;
   clearDraft: () => void;
+  pollOptions: PollOption[];
+  setPollOptions: (options: PollOption[]) => void;
   timezone: string;
   onTimezoneChange: (timezone: string) => void;
   onPublishNow?: () => void;
-  onSaveDraft?: () => void;
-  initialPost?: any;
 }
 
 export const CreatePostFormContent = ({
-  accounts = [],
+  accounts,
   content,
   setContent,
-  selectedAccounts,
-  setSelectedAccounts,
+  selectedAccount,
+  setSelectedAccount,
   date,
   setDate,
   postType,
@@ -46,16 +52,23 @@ export const CreatePostFormContent = ({
   isDraft,
   onSubmit,
   clearDraft,
+  pollOptions,
+  setPollOptions,
   timezone,
   onTimezoneChange,
-  onPublishNow,
-  onSaveDraft,
-  initialPost
+  onPublishNow
 }: CreatePostFormContentProps) => {
   const handleFileUpload = (files: File[]) => {
-    setUploadedFiles([files[0]]);
-    const objectUrl = URL.createObjectURL(files[0]);
-    setPreviewUrls([objectUrl]);
+    if (postType === 'carousel') {
+      const newFiles = [...uploadedFiles, ...files];
+      setUploadedFiles(newFiles);
+      const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+      setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+    } else {
+      setUploadedFiles([files[0]]);
+      const objectUrl = URL.createObjectURL(files[0]);
+      setPreviewUrls([objectUrl]);
+    }
   };
 
   const handleFileDelete = (index: number) => {
@@ -67,10 +80,10 @@ export const CreatePostFormContent = ({
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <SocialAccountSelect
+      <SocialAccountList
         accounts={accounts}
-        selectedAccounts={selectedAccounts}
-        onSelect={setSelectedAccounts}
+        selectedAccount={selectedAccount}
+        onSelect={setSelectedAccount}
       />
 
       <PostTypeSelect 
@@ -80,13 +93,12 @@ export const CreatePostFormContent = ({
 
       <div className="space-y-2">
         <label htmlFor="content" className="text-sm font-medium">
-          Post Content {postType === 'text' && <span className="text-red-500">*</span>}
+          Post Content <span className="text-red-500">*</span>
         </label>
         <RichTextEditor
           value={content}
           onChange={setContent}
           maxLength={2200}
-          required={postType === 'text'}
         />
       </div>
 
@@ -96,6 +108,8 @@ export const CreatePostFormContent = ({
         previewUrls={previewUrls}
         onFileUpload={handleFileUpload}
         onFileDelete={handleFileDelete}
+        pollOptions={pollOptions}
+        onPollOptionsChange={setPollOptions}
       />
 
       <SchedulingOptions
@@ -109,8 +123,6 @@ export const CreatePostFormContent = ({
         isDraft={isDraft}
         onClearDraft={clearDraft}
         onPublishNow={onPublishNow}
-        onSaveDraft={onSaveDraft}
-        isEditing={!!initialPost}
       />
     </div>
   );

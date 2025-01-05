@@ -4,192 +4,125 @@ import { toast } from "sonner";
 import { CreatePostFormContent } from "./CreatePostFormContent";
 import { useNavigate } from "react-router-dom";
 import { publishPost } from "@/utils/postPublisher";
-import { useUser } from "@/hooks/useUser";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CreatePostFormProps {
   accounts: any[];
   userId: string | null;
   initialDate?: Date;
-  initialPost?: any;
-  onSuccess?: () => void;
 }
 
-export const CreatePostForm = ({ 
-  accounts, 
-  initialDate,
-  initialPost,
-  onSuccess 
-}: CreatePostFormProps) => {
+interface PollOption {
+  id: string;
+  text: string;
+}
+
+export const CreatePostForm = ({ accounts, userId, initialDate }: CreatePostFormProps) => {
   const navigate = useNavigate();
-  const { userId } = useUser();
-  const [content, setContent] = useState(initialPost?.content || "");
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(
-    initialPost ? [initialPost.social_account_id] : []
-  );
-  const [date, setDate] = useState<Date | undefined>(
-    initialPost ? new Date(initialPost.scheduled_for) : initialDate
-  );
-  const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
-  const [postType, setPostType] = useState<PostType>(() => {
-    if (initialPost) {
-      if (initialPost.image_url) {
-        const isVideo = initialPost.image_url.match(/\.(mp4|mov)$/i);
-        return isVideo ? "video" : "image";
-      }
-      return "text";
-    }
-    return "text";
-  });
+  const [content, setContent] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [date, setDate] = useState<Date | undefined>(initialDate);
+  const [timezone, setTimezone] = useState<string>("UTC");
+  const [postType, setPostType] = useState<PostType>("text");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>(() => {
-    if (initialPost?.image_url) {
-      return [initialPost.image_url];
-    }
-    return [];
-  });
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isDraft, setIsDraft] = useState(false);
+  const [pollOptions, setPollOptions] = useState<PollOption[]>([
+    { id: crypto.randomUUID(), text: "" },
+    { id: crypto.randomUUID(), text: "" }
+  ]);
 
-  const resetForm = () => {
-    setContent("");
-    setSelectedAccounts([]);
-    setDate(undefined);
-    setPostType("text");
-    setUploadedFiles([]);
-    setPreviewUrls([]);
-    setIsDraft(false);
-    localStorage.removeItem('postDraft');
-  };
-
+  // Load draft from localStorage on component mount
   useEffect(() => {
-    if (!initialPost) {
-      const savedDraft = localStorage.getItem('postDraft');
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        setContent(draft.content || "");
-        setPostType(draft.postType || "text");
-        setSelectedAccounts(draft.selectedAccounts || []);
-        if (draft.date) setDate(new Date(draft.date));
-        if (draft.timezone) setTimezone(draft.timezone);
-      }
+    const savedDraft = localStorage.getItem('postDraft');
+    if (savedDraft) {
+      const draft = JSON.parse(savedDraft);
+      setContent(draft.content || "");
+      setPostType(draft.postType || "text");
+      setSelectedAccount(draft.selectedAccount || "");
+      if (draft.date) setDate(new Date(draft.date));
+      if (draft.timezone) setTimezone(draft.timezone);
+      if (draft.pollOptions) setPollOptions(draft.pollOptions);
     }
-  }, [initialPost]);
+  }, []);
 
+  // Save draft to localStorage when content changes
   useEffect(() => {
-    if (!initialPost && (content || selectedAccounts.length > 0 || date || postType !== "text")) {
+    if (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text)) {
       const draft = {
         content,
         postType,
-        selectedAccounts,
+        selectedAccount,
         date: date?.toISOString(),
         timezone,
+        pollOptions: postType === 'poll' ? pollOptions : undefined
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccounts, date, timezone, initialPost]);
-
-  const handleSaveDraft = () => {
-    const draft = {
-      content,
-      postType,
-      selectedAccounts,
-      date: date?.toISOString(),
-      timezone,
-    };
-    localStorage.setItem('postDraft', JSON.stringify(draft));
-    setIsDraft(true);
-    toast.success("Draft saved successfully!");
-  };
+  }, [content, postType, selectedAccount, date, timezone, pollOptions]);
 
   const clearDraft = () => {
-    resetForm();
-    toast.success("Draft cleared successfully!");
-  };
-
-  const handlePublishError = async (error: any) => {
-    console.error("Error publishing post:", error);
-    
-    const errorBody = typeof error.body === 'string' ? JSON.parse(error.body) : error.body;
-    const errorMessage = errorBody?.error || error.message;
-    
-    if (errorMessage?.includes("token has expired")) {
-      await supabase
-        .from('social_accounts')
-        .update({ 
-          requires_reconnect: true,
-          last_error: errorMessage
-        })
-        .eq('id', selectedAccounts[0]);
-      
-      toast.error("Social media token has expired. Please reconnect your account.");
-    } else {
-      toast.error(errorMessage || "Failed to publish post");
-    }
+    localStorage.removeItem('postDraft');
+    setContent("");
+    setSelectedAccount("");
+    setDate(undefined);
+    setPostType("text");
+    setUploadedFiles([]);
+    setPreviewUrls([]);
+    setPollOptions([
+      { id: crypto.randomUUID(), text: "" },
+      { id: crypto.randomUUID(), text: "" }
+    ]);
+    setIsDraft(false);
   };
 
   const handlePublishNow = async () => {
-    if (!userId) {
-      toast.error("You must be logged in to publish a post");
-      return;
-    }
-
     try {
-      // Publish to all selected accounts
-      for (const accountId of selectedAccounts) {
-        await publishPost({
-          content,
-          selectedAccount: accountId,
-          userId,
-          postType,
-          uploadedFiles,
-          timezone,
-        });
-      }
+      await publishPost({
+        content,
+        selectedAccount,
+        userId: userId!,
+        postType,
+        uploadedFiles,
+        pollOptions,
+        timezone,
+      });
       
-      toast.success("Posts published successfully!");
-      resetForm();
-      onSuccess?.();
-      if (!onSuccess) navigate('/posts');
+      toast.success("Post published successfully!");
+      clearDraft();
+      navigate('/posts');
     } catch (error: any) {
-      handlePublishError(error);
+      console.error("Error publishing post:", error);
+      toast.error(error.message || "Failed to publish post");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!userId) {
-      toast.error("You must be logged in to schedule a post");
-      return;
-    }
-
     if (!date) {
       toast.error("Please select a date and time");
       return;
     }
 
     try {
-      // Schedule for all selected accounts
-      for (const accountId of selectedAccounts) {
-        await publishPost({
-          content,
-          selectedAccount: accountId,
-          userId,
-          postType,
-          uploadedFiles,
-          timezone,
-          scheduledFor: date,
-          postId: initialPost?.id,
-        });
-      }
+      await publishPost({
+        content,
+        selectedAccount,
+        userId: userId!,
+        postType,
+        uploadedFiles,
+        pollOptions,
+        timezone,
+        scheduledFor: date,
+      });
       
-      toast.success(initialPost ? "Post updated successfully!" : "Posts scheduled successfully!");
-      resetForm();
-      onSuccess?.();
-      if (!onSuccess) navigate('/posts');
+      toast.success("Post scheduled successfully!");
+      clearDraft();
+      navigate('/posts');
     } catch (error: any) {
-      handlePublishError(error);
+      console.error("Error scheduling post:", error);
+      toast.error(error.message || "Failed to schedule post");
     }
   };
 
@@ -198,8 +131,8 @@ export const CreatePostForm = ({
       accounts={accounts}
       content={content}
       setContent={setContent}
-      selectedAccounts={selectedAccounts}
-      setSelectedAccounts={setSelectedAccounts}
+      selectedAccount={selectedAccount}
+      setSelectedAccount={setSelectedAccount}
       date={date}
       setDate={setDate}
       postType={postType}
@@ -211,11 +144,11 @@ export const CreatePostForm = ({
       isDraft={isDraft}
       onSubmit={handleSubmit}
       clearDraft={clearDraft}
+      pollOptions={pollOptions}
+      setPollOptions={setPollOptions}
       timezone={timezone}
       onTimezoneChange={setTimezone}
       onPublishNow={handlePublishNow}
-      onSaveDraft={handleSaveDraft}
-      initialPost={initialPost}
     />
   );
 };

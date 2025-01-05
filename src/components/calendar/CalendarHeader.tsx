@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Filter } from "lucide-react";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Link } from "react-router-dom";
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -15,8 +16,6 @@ interface CalendarHeaderProps {
   onNextWeek: () => void;
   onToday: () => void;
   onRefresh: () => void;
-  view: 'day' | 'week' | 'month';
-  onViewChange: (view: string) => void;
 }
 
 export const CalendarHeader = ({
@@ -25,67 +24,76 @@ export const CalendarHeader = ({
   onNextWeek,
   onToday,
   onRefresh,
-  view,
-  onViewChange,
 }: CalendarHeaderProps) => {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-semibold">Calendar</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Calendar</h2>
+          <p className="text-muted-foreground">View and manage your content schedule</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="icon"
-            onClick={onPreviousWeek}
+            size="sm"
+            onClick={onRefresh}
+            className="gap-2"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
+            Refresh
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onNextWeek}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onToday}
-          >
-            Today
+          <Button asChild>
+            <Link to="/create-post" className="gap-2">
+              <Plus className="h-4 w-4" />
+              New post
+            </Link>
           </Button>
         </div>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="text-lg font-medium">
-          {format(currentDate, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
+
+      <div className="bg-white rounded-lg border shadow">
+        <div className="p-4 border-b flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onPreviousWeek}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <h3 className="text-lg font-semibold">
+              {format(currentDate, 'MMMM yyyy')}
+            </h3>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onNextWeek}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onToday}
+            >
+              Today
+            </Button>
+          </div>
+          <div className="flex items-center gap-4">
+            <Select defaultValue="week">
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="View" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="week">Week</SelectItem>
+                <SelectItem value="month">Month</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filter
+            </Button>
+          </div>
         </div>
-        <Select value={view} onValueChange={onViewChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select view" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="day">Day</SelectItem>
-            <SelectItem value="week">Week</SelectItem>
-            <SelectItem value="month">Month</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => {
-            // Call onRefresh and provide visual feedback
-            const button = document.querySelector('.rotate-ccw-icon');
-            if (button) {
-              button.classList.add('animate-spin');
-              setTimeout(() => {
-                button.classList.remove('animate-spin');
-              }, 1000);
-            }
-            onRefresh();
-          }}
-        >
-          <RotateCcw className="h-4 w-4 rotate-ccw-icon" />
-        </Button>
       </div>
     </div>
   );

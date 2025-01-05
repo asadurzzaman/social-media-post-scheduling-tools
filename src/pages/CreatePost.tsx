@@ -3,95 +3,32 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreatePostForm } from "@/components/posts/CreatePostForm";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 
 const CreatePost = () => {
-  const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const [formKey, setFormKey] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Auth error:", error);
-          toast.error("Authentication error occurred");
-          navigate("/auth");
-          return;
-        }
-
-        if (!session) {
-          toast.error("Please sign in to create posts");
-          navigate("/auth");
-          return;
-        }
-        
-        setUserId(session.user.id);
-      } catch (error) {
-        console.error("Session error:", error);
-        toast.error("Error checking authentication status");
-        navigate("/auth");
-      } finally {
-        setIsLoading(false);
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
       }
     };
+    getCurrentUser();
+  }, []);
 
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        navigate("/auth");
-      } else {
-        setUserId(session.user.id);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
-
-  const { data: accounts, isLoading: isLoadingAccounts } = useQuery({
+  const { data: accounts, isLoading } = useQuery({
     queryKey: ["social-accounts"],
     queryFn: async () => {
-      console.log("Fetching social accounts for user:", userId);
       const { data, error } = await supabase
         .from("social_accounts")
-        .select("*");
+        .select("*")
+        .eq("platform", "facebook");
       
-      if (error) {
-        console.error("Error fetching social accounts:", error);
-        throw error;
-      }
-      
-      console.log("Retrieved social accounts:", data);
+      if (error) throw error;
       return data;
     },
-    enabled: !!userId, // Only fetch if user is authenticated
   });
-
-  const handleSuccess = () => {
-    toast.success("Post created successfully!");
-    setFormKey(prev => prev + 1);
-  };
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!userId) {
-    return null;
-  }
 
   return (
     <DashboardLayout>
@@ -101,17 +38,12 @@ const CreatePost = () => {
           <p className="text-muted-foreground">Schedule a new social media post</p>
         </div>
         
-        {isLoadingAccounts ? (
+        {isLoading ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <CreatePostForm 
-            key={formKey}
-            accounts={accounts || []} 
-            userId={userId} 
-            onSuccess={handleSuccess}
-          />
+          <CreatePostForm accounts={accounts || []} userId={userId} />
         )}
       </div>
     </DashboardLayout>

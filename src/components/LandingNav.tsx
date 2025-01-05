@@ -10,10 +10,9 @@ export function LandingNav() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initAuth = async () => {
+    const checkSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        const { data: { session } } = await supabase.auth.getSession();
         setIsAuthenticated(!!session);
       } catch (error) {
         console.error("Session check error:", error);
@@ -23,42 +22,25 @@ export function LandingNav() {
       }
     };
 
-    initAuth();
+    checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut({
-        scope: 'local'
-      });
-      
+      const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear all local storage
-      localStorage.clear();
-      
-      // Reset auth state
-      setIsAuthenticated(false);
-      
-      // Navigate and show success message
-      navigate("/login");
       toast.success("Logged out successfully");
+      navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Error logging out");
-      
-      // Even if there's an error, clear storage and redirect
-      localStorage.clear();
-      setIsAuthenticated(false);
-      navigate("/login");
     }
   };
 
@@ -83,9 +65,6 @@ export function LandingNav() {
             <span className="text-xl font-bold">SocialManager</span>
           </Link>
           <div className="hidden md:flex gap-6">
-            <Link to="/pricing" className="text-sm font-medium hover:text-primary">
-              Pricing
-            </Link>
             <Link to="/privacy-policy" className="text-sm font-medium hover:text-primary">
               Privacy Policy
             </Link>
@@ -105,14 +84,9 @@ export function LandingNav() {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="ghost" onClick={() => navigate("/login")}>
-                Login
-              </Button>
-              <Button onClick={() => navigate("/pricing")}>
-                Get Started
-              </Button>
-            </>
+            <Button onClick={() => navigate("/auth")}>
+              Sign In
+            </Button>
           )}
         </div>
       </div>

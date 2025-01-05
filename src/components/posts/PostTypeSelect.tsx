@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Select,
   SelectContent,
@@ -6,12 +5,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { FileText, Image, Film } from "lucide-react";
+import { FileText, Image, Film, Link2, BarChart2, History } from "lucide-react";
 
 export const POST_TYPES = [
   { value: "text", label: "Text Post", icon: FileText },
-  { value: "image", label: "Photo", icon: Image },
+  { value: "image", label: "Image", icon: Image },
+  { value: "carousel", label: "Image Carousel", icon: Image },
   { value: "video", label: "Video", icon: Film },
+  { value: "link", label: "Link with Preview", icon: Link2 },
+  { value: "poll", label: "Poll", icon: BarChart2 },
+  { value: "story", label: "Story", icon: History },
 ] as const;
 
 export type PostType = typeof POST_TYPES[number]['value'];
@@ -30,14 +33,7 @@ export const PostTypeSelect = ({ value, onChange }: PostTypeSelectProps) => {
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select post type">
-            <div className="flex items-center gap-2">
-              {POST_TYPES.find(type => type.value === value)?.icon && (
-                <span className="inline-block w-4 h-4">
-                  {React.createElement(POST_TYPES.find(type => type.value === value)?.icon || FileText)}
-                </span>
-              )}
-              {POST_TYPES.find(type => type.value === value)?.label}
-            </div>
+            {POST_TYPES.find(type => type.value === value)?.label}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

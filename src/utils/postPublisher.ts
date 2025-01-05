@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { PostType } from "@/components/posts/PostTypeSelect";
+
+interface PollOption {
+  id: string;
+  text: string;
+}
 
 interface PublishPostParams {
   content: string;
@@ -7,9 +13,9 @@ interface PublishPostParams {
   userId: string;
   postType: PostType;
   uploadedFiles: File[];
+  pollOptions: PollOption[];
   timezone: string;
   scheduledFor?: Date;
-  postId?: string;
 }
 
 export const publishPost = async ({
@@ -18,15 +24,16 @@ export const publishPost = async ({
   userId,
   postType,
   uploadedFiles,
+  pollOptions,
   timezone,
   scheduledFor,
-  postId,
 }: PublishPostParams) => {
+  // Validate required fields with specific error messages
   if (!selectedAccount) {
     throw new Error("Please select a social media account");
   }
 
-  if (!content && postType === 'text') {
+  if (!content) {
     throw new Error("Please add a caption for your post");
   }
 
@@ -34,8 +41,12 @@ export const publishPost = async ({
     throw new Error("You must be logged in to publish a post");
   }
 
-  if (["image", "video"].includes(postType) && uploadedFiles.length === 0) {
-    throw new Error(`Please upload 1 ${postType}`);
+  if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
+    throw new Error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
+  }
+
+  if (postType === 'poll' && !pollOptions.every(opt => opt.text.trim())) {
+    throw new Error("Please fill in all poll options");
   }
 
   let imageUrls: string[] = [];
@@ -62,55 +73,33 @@ export const publishPost = async ({
   // Set initial status based on whether it's immediate or scheduled
   const initialStatus = scheduledFor ? 'scheduled' : 'pending';
 
-  const postData = {
-    content,
-    social_account_id: selectedAccount,
-    image_url: imageUrls.length > 0 ? imageUrls[0] : null,
-    user_id: userId,
-    scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
-    status: initialStatus,
-    timezone,
-    post_type: postType
-  };
+  // Insert the post
+  const { data: post, error } = await supabase
+    .from("posts")
+    .insert({
+      content,
+      social_account_id: selectedAccount,
+      image_url: imageUrls.length > 0 ? imageUrls.join(',') : null,
+      user_id: userId,
+      scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
+      status: initialStatus,
+      timezone,
+      poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
+    })
+    .select()
+    .single();
 
-  // If postId exists, update the existing post
-  if (postId) {
-    const { error } = await supabase
-      .from("posts")
-      .update(postData)
-      .eq('id', postId);
+  if (error) throw error;
 
-    if (error) throw error;
-  } else {
-    // Insert new post
-    const { data: post, error } = await supabase
-      .from("posts")
-      .insert(postData)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // If it's an immediate publish, trigger the appropriate edge function based on platform
-    if (!scheduledFor) {
-      const { data: account } = await supabase
-        .from('social_accounts')
-        .select('platform')
-        .eq('id', selectedAccount)
-        .single();
-
-      if (!account) throw new Error('Social account not found');
-
-      const functionName = `publish-${account.platform}-post`;
-      
-      const { error: publishError } = await supabase.functions.invoke(
-        functionName,
-        {
-          body: { postId: post.id }
-        }
-      );
-      
-      if (publishError) throw publishError;
-    }
+  // If it's an immediate publish, trigger the edge function
+  if (!scheduledFor) {
+    const { error: publishError } = await supabase.functions.invoke(
+      'publish-facebook-post',
+      {
+        body: { postId: post.id }
+      }
+    );
+    
+    if (publishError) throw publishError;
   }
 };

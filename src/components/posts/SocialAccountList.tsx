@@ -1,163 +1,104 @@
-import { Facebook, Instagram, Check } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SocialAccount {
   id: string;
   platform: string;
   account_name: string;
-  avatar_url?: string;
 }
 
 interface SocialAccountListProps {
   accounts: SocialAccount[];
-  selectedAccounts: string[];
-  onSelect: (accountIds: string[]) => void;
+  selectedAccount: string;
+  onSelect: (accountId: string) => void;
 }
 
-export const SocialAccountList = ({
-  accounts = [], // Provide default empty array
-  selectedAccounts = [], // Provide default empty array
-  onSelect,
-}: SocialAccountListProps) => {
-  // Ensure accounts is always an array
-  const safeAccounts = Array.isArray(accounts) ? accounts : [];
-  
-  // Filter accounts with null checks
-  const facebookAccounts = safeAccounts.filter(account => account?.platform === 'facebook') || [];
-  const instagramAccounts = safeAccounts.filter(account => account?.platform === 'instagram') || [];
-  const linkedinAccounts = safeAccounts.filter(account => account?.platform === 'linkedin') || [];
+const demoAccounts = [
+  {
+    id: 'demo-linkedin',
+    platform: 'linkedin',
+    account_name: 'Demo LinkedIn Page'
+  },
+  {
+    id: 'demo-youtube',
+    platform: 'youtube',
+    account_name: 'Demo YouTube Channel'
+  },
+  {
+    id: 'demo-instagram',
+    platform: 'instagram',
+    account_name: 'Demo Instagram Profile'
+  },
+  {
+    id: 'demo-twitter',
+    platform: 'twitter',
+    account_name: 'Demo Twitter Account'
+  }
+];
 
-  const toggleAccount = (accountId: string) => {
-    if (selectedAccounts.includes(accountId)) {
-      onSelect(selectedAccounts.filter(id => id !== accountId));
-    } else {
-      onSelect([...selectedAccounts, accountId]);
+export const SocialAccountList = ({ accounts, selectedAccount, onSelect }: SocialAccountListProps) => {
+  const getPlatformIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'linkedin':
+        return <Linkedin className="h-5 w-5" />;
+      case 'youtube':
+        return <Youtube className="h-5 w-5" />;
+      case 'instagram':
+        return <Instagram className="h-5 w-5" />;
+      case 'twitter':
+        return <Twitter className="h-5 w-5" />;
+      default:
+        return null;
     }
   };
 
+  const getPlatformColor = (platform: string): string => {
+    switch (platform.toLowerCase()) {
+      case 'linkedin':
+        return 'bg-[#0077B5] hover:bg-[#006399]';
+      case 'youtube':
+        return 'bg-[#FF0000] hover:bg-[#CC0000]';
+      case 'instagram':
+        return 'bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90';
+      case 'twitter':
+        return 'bg-[#1DA1F2] hover:bg-[#1A91DA]';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
+  const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
+
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">
-        Select Social Media Accounts <span className="text-red-500">*</span>
-      </Label>
-      
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
+      <label className="text-sm font-medium">
+        Select Social Media Account <span className="text-red-500">*</span>
+      </label>
+      <div className="space-y-2">
+        {displayAccounts.map((account) => (
+          <button
+            key={account.id}
+            type="button"
+            onClick={() => onSelect(account.id)}
             className={cn(
-              "w-full justify-between",
-              selectedAccounts.length > 0 && "text-primary"
+              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white transition-all",
+              getPlatformColor(account.platform),
+              selectedAccount === account.id ? 'ring-2 ring-offset-2 ring-black' : ''
             )}
           >
-            {selectedAccounts.length === 0
-              ? "Select accounts"
-              : `${selectedAccounts.length} account${selectedAccounts.length === 1 ? "" : "s"} selected`}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
-          <Command>
-            <CommandInput placeholder="Search accounts..." />
-            <CommandEmpty>No accounts found.</CommandEmpty>
-            
-            {facebookAccounts.length > 0 && (
-              <CommandGroup heading="Facebook Pages">
-                {facebookAccounts.map((account) => (
-                  <CommandItem
-                    key={account.id}
-                    value={account.account_name}
-                    onSelect={() => toggleAccount(account.id)}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <Facebook className="h-4 w-4 text-[#1877F2]" />
-                      <span>{account.account_name}</span>
-                    </div>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id)
-                          ? "opacity-100"
-                          : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+            {getPlatformIcon(account.platform)}
+            <span className="font-medium">{account.account_name}</span>
+            {accounts.length === 0 && (
+              <span className="ml-auto text-sm bg-white/20 px-2 py-0.5 rounded">Demo</span>
             )}
-            
-            {instagramAccounts.length > 0 && (
-              <CommandGroup heading="Instagram Accounts">
-                {instagramAccounts.map((account) => (
-                  <CommandItem
-                    key={account.id}
-                    value={account.account_name}
-                    onSelect={() => toggleAccount(account.id)}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <Instagram className="h-4 w-4 text-[#E4405F]" />
-                      <span>{account.account_name}</span>
-                    </div>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id)
-                          ? "opacity-100"
-                          : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-
-            {linkedinAccounts.length > 0 && (
-              <CommandGroup heading="LinkedIn Accounts">
-                {linkedinAccounts.map((account) => (
-                  <CommandItem
-                    key={account.id}
-                    value={account.account_name}
-                    onSelect={() => toggleAccount(account.id)}
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      <Instagram className="h-4 w-4 text-[#0A66C2]" />
-                      <span>{account.account_name}</span>
-                    </div>
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id)
-                          ? "opacity-100"
-                          : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-
-            {safeAccounts.length === 0 && (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                No social media accounts connected. Please connect an account first.
-              </div>
-            )}
-          </Command>
-        </PopoverContent>
-      </Popover>
+          </button>
+        ))}
+        {accounts.length === 0 && (
+          <p className="text-sm text-muted-foreground mt-4">
+            These are demo accounts. Connect your social media accounts to start posting.
+          </p>
+        )}
+      </div>
     </div>
   );
 };

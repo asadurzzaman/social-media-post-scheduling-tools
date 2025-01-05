@@ -12,8 +12,7 @@ interface MentionSuggestionsProps {
   triggerRef: React.RefObject<HTMLSpanElement>;
 }
 
-// Define mentions outside component to avoid recreating on each render
-const DEFAULT_MENTIONS = [
+const demoMentions = [
   "@john.doe",
   "@jane.smith",
   "@marketing.team",
@@ -27,45 +26,26 @@ export const MentionSuggestions = ({
   onSelect,
   triggerRef,
 }: MentionSuggestionsProps) => {
-  // Ensure we always have a valid array to map over
-  const mentions = DEFAULT_MENTIONS || [];
-
   return (
     <Popover open={isOpen} onOpenChange={onClose}>
       <PopoverTrigger asChild>
         <span ref={triggerRef} className="fixed" />
       </PopoverTrigger>
-      <PopoverContent 
-        className="p-0 w-[200px]" 
-        sideOffset={5}
-        align="start"
-        side="bottom"
-      >
+      <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
         <Command>
           <Command.List>
-            {mentions.length > 0 ? (
-              mentions.map((mention) => (
-                <Command.Item
-                  key={mention}
-                  value={mention}
-                  onSelect={() => {
-                    onSelect(mention);
-                    onClose();
-                  }}
-                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
-                >
-                  {mention}
-                </Command.Item>
-              ))
-            ) : (
+            {demoMentions.map((mention) => (
               <Command.Item
-                value="no-mentions"
-                className="px-2 py-1.5 text-sm text-muted-foreground"
-                disabled
+                key={mention}
+                onSelect={() => {
+                  onSelect(mention);
+                  onClose();
+                }}
+                className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
               >
-                No mentions available
+                {mention}
               </Command.Item>
-            )}
+            ))}
           </Command.List>
         </Command>
       </PopoverContent>

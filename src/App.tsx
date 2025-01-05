@@ -14,24 +14,12 @@ import AddAccount from "./pages/AddAccount";
 import CreatePost from "./pages/CreatePost";
 import Media from "./pages/Media";
 import Auth from "./pages/Auth";
-import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Posts from "./pages/Posts";
-import Engage from "./pages/Engage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
-import Pricing from "./pages/Pricing";
-import Settings from "./pages/Settings";
-import AuthCallback from "./pages/AuthCallback";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -63,114 +51,93 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/auth" />;
 };
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Index />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/posts"
-              element={
-                <ProtectedRoute>
-                  <Posts />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/add-account"
-              element={
-                <ProtectedRoute>
-                  <AddAccount />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/create-post"
-              element={
-                <ProtectedRoute>
-                  <CreatePost />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/compose"
-              element={
-                <ProtectedRoute>
-                  <Compose />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <ProtectedRoute>
-                  <Calendar />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/media"
-              element={
-                <ProtectedRoute>
-                  <Media />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <Analytics />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/engage"
-              element={
-                <ProtectedRoute>
-                  <Engage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/posts"
+            element={
+              <ProtectedRoute>
+                <Posts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/add-account"
+            element={
+              <ProtectedRoute>
+                <AddAccount />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-post"
+            element={
+              <ProtectedRoute>
+                <CreatePost />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/compose"
+            element={
+              <ProtectedRoute>
+                <Compose />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <Calendar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/media"
+            element={
+              <ProtectedRoute>
+                <Media />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

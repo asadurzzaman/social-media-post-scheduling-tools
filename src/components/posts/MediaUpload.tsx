@@ -32,7 +32,12 @@ export const MediaUpload = ({
         return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
       case 'video':
         return { 'video/*': ['.mp4', '.mov', '.avi'] };
+      case 'carousel':
+        return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
       case 'text':
+      case 'link':
+      case 'poll':
+      case 'story':
         return {};
       default:
         return {};
@@ -42,12 +47,12 @@ export const MediaUpload = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: getAcceptedFiles(postType),
-    maxFiles: 1,
+    maxFiles: postType === 'carousel' ? 10 : 1,
     disabled: postType === 'text',
-    multiple: false
+    multiple: postType === 'carousel'
   });
 
-  if (postType === 'text') {
+  if (postType === 'text' || postType === 'link' || postType === 'poll') {
     return null;
   }
 
@@ -80,6 +85,11 @@ export const MediaUpload = ({
                 onDelete={onFileDelete}
               />
             )}
+            {postType === 'carousel' && previewUrls.length < 10 && (
+              <p className="text-sm text-muted-foreground mt-4">
+                Click or drag to add more images ({10 - previewUrls.length} remaining)
+              </p>
+            )}
           </div>
         ) : (
           <>
@@ -89,12 +99,17 @@ export const MediaUpload = ({
                 ? "Drop the files here"
                 : `Drag and drop your ${postType} here, or click to select`}
             </p>
+            {postType === 'carousel' && (
+              <p className="text-sm text-muted-foreground mt-2">
+                You can upload up to 10 images
+              </p>
+            )}
           </>
         )}
       </div>
       {uploadedFiles.length === 0 && (
         <p className="text-sm text-orange-500">
-          Please upload 1 {postType}
+          Please upload {postType === 'carousel' ? 'at least one image' : `1 ${postType}`}
         </p>
       )}
     </div>
