@@ -27,12 +27,14 @@ interface FacebookLoginButtonProps {
   appId: string;
   onSuccess: (response: { accessToken: string; userId: string }) => void;
   onError: (error: string) => void;
+  isReconnect?: boolean;
 }
 
 const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   appId,
   onSuccess,
-  onError
+  onError,
+  isReconnect = false
 }) => {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -100,7 +102,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         .from('social_accounts')
         .update({
           access_token: accessToken,
-          token_expires_at: expirationDate.toISOString()
+          token_expires_at: expirationDate.toISOString(),
+          requires_reconnect: false,
+          last_error: null
         })
         .eq('platform', 'facebook');
 
@@ -186,7 +190,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       >
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
       </svg>
-      {isProcessing ? 'Processing...' : 'Continue with Facebook'}
+      {isProcessing ? 'Processing...' : isReconnect ? 'Reconnect Facebook' : 'Continue with Facebook'}
     </button>
   );
 };
