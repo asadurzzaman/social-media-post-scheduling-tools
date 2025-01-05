@@ -6,6 +6,7 @@ import InstagramLoginButton from "@/components/InstagramLoginButton";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface ConnectAccountDialogProps {
   onSuccess: (response: { accessToken: string; userId: string }) => Promise<void>;
@@ -24,11 +25,10 @@ export const ConnectAccountDialog = ({
       const { data, error } = await supabase
         .from('social_accounts')
         .select('*')
-        .eq('platform', 'facebook')
-        .single();
+        .eq('platform', 'facebook');
       
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      if (error) throw error;
+      return (data || []) as Tables<'social_accounts'>[];
     },
   });
 
@@ -44,7 +44,8 @@ export const ConnectAccountDialog = ({
     toast.error(error);
   };
 
-  const needsReconnect = socialAccounts?.requires_reconnect || false;
+  // Check if any Facebook account requires reconnection
+  const needsReconnect = socialAccounts?.some(account => account.requires_reconnect) || false;
 
   return (
     <DialogContent>
