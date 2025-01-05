@@ -25,10 +25,11 @@ export class FacebookSDK {
             version: config.version
           });
 
+          // Create empty function for event handlers
+          const emptyHandler = () => {};
+
           // Disable all tracking and logging
           if (window.FB.Event && window.FB.Event.unsubscribe) {
-            // Create empty functions for each event type
-            const emptyHandler = () => {};
             window.FB.Event.unsubscribe('edge.create', emptyHandler);
             window.FB.Event.unsubscribe('edge.remove', emptyHandler);
             window.FB.Event.unsubscribe('auth.login', emptyHandler);
@@ -37,10 +38,20 @@ export class FacebookSDK {
           }
 
           // Mock all tracking functions
-          window.FB.AppEvents = {
-            logEvent: () => {},
-            EventNames: {},
-            ParameterNames: {}
+          if (window.FB.AppEvents) {
+            window.FB.AppEvents.logEvent = () => {};
+            window.FB.AppEvents.activateApp = () => {};
+            window.FB.AppEvents.logPageView = () => {};
+          }
+
+          // Disable impression logging
+          const originalInit = window.FB.init;
+          window.FB.init = function(...args: any[]) {
+            const result = originalInit.apply(this, args);
+            if (window.FB.Event && window.FB.Event.subscribe) {
+              window.FB.Event.subscribe = () => {};
+            }
+            return result;
           };
 
           // Mock additional tracking functions
@@ -50,7 +61,7 @@ export class FacebookSDK {
             unsubscribe: () => {}
           };
 
-          console.log('Facebook SDK initialized successfully');
+          console.log('Facebook SDK initialized successfully with tracking disabled');
           resolve();
         };
 
