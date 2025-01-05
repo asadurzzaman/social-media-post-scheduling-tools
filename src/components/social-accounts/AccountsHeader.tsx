@@ -8,7 +8,7 @@ interface AccountsHeaderProps {
 
 export const AccountsHeader = ({ onOpenDialog }: AccountsHeaderProps) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-8">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Social accounts</h2>
         <p className="text-muted-foreground">Connect your social media accounts to start posting</p>
@@ -16,12 +16,9 @@ export const AccountsHeader = ({ onOpenDialog }: AccountsHeaderProps) => {
       <div className="flex gap-3">
         <Dialog>
           <DialogTrigger asChild>
-            <Button onClick={onOpenDialog}>Add new account</Button>
+            <Button onClick={onOpenDialog} className="bg-blue-600 hover:bg-blue-700">Add new account</Button>
           </DialogTrigger>
         </Dialog>
-        <Button asChild>
-          <Link to="/create-post">New post</Link>
-        </Button>
       </div>
     </div>
   );
