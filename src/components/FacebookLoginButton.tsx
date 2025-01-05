@@ -52,7 +52,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
             cookie: true,
             xfbml: true,
             version: 'v18.0',
-            status: true
+            status: true,
+            autoLogAppEvents: false // Disable automatic event logging
           });
           console.log('Facebook SDK initialized successfully');
           setIsSDKLoaded(true);
@@ -123,28 +124,26 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       }
 
       console.log('Initiating Facebook login...');
-      const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
-        window.FB.login((response: FacebookLoginStatusResponse) => {
-          console.log('Login response:', response);
-          resolve(response);
-        }, {
-          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
-          return_scopes: true,
-          auth_type: 'rerequest',
-          enable_profile_selector: true
-        });
+      window.FB.login((response: FacebookLoginStatusResponse) => {
+        console.log('Login response:', response);
+        
+        if (response.status === 'connected' && response.authResponse) {
+          console.log('Login successful, proceeding with success callback');
+          onSuccess({
+            accessToken: response.authResponse.accessToken,
+            userId: response.authResponse.userID
+          });
+        } else {
+          console.error('Login failed or was cancelled');
+          onError('Login failed or was cancelled');
+        }
+        setIsProcessing(false);
+      }, {
+        scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
+        return_scopes: true,
+        auth_type: 'rerequest',
+        enable_profile_selector: true
       });
-
-      if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-        console.log('Login successful, proceeding with success callback');
-        onSuccess({
-          accessToken: loginResponse.authResponse.accessToken,
-          userId: loginResponse.authResponse.userID
-        });
-      } else {
-        console.error('Login failed or was cancelled');
-        onError('Login failed or was cancelled');
-      }
     } catch (error) {
       console.error('Facebook login error:', error);
       try {
@@ -152,7 +151,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       } catch (handledError: any) {
         onError(handledError.message || 'An error occurred during Facebook login');
       }
-    } finally {
       setIsProcessing(false);
     }
   };
