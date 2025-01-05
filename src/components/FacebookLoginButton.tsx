@@ -55,6 +55,14 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           window.FB.Event.subscribe('edge.create', () => {});
           window.FB.Event.subscribe('edge.remove', () => {});
         }
+
+        // Disable impression logging
+        window.FB.AppEvents = {
+          logEvent: () => {},
+          logPageView: () => {},
+          setUserID: () => {},
+          updateUserProperties: () => {}
+        };
         
         console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
