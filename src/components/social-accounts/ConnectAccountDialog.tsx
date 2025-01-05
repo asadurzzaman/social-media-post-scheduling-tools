@@ -12,7 +12,7 @@ interface ConnectAccountDialogProps {
 export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAccountDialogProps) => {
   const handleFacebookError = (error: string) => {
     console.error('Facebook connection error:', error);
-    toast.error('Failed to connect Facebook account. Please try again.');
+    toast.error('Failed to connect Facebook account. Please check your internet connection and try again.');
   };
 
   const handleLinkedInError = (error: string) => {

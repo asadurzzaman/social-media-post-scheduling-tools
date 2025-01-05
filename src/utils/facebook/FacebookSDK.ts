@@ -22,80 +22,33 @@ export class FacebookSDK {
           }
         }
         
-        // Initialize SDK with absolute minimal features
         window.fbAsyncInit = function() {
-          // Override FB.init to prevent tracking initialization
-          const originalInit = window.FB.init;
-          window.FB.init = function(...args: any[]) {
-            const modifiedConfig = {
-              ...args[0],
-              xfbml: false,
-              autoLogAppEvents: false,
-              status: false,
-              frictionlessRequests: false,
-              logging: false
-            };
-            return originalInit.call(this, modifiedConfig);
-          };
-
-          // Initialize with minimal config
           window.FB.init({
             appId: config.appId,
-            cookie: false, // Disable cookie creation
-            xfbml: false,
-            version: config.version,
-            autoLogAppEvents: false,
-            status: false,
-            frictionlessRequests: false
+            cookie: true,
+            xfbml: true,
+            version: config.version
           });
 
-          // Disable all tracking and logging functions
-          if (window.FB.AppEvents) {
-            window.FB.AppEvents = {
-              ...window.FB.AppEvents,
-              logEvent: () => {},
-              activateApp: () => {},
-              logPageView: () => {},
-              clearUserID: () => {},
-              setUserID: () => {},
-              updateUserProperties: () => {},
-              setAppVersion: () => {},
-              EventNames: {},
-              ParameterNames: {}
-            };
-          }
-
-          // Disable all event subscriptions
-          if (window.FB.Event) {
-            window.FB.Event = {
-              subscribe: () => {},
-              unsubscribe: () => {},
-              clear: () => {}
-            };
-          }
-
-          // Disable XFBML parsing
-          if (window.FB.XFBML) {
-            window.FB.XFBML = {
-              parse: () => {},
-              parseElement: () => {}
-            };
-          }
-
-          console.log('Facebook SDK initialized with all tracking disabled');
+          console.log('Facebook SDK initialized successfully');
           resolve();
         };
 
-        // Load SDK with debug and logging disabled
+        // Load SDK
         const js = document.createElement('script');
         js.id = 'facebook-jssdk';
-        js.src = 'https://connect.facebook.net/en_US/sdk.js?debug=false&logging=false&autoLogAppEvents=false';
+        js.src = 'https://connect.facebook.net/en_US/sdk.js';
         js.async = true;
         js.defer = true;
         js.crossOrigin = 'anonymous';
+        js.onerror = () => {
+          console.error('Failed to load Facebook SDK script');
+          reject(new Error('Failed to load Facebook SDK'));
+        };
         const fjs = document.getElementsByTagName('script')[0];
         fjs.parentNode?.insertBefore(js, fjs);
       } catch (error) {
+        console.error('Error initializing Facebook SDK:', error);
         reject(error);
       }
     });
