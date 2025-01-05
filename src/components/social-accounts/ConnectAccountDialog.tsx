@@ -33,7 +33,7 @@ export const ConnectAccountDialog = ({ onSuccess, onLinkedInSuccess }: ConnectAc
           onError={handleFacebookError}
         />
         <LinkedInLoginButton
-          clientId={process.env.LINKEDIN_CLIENT_ID || ''}
+          clientId={import.meta.env.VITE_LINKEDIN_CLIENT_ID || ''}
           onSuccess={onLinkedInSuccess}
           onError={handleLinkedInError}
         />
