@@ -48,11 +48,20 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           version: 'v18.0'
         });
         
-        // Disable impression logging to prevent errors
+        // Completely disable impression logging
         if (window.FB.Event && window.FB.Event.subscribe) {
-          window.FB.Event.subscribe('edge.create', () => {});
-          window.FB.Event.subscribe('edge.remove', () => {});
+          window.FB.Event.unsubscribe('edge.create');
+          window.FB.Event.unsubscribe('edge.remove');
+          window.FB.Event.unsubscribe('auth.login');
+          window.FB.Event.unsubscribe('auth.logout');
         }
+
+        // Mock impression logging functions
+        window.FB.AppEvents = {
+          logEvent: () => {},
+          EventNames: {},
+          ParameterNames: {}
+        };
         
         console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
@@ -65,8 +74,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       }
 
       // Clear any existing FB cookies
-      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 
+      // Load the SDK
       (function(d, s, id) {
         let js: HTMLScriptElement;
         const fjs = d.getElementsByTagName(s)[0];
@@ -86,8 +96,10 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       if (existingScript) {
         existingScript.remove();
       }
+      // Clear FB instance and cookies
       delete window.FB;
       delete window.fbAsyncInit;
+      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     };
   }, [appId]);
 
@@ -125,7 +137,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      // Force a new login attempt
+      // Force a new login attempt with disabled tracking
       console.log('Initiating Facebook login...');
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
@@ -134,7 +146,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         }, {
           scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
           return_scopes: true,
-          auth_type: 'rerequest'
+          auth_type: 'rerequest',
+          enable_profile_selector: true
         });
       });
 
