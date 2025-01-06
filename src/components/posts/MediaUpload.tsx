@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Image as ImageIcon, Video, FileText, Link2, BarChart3 } from "lucide-react";
+import { Upload, Image as ImageIcon, Video, FileText, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostType } from './PostTypeSelect';
 import { ImagePreviewGrid } from './ImagePreviewGrid';
@@ -36,8 +36,6 @@ export const MediaUpload = ({
       case 'carousel':
         return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
       case 'text':
-      case 'link':
-      case 'poll':
       case 'story':
         return {};
       default:
@@ -49,11 +47,11 @@ export const MediaUpload = ({
     onDrop,
     accept: getAcceptedFiles(postType),
     maxFiles: postType === 'carousel' ? 10 : 1,
-    disabled: postType === 'text' || postType === 'link' || postType === 'poll',
+    disabled: postType === 'text',
     multiple: postType === 'carousel'
   });
 
-  if (postType === 'text' || postType === 'link' || postType === 'poll') {
+  if (postType === 'text') {
     return null;
   }
 
@@ -65,12 +63,8 @@ export const MediaUpload = ({
         return <Video className="h-6 w-6" />;
       case 'carousel':
         return <ImageIcon className="h-6 w-6" />;
-      case 'link':
-        return <Link2 className="h-6 w-6" />;
-      case 'poll':
-        return <BarChart3 className="h-6 w-6" />;
       case 'story':
-        return <ImageIcon className="h-6 w-6" />;
+        return <History className="h-6 w-6" />;
       default:
         return <FileText className="h-6 w-6" />;
     }

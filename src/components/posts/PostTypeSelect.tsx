@@ -5,15 +5,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { FileText, Image, Film, Link2, BarChart2, History } from "lucide-react";
+import { FileText, Image, Film, History } from "lucide-react";
 
 export const POST_TYPES = [
   { value: "text", label: "Text Post", icon: FileText },
   { value: "image", label: "Image", icon: Image },
   { value: "carousel", label: "Image Carousel", icon: Image },
   { value: "video", label: "Video", icon: Film },
-  { value: "link", label: "Link with Preview", icon: Link2 },
-  { value: "poll", label: "Poll", icon: BarChart2 },
   { value: "story", label: "Story", icon: History },
 ] as const;
 
