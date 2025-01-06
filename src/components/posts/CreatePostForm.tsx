@@ -13,16 +13,6 @@ interface CreatePostFormProps {
   onSuccess?: () => void;
 }
 
-interface PollOption {
-  id: string;
-  text: string;
-}
-
-const defaultPollOptions = [
-  { id: crypto.randomUUID(), text: "" },
-  { id: crypto.randomUUID(), text: "" }
-];
-
 export const CreatePostForm = ({ 
   accounts, 
   userId, 
@@ -39,14 +29,6 @@ export const CreatePostForm = ({
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>(initialPost?.image_url ? [initialPost.image_url] : []);
   const [isDraft, setIsDraft] = useState(false);
-  const [pollOptions, setPollOptions] = useState<PollOption[]>(
-    initialPost?.poll_options?.length > 0
-      ? initialPost.poll_options.map((text: string) => ({ 
-          id: crypto.randomUUID(), 
-          text 
-        }))
-      : defaultPollOptions
-  );
 
   const resetForm = () => {
     setContent("");
@@ -55,7 +37,6 @@ export const CreatePostForm = ({
     setPostType("text");
     setUploadedFiles([]);
     setPreviewUrls([]);
-    setPollOptions(defaultPollOptions);
     setIsDraft(false);
     localStorage.removeItem('postDraft');
   };
@@ -70,25 +51,23 @@ export const CreatePostForm = ({
         setSelectedAccount(draft.selectedAccount || "");
         if (draft.date) setDate(new Date(draft.date));
         if (draft.timezone) setTimezone(draft.timezone);
-        if (draft.pollOptions) setPollOptions(draft.pollOptions);
       }
     }
   }, [initialPost]);
 
   useEffect(() => {
-    if (!initialPost && (content || selectedAccount || date || postType !== "text" || pollOptions.some(opt => opt.text))) {
+    if (!initialPost && (content || selectedAccount || date || postType !== "text")) {
       const draft = {
         content,
         postType,
         selectedAccount,
         date: date?.toISOString(),
         timezone,
-        pollOptions: postType === 'poll' ? pollOptions : undefined
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccount, date, timezone, pollOptions, initialPost]);
+  }, [content, postType, selectedAccount, date, timezone, initialPost]);
 
   const handleSaveDraft = () => {
     const draft = {
@@ -97,7 +76,6 @@ export const CreatePostForm = ({
       selectedAccount,
       date: date?.toISOString(),
       timezone,
-      pollOptions: postType === 'poll' ? pollOptions : undefined
     };
     localStorage.setItem('postDraft', JSON.stringify(draft));
     setIsDraft(true);
@@ -117,7 +95,6 @@ export const CreatePostForm = ({
         userId: userId!,
         postType,
         uploadedFiles,
-        pollOptions,
         timezone,
       });
       
@@ -146,7 +123,6 @@ export const CreatePostForm = ({
         userId: userId!,
         postType,
         uploadedFiles,
-        pollOptions,
         timezone,
         scheduledFor: date,
         postId: initialPost?.id,
@@ -180,12 +156,11 @@ export const CreatePostForm = ({
       isDraft={isDraft}
       onSubmit={handleSubmit}
       clearDraft={clearDraft}
-      pollOptions={pollOptions}
-      setPollOptions={setPollOptions}
       timezone={timezone}
       onTimezoneChange={setTimezone}
       onPublishNow={handlePublishNow}
       onSaveDraft={handleSaveDraft}
+      initialPost={initialPost}
     />
   );
 };

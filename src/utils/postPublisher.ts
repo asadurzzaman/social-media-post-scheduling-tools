@@ -1,11 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { PostType } from "@/components/posts/PostTypeSelect";
-
-interface PollOption {
-  id: string;
-  text: string;
-}
 
 interface PublishPostParams {
   content: string;
@@ -13,10 +7,9 @@ interface PublishPostParams {
   userId: string;
   postType: PostType;
   uploadedFiles: File[];
-  pollOptions: PollOption[];
   timezone: string;
   scheduledFor?: Date;
-  postId?: string; // Added this parameter for editing existing posts
+  postId?: string;
 }
 
 export const publishPost = async ({
@@ -25,7 +18,6 @@ export const publishPost = async ({
   userId,
   postType,
   uploadedFiles,
-  pollOptions,
   timezone,
   scheduledFor,
   postId,
@@ -45,10 +37,6 @@ export const publishPost = async ({
 
   if (["image", "carousel", "video"].includes(postType) && uploadedFiles.length === 0) {
     throw new Error(`Please upload ${postType === 'carousel' ? 'at least one image' : `1 ${postType}`}`);
-  }
-
-  if (postType === 'poll' && !pollOptions.every(opt => opt.text.trim())) {
-    throw new Error("Please fill in all poll options");
   }
 
   let imageUrls: string[] = [];
@@ -86,7 +74,6 @@ export const publishPost = async ({
         scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
         status: initialStatus,
         timezone,
-        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
       })
       .eq('id', postId);
 
@@ -103,7 +90,6 @@ export const publishPost = async ({
         scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
         status: initialStatus,
         timezone,
-        poll_options: postType === 'poll' ? pollOptions.map(opt => opt.text) : null
       })
       .select()
       .single();
