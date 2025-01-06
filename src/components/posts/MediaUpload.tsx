@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload } from "lucide-react";
+import { Upload, Image as ImageIcon, Video, FileText, Link2, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostType } from './PostTypeSelect';
 import { ImagePreviewGrid } from './ImagePreviewGrid';
+import { Button } from "@/components/ui/button";
 
 interface MediaUploadProps {
   postType: PostType;
@@ -56,11 +57,41 @@ export const MediaUpload = ({
     return null;
   }
 
+  const getMediaIcon = () => {
+    switch (postType) {
+      case 'image':
+        return <ImageIcon className="h-6 w-6" />;
+      case 'video':
+        return <Video className="h-6 w-6" />;
+      case 'carousel':
+        return <ImageIcon className="h-6 w-6" />;
+      case 'link':
+        return <Link2 className="h-6 w-6" />;
+      case 'poll':
+        return <BarChart3 className="h-6 w-6" />;
+      default:
+        return <FileText className="h-6 w-6" />;
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <label className="text-sm font-medium">
-        Media Upload <span className="text-red-500">*</span>
-      </label>
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium">
+          Media Upload <span className="text-red-500">*</span>
+        </label>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <ImageIcon className="h-4 w-4 mr-2" />
+            Upload Image
+          </Button>
+          <Button variant="outline" size="sm">
+            <Video className="h-4 w-4 mr-2" />
+            Upload Video
+          </Button>
+        </div>
+      </div>
+      
       <div
         {...getRootProps()}
         className={cn(
@@ -93,8 +124,8 @@ export const MediaUpload = ({
           </div>
         ) : (
           <>
-            <Upload className="h-10 w-10 text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">
+            {getMediaIcon()}
+            <p className="text-sm text-muted-foreground mt-4">
               {isDragActive
                 ? "Drop the files here"
                 : `Drag and drop your ${postType} here, or click to select`}

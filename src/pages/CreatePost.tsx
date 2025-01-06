@@ -34,16 +34,15 @@ const CreatePost = () => {
 
   const handleSuccess = () => {
     toast.success("Post created successfully!");
-    // Force a complete remount of the form component
     setFormKey(prev => prev + 1);
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-8">
           <h2 className="text-3xl font-bold tracking-tight">Create Post</h2>
-          <p className="text-muted-foreground">Schedule a new social media post</p>
+          <p className="text-muted-foreground mt-2">Schedule a new social media post</p>
         </div>
         
         {isLoading ? (
