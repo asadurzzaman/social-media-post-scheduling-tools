@@ -27,13 +27,16 @@ export class FacebookSDK {
           window.FB.init({
             appId: config.appId,
             cookie: true,
-            xfbml: true,
-            version: config.version
+            xfbml: false, // Set to false to prevent impression tracking
+            version: config.version,
+            status: true
           });
 
           // Check login status after initialization
           window.FB.getLoginStatus((response) => {
-            console.log('Facebook login status:', response);
+            console.log('Facebook login status:', response, {
+              loginSource: 'facebook'
+            });
             if (response.status === 'connected') {
               console.log('Already connected to Facebook');
             } else {
@@ -43,13 +46,14 @@ export class FacebookSDK {
           });
         };
 
-        // Load SDK
+        // Load SDK with modern attributes
         const js = document.createElement('script');
         js.id = 'facebook-jssdk';
         js.src = 'https://connect.facebook.net/en_US/sdk.js';
         js.async = true;
         js.defer = true;
         js.crossOrigin = 'anonymous';
+        js.setAttribute('data-logging', 'false'); // Disable default logging
         js.onerror = () => {
           console.error('Failed to load Facebook SDK script');
           reject(new Error('Failed to load Facebook SDK'));

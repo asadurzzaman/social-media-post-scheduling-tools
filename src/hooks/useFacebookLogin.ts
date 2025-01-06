@@ -63,7 +63,6 @@ export const useFacebookLogin = ({ appId, onSuccess, onError }: UseFacebookLogin
         }, {
           scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
           return_scopes: true,
-          auth_type: 'rerequest',
           enable_profile_selector: true
         });
       });
