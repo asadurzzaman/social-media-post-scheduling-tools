@@ -44,16 +44,14 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         window.FB.init({
           appId: appId,
           cookie: true,
-          xfbml: false, // Disable XFBML parsing
+          xfbml: true,
           version: 'v18.0'
         });
         
-        // Disable all event subscriptions
-        if (window.FB.Event && window.FB.Event.unsubscribe) {
-          window.FB.Event.unsubscribe('edge.create');
-          window.FB.Event.unsubscribe('edge.remove');
-          window.FB.Event.unsubscribe('auth.login');
-          window.FB.Event.unsubscribe('auth.logout');
+        // Disable impression logging to prevent errors
+        if (window.FB.Event && window.FB.Event.subscribe) {
+          window.FB.Event.subscribe('edge.create', () => {});
+          window.FB.Event.subscribe('edge.remove', () => {});
         }
         
         console.log('Facebook SDK initialized successfully');
@@ -76,8 +74,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         js = d.createElement(s) as HTMLScriptElement;
         js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
-        js.setAttribute('data-logging', 'false'); // Disable logging
-        js.setAttribute('data-auto-logout-link', 'false'); // Disable auto logout
         fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
     };
@@ -89,16 +85,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
         existingScript.remove();
-      }
-      // Clean up all FB related cookies
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i];
-        const eqPos = cookie.indexOf('=');
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        if (name.trim().startsWith('fb') || name.trim().startsWith('_fb')) {
-          document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
-        }
       }
       delete window.FB;
       delete window.fbAsyncInit;
@@ -139,6 +125,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
+      // Force a new login attempt
       console.log('Initiating Facebook login...');
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
@@ -147,8 +134,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         }, {
           scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
           return_scopes: true,
-          auth_type: 'rerequest',
-          enable_profile_selector: true
+          auth_type: 'rerequest'
         });
       });
 
