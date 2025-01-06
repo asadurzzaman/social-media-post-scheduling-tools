@@ -108,27 +108,20 @@ const AddAccount = () => {
         </Dialog>
 
         {/* Accounts Summary Cards */}
-        <Card className="border-none shadow-none bg-gray-50/50">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Connected Accounts Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="text-sm text-gray-500 mb-1">Total Accounts</div>
-                <div className="text-3xl font-bold text-gray-900">{totalAccounts}</div>
-              </div>
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="text-sm text-gray-500 mb-1">Instagram Accounts</div>
-                <div className="text-3xl font-bold text-gray-900">{instagramAccounts}</div>
-              </div>
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                <div className="text-sm text-gray-500 mb-1">LinkedIn Accounts</div>
-                <div className="text-3xl font-bold text-gray-900">{linkedinAccounts}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-500 mb-1">Total Accounts</div>
+            <div className="text-3xl font-bold text-gray-900">{totalAccounts}</div>
+          </div>
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-500 mb-1">Instagram Accounts</div>
+            <div className="text-3xl font-bold text-gray-900">{instagramAccounts}</div>
+          </div>
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+            <div className="text-sm text-gray-500 mb-1">LinkedIn Accounts</div>
+            <div className="text-3xl font-bold text-gray-900">{linkedinAccounts}</div>
+          </div>
+        </div>
 
         {/* Connected Accounts List */}
         <Card>

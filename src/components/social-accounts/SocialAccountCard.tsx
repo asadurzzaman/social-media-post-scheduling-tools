@@ -110,71 +110,73 @@ export const SocialAccountCard = ({
   };
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 flex items-center justify-center bg-blue-100 rounded-lg">
-          {icon}
+    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 flex items-center justify-center bg-blue-100 rounded-lg">
+            {icon}
+          </div>
+          <div>
+            <h3 className="font-semibold">{title}</h3>
+            {isConnected && (
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="h-8 w-48"
+                      placeholder="Enter new name"
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={handleUpdateName}
+                      className="h-8 w-8"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setNewName(accountName || '');
+                      }}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">{accountName}</p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => setIsEditing(true)}
+                      className="h-6 w-6"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold">{title}</h3>
-          {isConnected && (
-            <div className="flex items-center gap-2">
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="h-8 w-48"
-                    placeholder="Enter new name"
-                  />
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={handleUpdateName}
-                    className="h-8 w-8"
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setNewName(accountName || '');
-                    }}
-                    className="h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">{accountName}</p>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setIsEditing(true)}
-                    className="h-6 w-6"
-                  >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {isConnected ? (
+          <Button 
+            variant="destructive" 
+            onClick={handleDisconnect}
+            disabled={isDisconnecting}
+          >
+            {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+          </Button>
+        ) : (
+          children
+        )}
       </div>
-      {isConnected ? (
-        <Button 
-          variant="destructive" 
-          onClick={handleDisconnect}
-          disabled={isDisconnecting}
-        >
-          {isDisconnecting ? "Disconnecting..." : "Disconnect"}
-        </Button>
-      ) : (
-        children
-      )}
     </div>
   );
 };
