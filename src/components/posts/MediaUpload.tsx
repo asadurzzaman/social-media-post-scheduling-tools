@@ -69,6 +69,8 @@ export const MediaUpload = ({
         return <Link2 className="h-6 w-6" />;
       case 'poll':
         return <BarChart3 className="h-6 w-6" />;
+      case 'story':
+        return <ImageIcon className="h-6 w-6" />;
       default:
         return <FileText className="h-6 w-6" />;
     }
