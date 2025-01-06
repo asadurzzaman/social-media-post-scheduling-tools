@@ -9,11 +9,6 @@ import { Card } from "@/components/ui/card";
 import { Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface PollOption {
-  id: string;
-  text: string;
-}
-
 interface CreatePostFormContentProps {
   accounts: any[];
   content: string;
@@ -31,8 +26,6 @@ interface CreatePostFormContentProps {
   isDraft: boolean;
   onSubmit: (e: React.FormEvent) => void;
   clearDraft: () => void;
-  pollOptions: PollOption[];
-  setPollOptions: (options: PollOption[]) => void;
   timezone: string;
   onTimezoneChange: (timezone: string) => void;
   onPublishNow?: () => void;
@@ -57,8 +50,6 @@ export const CreatePostFormContent = ({
   isDraft,
   onSubmit,
   clearDraft,
-  pollOptions,
-  setPollOptions,
   timezone,
   onTimezoneChange,
   onPublishNow,
@@ -121,8 +112,6 @@ export const CreatePostFormContent = ({
         previewUrls={previewUrls}
         onFileUpload={handleFileUpload}
         onFileDelete={handleFileDelete}
-        pollOptions={pollOptions}
-        onPollOptionsChange={setPollOptions}
       />
 
       <SchedulingOptions
