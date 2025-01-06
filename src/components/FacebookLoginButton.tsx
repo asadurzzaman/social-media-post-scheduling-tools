@@ -93,6 +93,15 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
   const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
     try {
+      // First check if we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      
+      if (!session) {
+        console.error('No valid session found');
+        throw new Error('No valid session found');
+      }
+
       const expirationDate = new Date();
       expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
 
@@ -125,6 +134,16 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
+      // Check for existing session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      if (!session) {
+        console.error('No valid session found');
+        onError('Please sign in to continue');
+        return;
+      }
+
       // Force a new login attempt
       console.log('Initiating Facebook login...');
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
