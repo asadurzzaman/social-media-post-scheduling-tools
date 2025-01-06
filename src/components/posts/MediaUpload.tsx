@@ -49,7 +49,7 @@ export const MediaUpload = ({
     onDrop,
     accept: getAcceptedFiles(postType),
     maxFiles: postType === 'carousel' ? 10 : 1,
-    disabled: postType === 'text',
+    disabled: postType === 'text' || postType === 'link' || postType === 'poll',
     multiple: postType === 'carousel'
   });
 
