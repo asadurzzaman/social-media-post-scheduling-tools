@@ -104,6 +104,18 @@ export const CreatePostForm = ({
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
       console.error("Error publishing post:", error);
+      
+      // Check if we need to reconnect Facebook
+      if (error.message?.includes('reconnect')) {
+        toast.error("Please reconnect your Facebook account", {
+          action: {
+            label: "Reconnect",
+            onClick: () => navigate('/add-account')
+          }
+        });
+        return;
+      }
+      
       toast.error(error.message || "Failed to publish post");
     }
   };
@@ -134,13 +146,25 @@ export const CreatePostForm = ({
       if (!onSuccess) navigate('/posts');
     } catch (error: any) {
       console.error("Error scheduling post:", error);
+      
+      // Check if we need to reconnect Facebook
+      if (error.message?.includes('reconnect')) {
+        toast.error("Please reconnect your Facebook account", {
+          action: {
+            label: "Reconnect",
+            onClick: () => navigate('/add-account')
+          }
+        });
+        return;
+      }
+      
       toast.error(error.message || "Failed to schedule post");
     }
   };
 
   return (
     <CreatePostFormContent
-      accounts={accounts}
+      accounts={accounts} 
       content={content}
       setContent={setContent}
       selectedAccount={selectedAccount}
