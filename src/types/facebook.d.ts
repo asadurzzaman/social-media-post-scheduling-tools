@@ -1,9 +1,9 @@
-interface FacebookLoginStatusResponse {
+export interface FacebookLoginStatusResponse {
   status: 'connected' | 'not_authorized' | 'unknown';
   authResponse: FacebookAuthResponse | null;
 }
 
-interface FacebookAuthResponse {
+export interface FacebookAuthResponse {
   accessToken: string;
   userID: string;
   expiresIn: number;
@@ -12,7 +12,7 @@ interface FacebookAuthResponse {
   data_access_expiration_time: number;
 }
 
-interface FacebookSDK {
+export interface FacebookSDK {
   init(options: {
     appId: string;
     cookie: boolean;
