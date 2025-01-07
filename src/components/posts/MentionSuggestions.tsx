@@ -26,6 +26,8 @@ export const MentionSuggestions = ({
   onSelect,
   triggerRef,
 }: MentionSuggestionsProps) => {
+  const mentions = demoMentions || [];
+
   return (
     <Popover open={isOpen} onOpenChange={onClose}>
       <PopoverTrigger asChild>
@@ -34,7 +36,7 @@ export const MentionSuggestions = ({
       <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
         <Command>
           <Command.List>
-            {demoMentions?.map((mention) => (
+            {mentions.map((mention) => (
               <Command.Item
                 key={mention}
                 onSelect={() => {
