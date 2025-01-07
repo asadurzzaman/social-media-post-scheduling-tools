@@ -34,19 +34,21 @@ export const MentionSuggestions = ({
       <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
         <Command>
           <Command.List>
-            {demoMentions.map((mention) => (
-              <Command.Item
-                key={mention}
-                onSelect={() => {
-                  onSelect(mention);
-                  onClose();
-                }}
-                className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
-                value={mention}
-              >
-                {mention}
-              </Command.Item>
-            ))}
+            <Command.Group>
+              {demoMentions.map((mention) => (
+                <Command.Item
+                  key={mention}
+                  value={mention}
+                  onSelect={() => {
+                    onSelect(mention);
+                    onClose();
+                  }}
+                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
+                >
+                  {mention}
+                </Command.Item>
+              ))}
+            </Command.Group>
           </Command.List>
         </Command>
       </PopoverContent>
