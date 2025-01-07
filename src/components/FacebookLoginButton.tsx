@@ -34,6 +34,11 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
 
   const checkTokenStatus = async () => {
+    if (!window.FB) {
+      console.error('Facebook SDK not loaded');
+      return null;
+    }
+
     try {
       const response = await new Promise<FacebookLoginStatusResponse>((resolve) => {
         window.FB.getLoginStatus((response: FacebookLoginStatusResponse) => {
@@ -53,7 +58,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
-    if (!isSDKLoaded) {
+    if (!isSDKLoaded || !window.FB) {
       console.error('Facebook SDK not loaded yet');
       onError('Facebook SDK not loaded yet');
       return;
