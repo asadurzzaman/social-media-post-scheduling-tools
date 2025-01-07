@@ -97,7 +97,7 @@ export const SocialAccountList = ({
             <CommandInput placeholder="Search accounts..." />
             <CommandEmpty>No accounts found.</CommandEmpty>
             <CommandGroup>
-              {displayAccounts.map((account) => (
+              {displayAccounts?.map((account) => (
                 <CommandItem
                   key={account.id}
                   value={account.id}

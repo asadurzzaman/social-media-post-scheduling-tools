@@ -34,7 +34,7 @@ export const MentionSuggestions = ({
       <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
         <Command>
           <Command.List>
-            {demoMentions.map((mention) => (
+            {demoMentions?.map((mention) => (
               <Command.Item
                 key={mention}
                 onSelect={() => {
