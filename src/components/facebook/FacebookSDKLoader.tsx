@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 declare global {
   interface Window {
@@ -19,12 +19,28 @@ export const FacebookSDKLoader: React.FC<FacebookSDKLoaderProps> = ({
   useEffect(() => {
     const loadFacebookSDK = () => {
       console.log('Starting Facebook SDK initialization...');
+      
+      // Remove existing Facebook SDK if present
+      const existingScript = document.getElementById('facebook-jssdk');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      // Clear any existing FB cookies
+      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+      // Initialize Facebook SDK
       window.fbAsyncInit = function() {
+        if (!window.FB) {
+          console.error('Facebook SDK failed to load properly');
+          return;
+        }
+
         window.FB.init({
           appId: appId,
           cookie: true,
           xfbml: true,
-          version: 'v18.0'
+          version: 'v19.0' // Updated to latest stable version
         });
         
         // Disable impression logging to prevent errors
@@ -37,15 +53,7 @@ export const FacebookSDKLoader: React.FC<FacebookSDKLoaderProps> = ({
         onLoad();
       };
 
-      // Remove existing Facebook SDK if present
-      const existingScript = document.getElementById('facebook-jssdk');
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      // Clear any existing FB cookies
-      document.cookie = 'fblo_' + appId + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-
+      // Load the SDK asynchronously
       (function(d, s, id) {
         let js: HTMLScriptElement;
         const fjs = d.getElementsByTagName(s)[0];
@@ -53,6 +61,8 @@ export const FacebookSDKLoader: React.FC<FacebookSDKLoaderProps> = ({
         js = d.createElement(s) as HTMLScriptElement;
         js.id = id;
         js.src = "https://connect.facebook.net/en_US/sdk.js";
+        js.async = true;
+        js.defer = true;
         fjs.parentNode?.insertBefore(js, fjs);
       }(document, 'script', 'facebook-jssdk'));
     };
