@@ -24,13 +24,11 @@ interface Post {
   status: string;
   created_at: string;
   scheduled_for: string;
-  hashtags: string[];
-  image_url: string | null;
-  poll_options: string[];
+  hashtags?: string[];
   social_account_id: string;
-  timezone: string;
+  timezone?: string;
   user_id: string;
-  group_id?: string | null;  // Made optional and allow null
+  group_id?: string | null;
   social_accounts: {
     platform: string;
   };
@@ -92,12 +90,10 @@ const Posts = () => {
             created_at: new Date().toISOString(),
             scheduled_for: draft.date || new Date().toISOString(),
             hashtags: [],
-            image_url: null,
-            poll_options: [],
             social_account_id: draft.selectedAccount || '',
             timezone: draft.timezone || 'UTC',
             user_id: '',
-            group_id: null,  // Add group_id as null for drafts
+            group_id: null,
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
@@ -107,7 +103,6 @@ const Posts = () => {
     }
   });
 
-  // Query to get social accounts for the edit dialog
   const { data: accounts } = useQuery({
     queryKey: ["social-accounts"],
     queryFn: async () => {

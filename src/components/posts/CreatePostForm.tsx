@@ -13,16 +13,6 @@ interface CreatePostFormProps {
   onSuccess?: () => void;
 }
 
-interface PollOption {
-  id: string;
-  text: string;
-}
-
-const defaultPollOptions = [
-  { id: crypto.randomUUID(), text: "" },
-  { id: crypto.randomUUID(), text: "" }
-];
-
 export const CreatePostForm = ({ 
   accounts, 
   userId, 
@@ -38,26 +28,13 @@ export const CreatePostForm = ({
   const [date, setDate] = useState<Date | undefined>(initialPost ? new Date(initialPost.scheduled_for) : initialDate);
   const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
   const [postType, setPostType] = useState<PostType>("text");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>(initialPost?.image_url ? [initialPost.image_url] : []);
   const [isDraft, setIsDraft] = useState(false);
-  const [pollOptions, setPollOptions] = useState<PollOption[]>(
-    initialPost?.poll_options?.length > 0
-      ? initialPost.poll_options.map((text: string) => ({ 
-          id: crypto.randomUUID(), 
-          text 
-        }))
-      : defaultPollOptions
-  );
 
   const resetForm = () => {
     setContent("");
     setSelectedAccounts([]);
     setDate(undefined);
     setPostType("text");
-    setUploadedFiles([]);
-    setPreviewUrls([]);
-    setPollOptions(defaultPollOptions);
     setIsDraft(false);
     localStorage.removeItem('postDraft');
   };
@@ -72,25 +49,23 @@ export const CreatePostForm = ({
         setSelectedAccounts(draft.selectedAccounts || []);
         if (draft.date) setDate(new Date(draft.date));
         if (draft.timezone) setTimezone(draft.timezone);
-        if (draft.pollOptions) setPollOptions(draft.pollOptions);
       }
     }
   }, [initialPost]);
 
   useEffect(() => {
-    if (!initialPost && (content || selectedAccounts.length > 0 || date || postType !== "text" || pollOptions.some(opt => opt.text))) {
+    if (!initialPost && (content || selectedAccounts.length > 0 || date)) {
       const draft = {
         content,
         postType,
         selectedAccounts,
         date: date?.toISOString(),
-        timezone,
-        pollOptions: postType === 'poll' ? pollOptions : undefined
+        timezone
       };
       localStorage.setItem('postDraft', JSON.stringify(draft));
       setIsDraft(true);
     }
-  }, [content, postType, selectedAccounts, date, timezone, pollOptions, initialPost]);
+  }, [content, postType, selectedAccounts, date, timezone, initialPost]);
 
   const handleSaveDraft = () => {
     const draft = {
@@ -98,8 +73,7 @@ export const CreatePostForm = ({
       postType,
       selectedAccounts,
       date: date?.toISOString(),
-      timezone,
-      pollOptions: postType === 'poll' ? pollOptions : undefined
+      timezone
     };
     localStorage.setItem('postDraft', JSON.stringify(draft));
     setIsDraft(true);
@@ -118,15 +92,12 @@ export const CreatePostForm = ({
     }
 
     try {
-      // Publish to each selected account
       for (const accountId of selectedAccounts) {
         await publishPost({
           content,
           selectedAccount: accountId,
           userId: userId!,
           postType,
-          uploadedFiles,
-          pollOptions,
           timezone,
         });
       }
@@ -155,15 +126,12 @@ export const CreatePostForm = ({
     }
 
     try {
-      // Schedule for each selected account
       for (const accountId of selectedAccounts) {
         await publishPost({
           content,
           selectedAccount: accountId,
           userId: userId!,
           postType,
-          uploadedFiles,
-          pollOptions,
           timezone,
           scheduledFor: date,
           postId: initialPost?.id,
@@ -191,15 +159,9 @@ export const CreatePostForm = ({
       setDate={setDate}
       postType={postType}
       setPostType={setPostType}
-      uploadedFiles={uploadedFiles}
-      setUploadedFiles={setUploadedFiles}
-      previewUrls={previewUrls}
-      setPreviewUrls={setPreviewUrls}
       isDraft={isDraft}
       onSubmit={handleSubmit}
       clearDraft={clearDraft}
-      pollOptions={pollOptions}
-      setPollOptions={setPollOptions}
       timezone={timezone}
       onTimezoneChange={setTimezone}
       onPublishNow={handlePublishNow}

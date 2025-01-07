@@ -280,9 +280,6 @@ export type Database = {
           group_id: string | null
           hashtags: string[] | null
           id: string
-          image_url: string | null
-          poll_options: string[] | null
-          post_type: string
           scheduled_for: string
           search_vector: unknown | null
           social_account_id: string
@@ -296,9 +293,6 @@ export type Database = {
           group_id?: string | null
           hashtags?: string[] | null
           id?: string
-          image_url?: string | null
-          poll_options?: string[] | null
-          post_type?: string
           scheduled_for: string
           search_vector?: unknown | null
           social_account_id: string
@@ -312,9 +306,6 @@ export type Database = {
           group_id?: string | null
           hashtags?: string[] | null
           id?: string
-          image_url?: string | null
-          poll_options?: string[] | null
-          post_type?: string
           scheduled_for?: string
           search_vector?: unknown | null
           social_account_id?: string
@@ -377,7 +368,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string | null
-          id?: string
+          id: string
           last_login?: string | null
           login_count?: number | null
           post_platform_selection?: boolean | null
@@ -432,10 +423,10 @@ export type Database = {
           interval_value?: number
           last_posted_at?: string | null
           poll_options?: string[] | null
-          social_account_id?: string
-          start_date?: string
+          social_account_id: string
+          start_date: string
           status?: string | null
-          user_id?: string
+          user_id: string
         }
         Relationships: [
           {
@@ -545,7 +536,7 @@ export type Database = {
           platform?: string
           requires_reconnect?: boolean | null
           token_expires_at?: string | null
-          user_id?: string
+          user_id: string
         }
         Relationships: [
           {
@@ -597,99 +588,19 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
-
-export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
-  }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+export interface Post {
+  id: string;
+  user_id: string;
+  social_account_id: string;
+  content: string;
+  hashtags?: string[];
+  scheduled_for: string;
+  status?: string;
+  created_at: string;
+  timezone?: string;
+  group_id?: string;
+  search_vector?: unknown;
+  social_accounts: {
+    platform: string;
+  };
+}
