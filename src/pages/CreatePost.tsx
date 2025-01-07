@@ -15,10 +15,10 @@ const CreatePost = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          throw error;
+        if (sessionError) {
+          throw sessionError;
         }
 
         if (!session) {
@@ -28,7 +28,7 @@ const CreatePost = () => {
         }
 
         setUserId(session.user.id);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Auth error:", error);
         toast.error("Authentication error. Please try signing in again.");
         navigate("/auth");
