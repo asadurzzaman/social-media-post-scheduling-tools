@@ -5,20 +5,6 @@ import { FacebookSDKLoader } from './facebook/FacebookSDKLoader';
 import { updateTokenInDatabase } from './facebook/FacebookTokenManager';
 import { toast } from 'sonner';
 
-interface FacebookAuthResponse {
-  accessToken: string;
-  userID: string;
-  expiresIn: number;
-  signedRequest: string;
-  graphDomain: string;
-  data_access_expiration_time: number;
-}
-
-interface FacebookLoginStatusResponse {
-  status: 'connected' | 'not_authorized' | 'unknown';
-  authResponse: FacebookAuthResponse | null;
-}
-
 interface FacebookLoginButtonProps {
   appId: string;
   onSuccess: (response: { accessToken: string; userId: string }) => void;
