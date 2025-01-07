@@ -61,13 +61,14 @@ export const SocialAccountList = ({
   };
 
   const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
+  const safeSelectedAccounts = Array.isArray(selectedAccounts) ? selectedAccounts : [];
 
   const handleSelect = (accountId: string) => {
     if (!onSelect) return;
     
-    const newSelectedAccounts = selectedAccounts.includes(accountId)
-      ? selectedAccounts.filter(id => id !== accountId)
-      : [...selectedAccounts, accountId];
+    const newSelectedAccounts = safeSelectedAccounts.includes(accountId)
+      ? safeSelectedAccounts.filter(id => id !== accountId)
+      : [...safeSelectedAccounts, accountId];
     
     onSelect(newSelectedAccounts);
   };
@@ -84,10 +85,10 @@ export const SocialAccountList = ({
             role="combobox"
             className="w-full justify-between"
           >
-            {selectedAccounts.length === 0 ? (
+            {safeSelectedAccounts.length === 0 ? (
               "Select accounts..."
             ) : (
-              `${selectedAccounts.length} account${selectedAccounts.length === 1 ? '' : 's'} selected`
+              `${safeSelectedAccounts.length} account${safeSelectedAccounts.length === 1 ? '' : 's'} selected`
             )}
           </Button>
         </PopoverTrigger>
@@ -112,7 +113,7 @@ export const SocialAccountList = ({
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
+                        safeSelectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
                       )}
                     />
                   </div>
