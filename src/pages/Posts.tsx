@@ -30,16 +30,14 @@ interface Post {
   social_account_id: string;
   timezone: string;
   user_id: string;
-  group_id?: string | null;
-  post_type: string;
-  search_vector: unknown;
+  group_id?: string | null;  // Made optional and allow null
   social_accounts: {
     platform: string;
   };
 }
 
 const Posts = () => {
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -99,9 +97,7 @@ const Posts = () => {
             social_account_id: draft.selectedAccount || '',
             timezone: draft.timezone || 'UTC',
             user_id: '',
-            group_id: null,
-            post_type: draft.postType || 'text',
-            search_vector: null,
+            group_id: null,  // Add group_id as null for drafts
             social_accounts: { platform: 'draft' }
           }, ...allPosts];
         }
@@ -149,7 +145,7 @@ const Posts = () => {
     }
   };
 
-  const handleEdit = (post: Post) => {
+  const handleEdit = (post: any) => {
     setSelectedPost(post);
     setIsEditDialogOpen(true);
   };

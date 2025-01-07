@@ -1,29 +1,25 @@
 import { Auth as SupabaseAuth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const success = searchParams.get('success');
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           navigate("/dashboard");
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Session check error:", error);
-        setError(error.message);
+        toast.error("Error checking authentication status");
       }
     };
 
@@ -33,29 +29,7 @@ const Auth = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        // Ensure profile exists
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileError || !profile) {
-          // Create profile if it doesn't exist
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert([{ id: session.user.id }]);
-
-          if (insertError) {
-            console.error("Error creating profile:", insertError);
-            toast.error("Failed to create user profile");
-            return;
-          }
-        }
-
         navigate("/dashboard");
-      } else if (event === 'SIGNED_OUT') {
-        navigate("/auth");
       }
     });
 
@@ -84,11 +58,6 @@ const Auth = () => {
             Create your account to access your subscription
           </p>
         </div>
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
         <div className="mt-8">
           <SupabaseAuth
             supabaseClient={supabase}
@@ -104,7 +73,7 @@ const Auth = () => {
               },
             }}
             providers={["facebook"]}
-            redirectTo={`${window.location.origin}/dashboard`}
+            redirectTo={window.location.origin}
             view="sign_up"
           />
         </div>

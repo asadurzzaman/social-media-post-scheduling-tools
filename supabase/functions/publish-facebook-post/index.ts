@@ -34,8 +34,7 @@ serve(async (req) => {
         image_url,
         social_accounts!inner(
           page_id,
-          page_access_token,
-          requires_reconnect
+          page_access_token
         )
       `)
       .eq('id', postId)
@@ -53,11 +52,6 @@ serve(async (req) => {
 
     if (!pageId || !pageAccessToken) {
       throw new Error('Missing Facebook page credentials');
-    }
-
-    // Check if account needs reconnection
-    if (post.social_accounts.requires_reconnect) {
-      throw new Error('Facebook account needs to be reconnected');
     }
 
     // Prepare the post data
@@ -91,28 +85,13 @@ serve(async (req) => {
       body: JSON.stringify(postData),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      console.error('Facebook API Error:', result);
-      
-      // Check for token expiration or invalidity
-      if (result.error?.code === 190) {
-        // Update the account to require reconnection
-        await supabaseClient
-          .from('social_accounts')
-          .update({ 
-            requires_reconnect: true,
-            last_error: result.error.message
-          })
-          .eq('page_id', pageId);
-          
-        throw new Error('Facebook token expired. Please reconnect your account.');
-      }
-      
-      throw new Error(`Facebook API Error: ${JSON.stringify(result)}`);
+      const errorData = await response.json();
+      console.error('Facebook API Error:', errorData);
+      throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
     }
 
+    const result = await response.json();
     console.log('Facebook API response:', result);
 
     // Update post status to published

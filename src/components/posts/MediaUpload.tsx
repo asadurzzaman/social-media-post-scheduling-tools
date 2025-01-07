@@ -1,10 +1,9 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Image as ImageIcon, Video, FileText, History } from "lucide-react";
+import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PostType } from './PostTypeSelect';
 import { ImagePreviewGrid } from './ImagePreviewGrid';
-import { Button } from "@/components/ui/button";
 
 interface MediaUploadProps {
   postType: PostType;
@@ -36,6 +35,8 @@ export const MediaUpload = ({
       case 'carousel':
         return { 'image/*': ['.jpeg', '.jpg', '.png', '.gif'] };
       case 'text':
+      case 'link':
+      case 'poll':
       case 'story':
         return {};
       default:
@@ -51,43 +52,15 @@ export const MediaUpload = ({
     multiple: postType === 'carousel'
   });
 
-  if (postType === 'text') {
+  if (postType === 'text' || postType === 'link' || postType === 'poll') {
     return null;
   }
 
-  const getMediaIcon = () => {
-    switch (postType) {
-      case 'image':
-        return <ImageIcon className="h-6 w-6" />;
-      case 'video':
-        return <Video className="h-6 w-6" />;
-      case 'carousel':
-        return <ImageIcon className="h-6 w-6" />;
-      case 'story':
-        return <History className="h-6 w-6" />;
-      default:
-        return <FileText className="h-6 w-6" />;
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">
-          Media Upload <span className="text-red-500">*</span>
-        </label>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <ImageIcon className="h-4 w-4 mr-2" />
-            Upload Image
-          </Button>
-          <Button variant="outline" size="sm">
-            <Video className="h-4 w-4 mr-2" />
-            Upload Video
-          </Button>
-        </div>
-      </div>
-      
+      <label className="text-sm font-medium">
+        Media Upload <span className="text-red-500">*</span>
+      </label>
       <div
         {...getRootProps()}
         className={cn(
@@ -120,8 +93,8 @@ export const MediaUpload = ({
           </div>
         ) : (
           <>
-            {getMediaIcon()}
-            <p className="text-sm text-muted-foreground mt-4">
+            <Upload className="h-10 w-10 text-muted-foreground mb-4" />
+            <p className="text-sm text-muted-foreground">
               {isDragActive
                 ? "Drop the files here"
                 : `Drag and drop your ${postType} here, or click to select`}

@@ -5,16 +5,18 @@ import { RichTextEditor } from './RichTextEditor';
 import { SchedulingOptions } from './SchedulingOptions';
 import { PostFormMedia } from './PostFormMedia';
 import { PostFormActions } from './PostFormActions';
-import { Card } from "@/components/ui/card";
-import { Wand2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+interface PollOption {
+  id: string;
+  text: string;
+}
 
 interface CreatePostFormContentProps {
   accounts: any[];
   content: string;
   setContent: (content: string) => void;
-  selectedAccount: string;
-  setSelectedAccount: (account: string) => void;
+  selectedAccounts: string[];
+  setSelectedAccounts: (accounts: string[]) => void;
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   postType: PostType;
@@ -26,6 +28,8 @@ interface CreatePostFormContentProps {
   isDraft: boolean;
   onSubmit: (e: React.FormEvent) => void;
   clearDraft: () => void;
+  pollOptions: PollOption[];
+  setPollOptions: (options: PollOption[]) => void;
   timezone: string;
   onTimezoneChange: (timezone: string) => void;
   onPublishNow?: () => void;
@@ -37,8 +41,8 @@ export const CreatePostFormContent = ({
   accounts,
   content,
   setContent,
-  selectedAccount,
-  setSelectedAccount,
+  selectedAccounts,
+  setSelectedAccounts,
   date,
   setDate,
   postType,
@@ -50,6 +54,8 @@ export const CreatePostFormContent = ({
   isDraft,
   onSubmit,
   clearDraft,
+  pollOptions,
+  setPollOptions,
   timezone,
   onTimezoneChange,
   onPublishNow,
@@ -77,11 +83,11 @@ export const CreatePostFormContent = ({
   };
 
   return (
-    <Card className="p-6 space-y-6 max-w-3xl mx-auto bg-white shadow-lg">
+    <div className="space-y-6 max-w-2xl">
       <SocialAccountList
         accounts={accounts}
-        selectedAccount={selectedAccount}
-        onSelect={setSelectedAccount}
+        selectedAccounts={selectedAccounts}
+        onSelect={setSelectedAccounts}
       />
 
       <PostTypeSelect 
@@ -89,16 +95,10 @@ export const CreatePostFormContent = ({
         onChange={setPostType} 
       />
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <label htmlFor="content" className="text-sm font-medium">
-            Post Content <span className="text-red-500">*</span>
-          </label>
-          <Button variant="ghost" size="sm" className="text-primary">
-            <Wand2 className="h-4 w-4 mr-2" />
-            Generate with AI
-          </Button>
-        </div>
+      <div className="space-y-2">
+        <label htmlFor="content" className="text-sm font-medium">
+          Post Content <span className="text-red-500">*</span>
+        </label>
         <RichTextEditor
           value={content}
           onChange={setContent}
@@ -112,6 +112,8 @@ export const CreatePostFormContent = ({
         previewUrls={previewUrls}
         onFileUpload={handleFileUpload}
         onFileDelete={handleFileDelete}
+        pollOptions={pollOptions}
+        onPollOptionsChange={setPollOptions}
       />
 
       <SchedulingOptions
@@ -128,6 +130,6 @@ export const CreatePostFormContent = ({
         onSaveDraft={onSaveDraft}
         isEditing={!!initialPost}
       />
-    </Card>
+    </div>
   );
 };
