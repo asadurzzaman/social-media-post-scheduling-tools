@@ -3,6 +3,7 @@ import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
 import { supabase } from "@/integrations/supabase/client";
 import { FacebookSDKLoader } from './facebook/FacebookSDKLoader';
 import { updateTokenInDatabase } from './facebook/FacebookTokenManager';
+import { toast } from 'sonner';
 
 interface FacebookAuthResponse {
   accessToken: string;
@@ -32,6 +33,24 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const checkTokenStatus = async () => {
+    try {
+      const response = await new Promise<FacebookLoginStatusResponse>((resolve) => {
+        window.FB.getLoginStatus((response: FacebookLoginStatusResponse) => {
+          resolve(response);
+        });
+      });
+
+      if (response.status === 'connected' && response.authResponse) {
+        return response.authResponse;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error checking token status:', error);
+      return null;
+    }
+  };
+
   const handleFacebookLogin = async () => {
     console.log('Starting Facebook login process...');
     if (!isSDKLoaded) {
@@ -53,8 +72,23 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         return;
       }
 
-      // Force a new login attempt
-      console.log('Initiating Facebook login...');
+      // Check current token status
+      const existingAuth = await checkTokenStatus();
+      if (existingAuth && existingAuth.data_access_expiration_time * 1000 > Date.now()) {
+        console.log('Using existing valid token');
+        await updateTokenInDatabase(
+          existingAuth.accessToken,
+          existingAuth.expiresIn
+        );
+        onSuccess({
+          accessToken: existingAuth.accessToken,
+          userId: existingAuth.userID
+        });
+        return;
+      }
+
+      // Force a new login attempt if token is expired or not present
+      console.log('Initiating new Facebook login...');
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
           console.log('Login response:', response);
