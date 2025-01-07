@@ -26,8 +26,6 @@ export const MentionSuggestions = ({
   onSelect,
   triggerRef,
 }: MentionSuggestionsProps) => {
-  if (!isOpen) return null;
-
   return (
     <Popover open={isOpen} onOpenChange={onClose}>
       <PopoverTrigger asChild>
@@ -44,6 +42,7 @@ export const MentionSuggestions = ({
                   onClose();
                 }}
                 className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
+                value={mention}
               >
                 {mention}
               </Command.Item>
