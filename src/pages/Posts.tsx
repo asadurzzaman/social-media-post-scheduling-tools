@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Post } from "@/integrations/supabase/types";
+import { Post } from "@/types/post";
 import { toast } from "sonner";
 
 const Posts = () => {
@@ -34,15 +34,15 @@ const Posts = () => {
   const transformPost = (post: any): Post => ({
     id: post.id,
     content: post.content,
-    status: post.status,
+    status: post.status || 'draft',
     created_at: post.created_at,
     scheduled_for: post.scheduled_for,
     hashtags: post.hashtags || [],
     social_account_id: post.social_account_id,
-    timezone: post.timezone,
+    timezone: post.timezone || 'UTC',
     user_id: post.user_id,
     group_id: post.group_id,
-    search_vector: null, // Add the required search_vector field
+    search_vector: post.search_vector,
     social_accounts: {
       platform: post.social_accounts?.platform
     }

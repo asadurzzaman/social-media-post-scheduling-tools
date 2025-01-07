@@ -1,6 +1,11 @@
 export type PostType = "text";
 
-export const PostTypeSelect = () => {
-  // Since we only have text posts now, we can remove this component
+interface PostTypeSelectProps {
+  value: PostType;
+  onChange: (type: PostType) => void;
+}
+
+export const PostTypeSelect = ({ value, onChange }: PostTypeSelectProps) => {
+  // Since we only have text posts now, we can return null
   return null;
 };
