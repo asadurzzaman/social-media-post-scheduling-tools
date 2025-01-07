@@ -60,7 +60,7 @@ export const SocialAccountList = ({
     }
   };
 
-  const displayAccounts = accounts?.length > 0 ? accounts : demoAccounts;
+  const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
   const currentSelectedAccounts = Array.isArray(selectedAccounts) ? selectedAccounts : [];
 
   const handleSelect = (accountId: string) => {
