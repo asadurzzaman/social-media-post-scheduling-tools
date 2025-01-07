@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Pencil, X, Check } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface SocialAccountCardProps {
   platform: string;
@@ -29,6 +30,8 @@ export const SocialAccountCard = ({
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(accountName || '');
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   const handleDisconnect = async () => {
     if (!accountId) return;
@@ -36,14 +39,27 @@ export const SocialAccountCard = ({
     try {
       setIsDisconnecting(true);
       
+      // Check session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) {
+        toast.error("Please sign in to continue");
+        return;
+      }
+
       // If it's a Facebook account, logout from Facebook SDK
-      if (platform === 'facebook' && window.FB) {
-        await new Promise<void>((resolve) => {
-          window.FB.logout(() => {
-            console.log('Logged out from Facebook SDK');
-            resolve();
+      if (platform.toLowerCase() === 'facebook' && window.FB) {
+        try {
+          await new Promise<void>((resolve) => {
+            window.FB.logout(() => {
+              console.log('Logged out from Facebook SDK');
+              resolve();
+            });
           });
-        });
+        } catch (fbError) {
+          console.error('Error logging out from Facebook:', fbError);
+          // Continue with account deletion even if FB logout fails
+        }
       }
 
       // First, delete all posts associated with this social account
@@ -57,23 +73,40 @@ export const SocialAccountCard = ({
         throw new Error('Failed to delete associated posts');
       }
 
-      // Then delete the social account
-      const { error: accountError } = await supabase
-        .from('social_accounts')
-        .delete()
-        .eq('id', accountId);
+      // Then delete the social account with retry logic
+      const deleteAccount = async (attempt: number): Promise<void> => {
+        try {
+          const { error: accountError } = await supabase
+            .from('social_accounts')
+            .delete()
+            .eq('id', accountId);
 
-      if (accountError) throw accountError;
+          if (accountError) throw accountError;
+          
+          toast.success(`${platform} account disconnected successfully`);
+          
+          // Call the onDisconnect callback if provided
+          if (onDisconnect) {
+            onDisconnect();
+          }
 
-      toast.success(`${platform} account disconnected successfully`);
+        } catch (error) {
+          console.error(`Attempt ${attempt} - Error disconnecting account:`, error);
+          
+          if (attempt < MAX_RETRIES) {
+            // Exponential backoff
+            const delay = Math.pow(2, attempt) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return deleteAccount(attempt + 1);
+          }
+          throw error;
+        }
+      };
 
-      // Call the onDisconnect callback if provided
-      if (onDisconnect) {
-        onDisconnect();
-      }
+      await deleteAccount(0);
 
       // Reinitialize Facebook SDK if it was a Facebook account
-      if (platform === 'facebook' && window.FB) {
+      if (platform.toLowerCase() === 'facebook' && window.FB) {
         window.FB.init({
           appId: '1294294115054311',
           cookie: true,
@@ -82,9 +115,10 @@ export const SocialAccountCard = ({
         });
         console.log('Facebook SDK reinitialized');
       }
-    } catch (error) {
+
+    } catch (error: any) {
       console.error(`Error disconnecting ${platform} account:`, error);
-      toast.error(`Failed to disconnect ${platform} account`);
+      toast.error(error.message || `Failed to disconnect ${platform} account`);
     } finally {
       setIsDisconnecting(false);
     }
@@ -166,13 +200,30 @@ export const SocialAccountCard = ({
           </div>
         </div>
         {isConnected ? (
-          <Button 
-            variant="destructive" 
-            onClick={handleDisconnect}
-            disabled={isDisconnecting}
-          >
-            {isDisconnecting ? "Disconnecting..." : "Disconnect"}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="destructive" 
+                disabled={isDisconnecting}
+              >
+                {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will disconnect your {platform} account and delete all associated posts. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDisconnect}>
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : (
           children
         )}
