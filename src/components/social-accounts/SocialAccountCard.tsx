@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AccountHeader } from "./AccountHeader";
 import { DisconnectButton } from "./DisconnectButton";
+import type { FacebookSDK } from '@/types/facebook';
 
 interface SocialAccountCardProps {
   platform: string;

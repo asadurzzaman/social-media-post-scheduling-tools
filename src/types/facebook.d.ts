@@ -28,6 +28,7 @@ interface FacebookSDK {
     }
   ): void;
   getLoginStatus(callback: (response: FacebookLoginStatusResponse) => void): void;
+  logout(callback: () => void): void;
 }
 
 declare global {
