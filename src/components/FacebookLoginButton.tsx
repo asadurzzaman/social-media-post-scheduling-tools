@@ -93,6 +93,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
   const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const expirationDate = new Date();
       expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
 
@@ -100,7 +103,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         .from('social_accounts')
         .update({
           access_token: accessToken,
-          token_expires_at: expirationDate.toISOString()
+          token_expires_at: expirationDate.toISOString(),
+          user_id: user.id // Add the required user_id field
         })
         .eq('platform', 'facebook');
 

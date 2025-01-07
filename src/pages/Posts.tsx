@@ -1,44 +1,11 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Post } from "@/integrations/supabase/types";
 import { toast } from "sonner";
-import { PostList } from "@/components/posts/PostList";
-import { CreatePostDialog } from "@/components/calendar/CreatePostDialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-type SortOption = 'newest' | 'oldest' | 'scheduled';
-
-interface Post {
-  id: string;
-  content: string;
-  status: string;
-  created_at: string;
-  scheduled_for: string;
-  hashtags?: string[];
-  social_account_id: string;
-  timezone?: string;
-  user_id: string;
-  group_id?: string | null;
-  social_accounts: {
-    platform: string;
-  };
-}
 
 const Posts = () => {
-  const [selectedPost, setSelectedPost] = useState<any>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,178 +18,53 @@ const Posts = () => {
     getCurrentUser();
   }, []);
 
-  const { data: posts, isLoading, refetch } = useQuery({
-    queryKey: ['posts', statusFilter, sortBy],
-    queryFn: async () => {
-      let query = supabase
-        .from('posts')
-        .select('*, social_accounts(platform)');
-
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-      
-      switch (sortBy) {
-        case 'newest':
-          query = query.order('created_at', { ascending: false });
-          break;
-        case 'oldest':
-          query = query.order('created_at', { ascending: true });
-          break;
-        case 'scheduled':
-          query = query.order('scheduled_for', { ascending: true });
-          break;
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      
-      let allPosts = data || [];
-      
-      if (statusFilter === 'all' || statusFilter === 'draft') {
-        const draftJson = localStorage.getItem('postDraft');
-        if (draftJson) {
-          const draft = JSON.parse(draftJson);
-          allPosts = [{
-            id: 'draft-' + Date.now(),
-            content: draft.content || '',
-            status: 'draft',
-            created_at: new Date().toISOString(),
-            scheduled_for: draft.date || new Date().toISOString(),
-            hashtags: [],
-            social_account_id: draft.selectedAccount || '',
-            timezone: draft.timezone || 'UTC',
-            user_id: '',
-            group_id: null,
-            social_accounts: { platform: 'draft' }
-          }, ...allPosts];
-        }
-      }
-      
-      return allPosts as Post[];
-    }
-  });
-
-  const { data: accounts } = useQuery({
-    queryKey: ["social-accounts"],
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["posts"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("social_accounts")
+        .from("posts")
         .select("*")
-        .eq("platform", "facebook");
+        .eq("user_id", userId);
       
       if (error) throw error;
       return data;
     },
   });
 
-  const handleDelete = async (postId: string) => {
-    try {
-      if (postId.startsWith('draft-')) {
-        localStorage.removeItem('postDraft');
-        toast.success("Draft deleted successfully");
-        refetch();
-        return;
-      }
-
-      const { error } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId);
-
-      if (error) throw error;
-      
-      toast.success("Post deleted successfully");
-      refetch();
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      toast.error("Failed to delete post");
+  const transformPost = (post: any): Post => ({
+    id: post.id,
+    content: post.content,
+    status: post.status,
+    created_at: post.created_at,
+    scheduled_for: post.scheduled_for,
+    hashtags: post.hashtags || [],
+    social_account_id: post.social_account_id,
+    timezone: post.timezone,
+    user_id: post.user_id,
+    group_id: post.group_id,
+    search_vector: null, // Add the required search_vector field
+    social_accounts: {
+      platform: post.social_accounts?.platform
     }
-  };
+  });
 
-  const handleEdit = (post: any) => {
-    setSelectedPost(post);
-    setIsEditDialogOpen(true);
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">My Posts</h2>
-            <p className="text-muted-foreground">
-              View and manage all your social media posts
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Posts</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={sortBy}
-              onValueChange={(value: SortOption) => setSortBy(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-                <SelectItem value="scheduled">Schedule Date</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
-            <Button asChild>
-              <Link to="/create-post" className="gap-2">
-                <Plus className="h-4 w-4" />
-                New post
-              </Link>
-            </Button>
-          </div>
+      <div>
+        <h2 className="text-3xl font-bold">Your Posts</h2>
+        <div>
+          {posts?.map(post => (
+            <div key={post.id}>
+              <h3>{post.content}</h3>
+              <p>Status: {post.status}</p>
+              <p>Scheduled for: {post.scheduled_for}</p>
+            </div>
+          ))}
         </div>
-
-        <PostList
-          posts={posts}
-          isLoading={isLoading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-
-        {selectedPost && (
-          <CreatePostDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false);
-              setSelectedPost(null);
-              refetch();
-            }}
-            selectedDate={selectedPost.scheduled_for ? new Date(selectedPost.scheduled_for) : null}
-            accounts={accounts || []}
-            userId={userId}
-            initialPost={selectedPost}
-          />
-        )}
       </div>
     </DashboardLayout>
   );

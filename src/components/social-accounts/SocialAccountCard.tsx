@@ -94,9 +94,15 @@ export const SocialAccountCard = ({
     if (!accountId || !newName.trim()) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { error } = await supabase
         .from('social_accounts')
-        .update({ account_name: newName.trim() })
+        .update({ 
+          account_name: newName.trim(),
+          user_id: user.id // Add the required user_id field
+        })
         .eq('id', accountId);
 
       if (error) throw error;

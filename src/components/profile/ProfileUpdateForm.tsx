@@ -33,6 +33,7 @@ export const ProfileUpdateForm = ({ profile, onUpdate }: ProfileUpdateFormProps)
 
     const formData = new FormData(e.currentTarget);
     const updates = {
+      id: profile.id, // Add the required id field
       full_name: String(formData.get('fullName')),
       email: String(formData.get('email')),
       timezone: String(formData.get('timezone')),

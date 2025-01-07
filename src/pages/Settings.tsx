@@ -1,159 +1,106 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ProfileUpdateForm } from "@/components/profile/ProfileUpdateForm";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 const Settings = () => {
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [theme, setTheme] = useState("light");
-  const [language, setLanguage] = useState("en");
-  const [platformSelection, setPlatformSelection] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [showPlatformSelection, setShowPlatformSelection] = useState(false);
 
   useEffect(() => {
-    const fetchSettings = async () => {
+    const getProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUser(user);
         const { data: profile } = await supabase
           .from('profiles')
-          .select('post_platform_selection')
+          .select('*')
           .eq('id', user.id)
           .single();
         
         if (profile) {
-          setPlatformSelection(profile.post_platform_selection ?? true);
+          setProfile(profile);
+          setShowPlatformSelection(profile.post_platform_selection || false);
         }
       }
     };
-    
-    fetchSettings();
+
+    getProfile();
   }, []);
 
-  const handleSaveSettings = async () => {
-    setIsLoading(true);
+  const updatePlatformSelection = async (value: boolean) => {
+    if (!user) return;
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('No user found');
-      }
-
       const { error } = await supabase
         .from('profiles')
-        .update({
-          post_platform_selection: platformSelection
+        .update({ 
+          id: user.id,
+          post_platform_selection: value 
         })
         .eq('id', user.id);
 
       if (error) throw error;
-      toast.success('Settings saved successfully');
+      
+      toast.success('Preference updated successfully');
+      setShowPlatformSelection(value);
     } catch (error) {
-      console.error('Error saving settings:', error);
-      toast.error('Failed to save settings');
-    } finally {
-      setIsLoading(false);
+      console.error('Error updating platform selection:', error);
+      toast.error('Failed to update preference');
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight">Global Settings</h1>
-          <Button onClick={handleSaveSettings} disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences
+          </p>
         </div>
 
-        <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Post Creation</CardTitle>
-              <CardDescription>
-                Configure how you want to create posts
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="platform-selection">Platform Selection</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Allow selecting social media platform when creating posts
-                  </div>
-                </div>
-                <Switch
-                  id="platform-selection"
-                  checked={platformSelection}
-                  onCheckedChange={setPlatformSelection}
-                />
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Profile Settings</h3>
+            <ProfileUpdateForm 
+              profile={profile} 
+              onUpdate={() => {
+                // Refresh profile data
+                if (user) {
+                  supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
+                    .then(({ data }) => {
+                      if (data) setProfile(data);
+                    });
+                }
+              }} 
+            />
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>
-                Customize how SocialManager looks and feels
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="theme">Theme</Label>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select theme" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="language">Language</Label>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Spanish</SelectItem>
-                    <SelectItem value="fr">French</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifications</CardTitle>
-              <CardDescription>
-                Configure how you want to receive notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="email-notifications">Email Notifications</Label>
-                  <div className="text-sm text-muted-foreground">
-                    Receive notifications about your account via email
-                  </div>
-                </div>
-                <Switch
-                  id="email-notifications"
-                  checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Post Settings</h3>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="platform-selection"
+                checked={showPlatformSelection}
+                onCheckedChange={updatePlatformSelection}
+              />
+              <Label htmlFor="platform-selection">
+                Show platform selection when creating posts
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              When enabled, you'll be asked to choose which platforms to post to when creating a new post
+            </p>
+          </div>
         </div>
       </div>
     </DashboardLayout>
