@@ -1,9 +1,13 @@
-import { Command } from "cmdk";
+import * as React from "react";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 
 interface MentionSuggestionsProps {
   isOpen: boolean;
@@ -12,12 +16,13 @@ interface MentionSuggestionsProps {
   triggerRef: React.RefObject<HTMLSpanElement>;
 }
 
-const demoMentions = [
-  "@john.doe",
-  "@jane.smith",
-  "@marketing.team",
-  "@sales.dept",
-  "@support.team",
+const suggestions = [
+  "@everyone",
+  "@team",
+  "@marketing",
+  "@sales",
+  "@engineering",
+  "@design",
 ];
 
 export const MentionSuggestions = ({
@@ -27,31 +32,31 @@ export const MentionSuggestions = ({
   triggerRef,
 }: MentionSuggestionsProps) => {
   return (
-    <Popover open={isOpen} onOpenChange={onClose}>
-      <PopoverTrigger asChild>
-        <span ref={triggerRef} className="fixed" />
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-[200px]" sideOffset={5}>
-        <Command>
-          <Command.List>
-            <Command.Group>
-              {demoMentions.map((mention) => (
-                <Command.Item
-                  key={mention}
-                  value={mention}
-                  onSelect={() => {
-                    onSelect(mention);
-                    onClose();
-                  }}
-                  className="px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
-                >
-                  {mention}
-                </Command.Item>
-              ))}
-            </Command.Group>
-          </Command.List>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <span ref={triggerRef} className="absolute">
+      <Popover open={isOpen} onOpenChange={onClose}>
+        <PopoverContent className="p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search mentions..." />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup>
+                {suggestions.map((suggestion) => (
+                  <CommandItem
+                    key={suggestion}
+                    value={suggestion}
+                    onSelect={() => {
+                      onSelect(suggestion);
+                      onClose();
+                    }}
+                  >
+                    {suggestion}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </span>
   );
 };
