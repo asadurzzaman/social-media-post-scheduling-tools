@@ -31,7 +31,6 @@ serve(async (req) => {
       .from('posts')
       .select(`
         content,
-        image_url,
         social_accounts!inner(
           page_id,
           page_access_token
@@ -65,24 +64,12 @@ serve(async (req) => {
       throw new Error('Missing Facebook page credentials');
     }
 
-    // Prepare the post data
-    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
-    let postData: Record<string, any> = {
+    // Use the /feed endpoint for text-only posts
+    const endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
+    const postData = {
       message: post.content,
       access_token: pageAccessToken,
     };
-
-    // If there's no image, use the /feed endpoint instead
-    if (!post.image_url) {
-      endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
-    } else {
-      // Clean and validate image URL
-      const imageUrl = post.image_url.split(',')[0].trim();
-      if (!imageUrl.startsWith('http')) {
-        throw new Error('Invalid image URL format');
-      }
-      postData.url = imageUrl;
-    }
 
     console.log('Making Facebook API request to:', endpoint);
     console.log('Post data:', { ...postData, access_token: '[REDACTED]' });
