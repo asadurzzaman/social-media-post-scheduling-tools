@@ -86,6 +86,11 @@ export const CreatePostForm = ({
   };
 
   const handlePublishNow = async () => {
+    if (!userId) {
+      toast.error("Please log in to publish posts");
+      return;
+    }
+
     if (selectedAccounts.length === 0) {
       toast.error("Please select at least one social media account");
       return;
@@ -96,7 +101,7 @@ export const CreatePostForm = ({
         await publishPost({
           content,
           selectedAccount: accountId,
-          userId: userId!,
+          userId,
           postType,
           timezone,
         });
@@ -115,6 +120,11 @@ export const CreatePostForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!userId) {
+      toast.error("Please log in to schedule posts");
+      return;
+    }
+
     if (!date) {
       toast.error("Please select a date and time");
       return;
@@ -130,7 +140,7 @@ export const CreatePostForm = ({
         await publishPost({
           content,
           selectedAccount: accountId,
-          userId: userId!,
+          userId,
           postType,
           timezone,
           scheduledFor: date,

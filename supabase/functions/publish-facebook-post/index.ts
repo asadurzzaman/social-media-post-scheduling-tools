@@ -38,11 +38,15 @@ serve(async (req) => {
         )
       `)
       .eq('id', postId)
-      .single();
+      .maybeSingle();
 
-    if (postError || !post) {
+    if (postError) {
       console.error('Failed to fetch post:', postError);
       throw new Error('Failed to fetch post details');
+    }
+
+    if (!post) {
+      throw new Error('Post not found');
     }
 
     console.log('Post details:', { ...post, social_accounts: { ...post.social_accounts, page_access_token: '[REDACTED]' } });
