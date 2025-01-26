@@ -30,6 +30,14 @@ export const CreatePostForm = ({
   const [postType, setPostType] = useState<PostType>("text");
   const [isDraft, setIsDraft] = useState(false);
 
+  // Check for user authentication at component mount
+  useEffect(() => {
+    if (!userId) {
+      toast.error("Please log in to create posts");
+      navigate('/auth');
+    }
+  }, [userId, navigate]);
+
   const resetForm = () => {
     setContent("");
     setSelectedAccounts([]);
@@ -68,6 +76,12 @@ export const CreatePostForm = ({
   }, [content, postType, selectedAccounts, date, timezone, initialPost]);
 
   const handleSaveDraft = () => {
+    if (!userId) {
+      toast.error("Please log in to save drafts");
+      navigate('/auth');
+      return;
+    }
+
     const draft = {
       content,
       postType,
@@ -88,6 +102,7 @@ export const CreatePostForm = ({
   const handlePublishNow = async () => {
     if (!userId) {
       toast.error("Please log in to publish posts");
+      navigate('/auth');
       return;
     }
 
@@ -122,6 +137,7 @@ export const CreatePostForm = ({
     
     if (!userId) {
       toast.error("Please log in to schedule posts");
+      navigate('/auth');
       return;
     }
 
@@ -158,6 +174,11 @@ export const CreatePostForm = ({
     }
   };
 
+  // If there's no userId, don't render the form
+  if (!userId) {
+    return null;
+  }
+
   return (
     <CreatePostFormContent
       accounts={accounts}
@@ -176,6 +197,7 @@ export const CreatePostForm = ({
       onTimezoneChange={setTimezone}
       onPublishNow={handlePublishNow}
       onSaveDraft={handleSaveDraft}
+      initialPost={initialPost}
     />
   );
 };
