@@ -97,10 +97,10 @@ export const SocialAccountList = ({
                 <AvatarImage 
                   src={account.avatar_url} 
                   alt={account.account_name}
-                  className="object-cover"
+                  className="object-cover rounded-full"
                 />
               ) : null}
-              <AvatarFallback>
+              <AvatarFallback className="bg-muted">
                 {getPlatformIcon(account.platform)}
               </AvatarFallback>
             </Avatar>
