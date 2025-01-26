@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FacebookErrorHandler } from '@/utils/facebook/FacebookErrorHandler';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 declare global {
   interface Window {
@@ -48,12 +49,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           version: 'v18.0'
         });
         
-        // Disable impression logging to prevent errors
-        if (window.FB.Event && window.FB.Event.subscribe) {
-          window.FB.Event.subscribe('edge.create', () => {});
-          window.FB.Event.subscribe('edge.remove', () => {});
-        }
-        
         console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
       };
@@ -80,7 +75,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
     loadFacebookSDK();
 
-    // Cleanup function
     return () => {
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
@@ -91,10 +85,32 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     };
   }, [appId]);
 
+  const verifyPageAccess = async (accessToken: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error('Error verifying page access:', data.error);
+        return false;
+      }
+
+      return data.data && data.data.length > 0;
+    } catch (error) {
+      console.error('Error checking page access:', error);
+      return false;
+    }
+  };
+
   const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
+
+      const hasPageAccess = await verifyPageAccess(accessToken);
+      if (!hasPageAccess) {
+        throw new Error('No Facebook pages found or insufficient permissions');
+      }
 
       const expirationDate = new Date();
       expirationDate.setSeconds(expirationDate.getSeconds() + expiresIn);
@@ -104,7 +120,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         .update({
           access_token: accessToken,
           token_expires_at: expirationDate.toISOString(),
-          user_id: user.id // Add the required user_id field
+          user_id: user.id
         })
         .eq('platform', 'facebook');
 
@@ -129,30 +145,39 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     setIsProcessing(true);
 
     try {
-      // Force a new login attempt
-      console.log('Initiating Facebook login...');
+      console.log('Initiating Facebook login with extended permissions...');
       const loginResponse: FacebookLoginStatusResponse = await new Promise((resolve) => {
         window.FB.login((response: FacebookLoginStatusResponse) => {
           console.log('Login response:', response);
           resolve(response);
         }, {
-          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts',
+          scope: 'public_profile,email,pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata',
           return_scopes: true,
           auth_type: 'rerequest'
         });
       });
 
       if (loginResponse.status === 'connected' && loginResponse.authResponse) {
-        console.log('Login successful, updating token in database');
-        await updateTokenInDatabase(
-          loginResponse.authResponse.accessToken,
-          loginResponse.authResponse.expiresIn
-        );
+        console.log('Login successful, verifying page access...');
         
-        onSuccess({
-          accessToken: loginResponse.authResponse.accessToken,
-          userId: loginResponse.authResponse.userID
-        });
+        try {
+          await updateTokenInDatabase(
+            loginResponse.authResponse.accessToken,
+            loginResponse.authResponse.expiresIn
+          );
+          
+          onSuccess({
+            accessToken: loginResponse.authResponse.accessToken,
+            userId: loginResponse.authResponse.userID
+          });
+          
+          toast.success('Successfully connected to Facebook');
+        } catch (error: any) {
+          if (error.message.includes('No Facebook pages found')) {
+            toast.error('Please make sure you have admin access to at least one Facebook page');
+          }
+          throw error;
+        }
       } else {
         console.error('Login failed or was cancelled');
         onError('Login failed or was cancelled');
