@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
+import { Linkedin, Youtube, Instagram, Twitter, Facebook } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface SocialAccount {
@@ -43,20 +43,22 @@ const demoAccounts: SocialAccount[] = [
   }
 ];
 
-  const getPlatformIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
-      case 'linkedin':
-        return <Linkedin className="h-6 w-6 text-[#0077B5]" />;
-      case 'youtube':
-        return <Youtube className="h-6 w-6 text-[#FF0000]" />;
-      case 'instagram':
-        return <Instagram className="h-6 w-6 text-[#E4405F]" />;
-      case 'twitter':
-        return <Twitter className="h-6 w-6 text-[#1DA1F2]" />;
-      default:
-        return null;
-    }
-  };
+const getPlatformIcon = (platform: string) => {
+  switch (platform.toLowerCase()) {
+    case 'linkedin':
+      return <Linkedin className="h-6 w-6 text-[#0077B5]" />;
+    case 'youtube':
+      return <Youtube className="h-6 w-6 text-[#FF0000]" />;
+    case 'instagram':
+      return <Instagram className="h-6 w-6 text-[#E4405F]" />;
+    case 'twitter':
+      return <Twitter className="h-6 w-6 text-[#1DA1F2]" />;
+    case 'facebook':
+      return <Facebook className="h-6 w-6 text-[#1877F2]" />;
+    default:
+      return null;
+  }
+};
 
 export const SocialAccountList = ({ 
   accounts = [], 
@@ -90,16 +92,18 @@ export const SocialAccountList = ({
               selectedAccounts.includes(account.id) && "bg-accent"
             )}
           >
-            {account.avatar_url ? (
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={account.avatar_url} alt={account.account_name} />
-                <AvatarFallback>{getPlatformIcon(account.platform)}</AvatarFallback>
-              </Avatar>
-            ) : (
-              <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
+            <Avatar className="h-10 w-10">
+              {account.avatar_url ? (
+                <AvatarImage 
+                  src={account.avatar_url} 
+                  alt={account.account_name}
+                  className="object-cover"
+                />
+              ) : null}
+              <AvatarFallback>
                 {getPlatformIcon(account.platform)}
-              </div>
-            )}
+              </AvatarFallback>
+            </Avatar>
             <span className="font-medium">{account.account_name}</span>
             {accounts.length === 0 && (
               <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
