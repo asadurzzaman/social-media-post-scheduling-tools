@@ -16,34 +16,33 @@ interface SocialAccountListProps {
   onSelect?: (accountIds: string[]) => void;
 }
 
-const demoAccounts = [
+const demoAccounts: SocialAccount[] = [
   {
     id: 'demo-linkedin',
     platform: 'linkedin',
-    account_name: 'Demo LinkedIn Page'
+    account_name: 'Demo LinkedIn Page',
+    avatar_url: null
   },
   {
     id: 'demo-youtube',
     platform: 'youtube',
-    account_name: 'Demo YouTube Channel'
+    account_name: 'Demo YouTube Channel',
+    avatar_url: null
   },
   {
     id: 'demo-instagram',
     platform: 'instagram',
-    account_name: 'Demo Instagram Profile'
+    account_name: 'Demo Instagram Profile',
+    avatar_url: null
   },
   {
     id: 'demo-twitter',
     platform: 'twitter',
-    account_name: 'Demo Twitter Account'
+    account_name: 'Demo Twitter Account',
+    avatar_url: null
   }
 ];
 
-export const SocialAccountList = ({ 
-  accounts = [], 
-  selectedAccounts = [], 
-  onSelect 
-}: SocialAccountListProps) => {
   const getPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
       case 'linkedin':
@@ -59,6 +58,11 @@ export const SocialAccountList = ({
     }
   };
 
+export const SocialAccountList = ({ 
+  accounts = [], 
+  selectedAccounts = [], 
+  onSelect 
+}: SocialAccountListProps) => {
   const displayAccounts = accounts.length > 0 ? accounts : demoAccounts;
 
   const handleSelect = (accountId: string) => {
