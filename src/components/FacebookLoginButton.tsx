@@ -85,6 +85,19 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     };
   }, [appId]);
 
+  const fetchProfilePicture = async (userId: string, accessToken: string): Promise<string | null> => {
+    try {
+      const response = await fetch(
+        `https://graph.facebook.com/${userId}/picture?type=large&redirect=false&access_token=${accessToken}`
+      );
+      const data = await response.json();
+      return data.data?.url || null;
+    } catch (error) {
+      console.error('Error fetching profile picture:', error);
+      return null;
+    }
+  };
+
   const verifyPageAccess = async (accessToken: string): Promise<boolean> => {
     try {
       const response = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${accessToken}`);
@@ -102,7 +115,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
     }
   };
 
-  const updateTokenInDatabase = async (accessToken: string, expiresIn: number) => {
+  const updateTokenInDatabase = async (accessToken: string, expiresIn: number, avatarUrl: string | null) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
@@ -120,7 +133,8 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         .update({
           access_token: accessToken,
           token_expires_at: expirationDate.toISOString(),
-          user_id: user.id
+          user_id: user.id,
+          avatar_url: avatarUrl
         })
         .eq('platform', 'facebook');
 
@@ -160,10 +174,17 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       if (loginResponse.status === 'connected' && loginResponse.authResponse) {
         console.log('Login successful, verifying page access...');
         
+        // Fetch profile picture after successful login
+        const profilePicUrl = await fetchProfilePicture(
+          loginResponse.authResponse.userID,
+          loginResponse.authResponse.accessToken
+        );
+        
         try {
           await updateTokenInDatabase(
             loginResponse.authResponse.accessToken,
-            loginResponse.authResponse.expiresIn
+            loginResponse.authResponse.expiresIn,
+            profilePicUrl
           );
           
           onSuccess({
