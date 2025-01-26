@@ -1,8 +1,5 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { Linkedin, Youtube, Instagram, Twitter } from "lucide-react";
 
 interface SocialAccount {
@@ -77,51 +74,30 @@ export const SocialAccountList = ({
       <label className="text-sm font-medium">
         Select Social Media Accounts <span className="text-red-500">*</span>
       </label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between"
-          >
-            {selectedAccounts.length === 0 ? (
-              "Select accounts..."
-            ) : (
-              `${selectedAccounts.length} account${selectedAccounts.length === 1 ? '' : 's'} selected`
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {displayAccounts.map((account) => (
+          <div
+            key={account.id}
+            onClick={() => handleSelect(account.id)}
+            className={cn(
+              "flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-accent transition-colors",
+              selectedAccounts.includes(account.id) && "bg-accent"
             )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start" side="bottom">
-          <Command>
-            <CommandInput placeholder="Search accounts..." />
-            <CommandEmpty>No accounts found.</CommandEmpty>
-            <CommandGroup>
-              {displayAccounts.map((account) => (
-                <CommandItem
-                  key={account.id}
-                  value={account.id}
-                  onSelect={() => handleSelect(account.id)}
-                  className="flex items-center gap-3 px-2 py-1.5 text-sm cursor-pointer hover:bg-accent"
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    {getPlatformIcon(account.platform)}
-                    <span className="font-medium">{account.account_name}</span>
-                    {accounts.length === 0 && (
-                      <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
-                    )}
-                    <Check
-                      className={cn(
-                        "ml-auto h-4 w-4",
-                        selectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
+          >
+            {getPlatformIcon(account.platform)}
+            <span className="font-medium">{account.account_name}</span>
+            {accounts.length === 0 && (
+              <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">Demo</span>
+            )}
+            <Check
+              className={cn(
+                "ml-auto h-4 w-4",
+                selectedAccounts.includes(account.id) ? "opacity-100" : "opacity-0"
+              )}
+            />
+          </div>
+        ))}
+      </div>
       {accounts.length === 0 && (
         <p className="text-sm text-muted-foreground">
           These are demo accounts. Connect your social media accounts to start posting.
