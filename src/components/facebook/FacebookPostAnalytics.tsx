@@ -2,12 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-interface FacebookPostAnalytics {
+interface PostTimeAnalytics {
   id: string;
-  post_id: string;
-  engagement_score: number;
   user_id: string;
   social_account_id: string;
+  day_of_week: number;
+  hour_of_day: number;
+  engagement_score: number;
   created_at: string;
   updated_at: string;
 }
@@ -17,14 +18,14 @@ interface FacebookPostAnalyticsProps {
 }
 
 export const FacebookPostAnalytics = ({ postId }: FacebookPostAnalyticsProps) => {
-  const { data: analytics, isLoading } = useQuery<FacebookPostAnalytics>({
+  const { data: analytics, isLoading } = useQuery<PostTimeAnalytics | null>({
     queryKey: ['post-analytics', postId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('post_time_analytics')
         .select('*')
-        .eq('post_id', postId)
-        .single();
+        .eq('social_account_id', postId)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
