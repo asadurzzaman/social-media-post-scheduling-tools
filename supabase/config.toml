@@ -1,12 +1,11 @@
 project_id = "czuhcymoqjgsmwzimlzd"
 
-[api]
-enabled = true
-url = "https://czuhcymoqjgsmwzimlzd.supabase.co"
-
 [functions]
 [functions.check-subscription]
 verify_jwt = true
 
 [functions.create-checkout]
+verify_jwt = true
+
+[functions.publish-facebook-post]
 verify_jwt = true

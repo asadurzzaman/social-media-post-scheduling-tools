@@ -26,7 +26,7 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    // Fetch the post details
+    // Fetch the post details with better error handling
     const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
@@ -41,15 +41,22 @@ serve(async (req) => {
       .maybeSingle();
 
     if (postError) {
-      console.error('Failed to fetch post:', postError);
-      throw new Error('Failed to fetch post details');
+      console.error('Database error when fetching post:', postError);
+      throw new Error(`Database error: ${postError.message}`);
     }
 
     if (!post) {
+      console.error('Post not found:', postId);
       throw new Error('Post not found');
     }
 
-    console.log('Post details:', { ...post, social_accounts: { ...post.social_accounts, page_access_token: '[REDACTED]' } });
+    console.log('Post details:', { 
+      ...post, 
+      social_accounts: { 
+        ...post.social_accounts, 
+        page_access_token: '[REDACTED]' 
+      } 
+    });
 
     const pageId = post.social_accounts.page_id;
     const pageAccessToken = post.social_accounts.page_access_token;
@@ -70,7 +77,7 @@ serve(async (req) => {
       endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
     } else {
       // Clean and validate image URL
-      const imageUrl = post.image_url.split(',')[0].trim(); // Use the first image URL
+      const imageUrl = post.image_url.split(',')[0].trim();
       if (!imageUrl.startsWith('http')) {
         throw new Error('Invalid image URL format');
       }
