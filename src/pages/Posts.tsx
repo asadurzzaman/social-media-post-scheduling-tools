@@ -4,8 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Post } from "@/types/post";
 import { toast } from "sonner";
+import { PostList } from "@/components/posts/PostList";
+import { useNavigate } from "react-router-dom";
 
 const Posts = () => {
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -13,58 +16,70 @@ const Posts = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
+      } else {
+        toast.error("Please log in to view posts");
+        navigate('/auth');
       }
     };
     getCurrentUser();
-  }, []);
+  }, [navigate]);
 
   const { data: posts, isLoading } = useQuery({
-    queryKey: ["posts"],
+    queryKey: ["posts", userId],
     queryFn: async () => {
+      if (!userId) return [];
+      
       const { data, error } = await supabase
         .from("posts")
         .select("*")
         .eq("user_id", userId);
       
-      if (error) throw error;
-      return data;
+      if (error) {
+        toast.error("Failed to fetch posts");
+        throw error;
+      }
+      return data || [];
     },
+    enabled: !!userId // Only run query when userId is available
   });
 
-  const transformPost = (post: any): Post => ({
-    id: post.id,
-    content: post.content,
-    status: post.status || 'draft',
-    created_at: post.created_at,
-    scheduled_for: post.scheduled_for,
-    hashtags: post.hashtags || [],
-    social_account_id: post.social_account_id,
-    timezone: post.timezone || 'UTC',
-    user_id: post.user_id,
-    group_id: post.group_id,
-    search_vector: post.search_vector,
-    social_accounts: {
-      platform: post.social_accounts?.platform
+  const handleEdit = (post: Post) => {
+    // Handle edit functionality
+    console.log("Editing post:", post);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!userId) {
+      toast.error("Please log in to delete posts");
+      navigate('/auth');
+      return;
     }
-  });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+    try {
+      const { error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+      toast.success("Post deleted successfully");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      toast.error("Failed to delete post");
+    }
+  };
 
   return (
     <DashboardLayout>
-      <div>
+      <div className="space-y-6">
         <h2 className="text-3xl font-bold">Your Posts</h2>
-        <div>
-          {posts?.map(post => (
-            <div key={post.id}>
-              <h3>{post.content}</h3>
-              <p>Status: {post.status}</p>
-              <p>Scheduled for: {post.scheduled_for}</p>
-            </div>
-          ))}
-        </div>
+        <PostList 
+          posts={posts || []} 
+          onEdit={handleEdit} 
+          onDelete={handleDelete}
+          isLoading={isLoading}
+        />
       </div>
     </DashboardLayout>
   );
