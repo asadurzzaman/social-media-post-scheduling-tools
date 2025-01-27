@@ -37,6 +37,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 }) => {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
 
   useEffect(() => {
     const loadFacebookSDK = () => {
@@ -76,6 +77,26 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
     loadFacebookSDK();
 
+    // Check for accounts that need reconnection
+    const checkReconnectStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: accounts } = await supabase
+        .from('social_accounts')
+        .select('requires_reconnect')
+        .eq('platform', 'facebook')
+        .eq('user_id', user.id)
+        .single();
+
+      if (accounts?.requires_reconnect) {
+        setNeedsReconnect(true);
+        toast.error('Your Facebook account needs to be reconnected');
+      }
+    };
+
+    checkReconnectStatus();
+
     return () => {
       const existingScript = document.getElementById('facebook-jssdk');
       if (existingScript) {
@@ -97,16 +118,15 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       if (response.status === 'connected') {
         const { data: socialAccount } = await supabase
           .from('social_accounts')
-          .select('token_expires_at')
+          .select('token_expires_at, requires_reconnect')
           .eq('platform', 'facebook')
           .single();
 
-        if (socialAccount?.token_expires_at) {
-          const expirationDate = new Date(socialAccount.token_expires_at);
-          if (expirationDate <= new Date()) {
-            console.log('Token expired, requesting new login');
-            await handleFacebookLogin();
-          }
+        if (socialAccount?.requires_reconnect || 
+            (socialAccount?.token_expires_at && new Date(socialAccount.token_expires_at) <= new Date())) {
+          console.log('Token expired or reconnection needed, requesting new login');
+          setNeedsReconnect(true);
+          await handleFacebookLogin();
         }
       }
     } catch (error) {
@@ -217,6 +237,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
             profilePicUrl
           );
           
+          setNeedsReconnect(false);
           onSuccess({
             accessToken: loginResponse.authResponse.accessToken,
             userId: loginResponse.authResponse.userID
@@ -252,7 +273,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       className={`
         flex items-center justify-center gap-2 
         px-4 py-2 rounded
-        ${isProcessing ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'}
+        ${isProcessing ? 'bg-gray-400' : needsReconnect ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}
         text-white font-medium
         transition-colors
         w-full max-w-sm
@@ -266,7 +287,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       >
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
       </svg>
-      {isProcessing ? 'Processing...' : 'Continue with Facebook'}
+      {isProcessing ? 'Processing...' : needsReconnect ? 'Reconnect Facebook' : 'Continue with Facebook'}
     </button>
   );
 };
