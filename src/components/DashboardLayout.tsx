@@ -1,5 +1,5 @@
 import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings, Layers, FileText, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, PenSquare, Calendar, BarChart3, LogOut, User, UserPlus, FilePlus, Image, Settings, Layers, FileText, Sun, Moon, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { CreatePostDialog } from "./posts/CreatePostDialog";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,6 +38,7 @@ const legalItems = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
@@ -105,6 +107,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenu>
                 </div>
               </div>
+              <Button
+                onClick={() => setIsCreatePostOpen(true)}
+                className="w-[calc(100%-24px)] mx-3 mb-2"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Post
+              </Button>
               <SidebarGroupContent className="list-none">
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.path} className="list-none">
@@ -137,6 +146,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <TopNav />
           <main className="p-6">{children}</main>
         </div>
+
+        <CreatePostDialog 
+          isOpen={isCreatePostOpen}
+          onClose={() => setIsCreatePostOpen(false)}
+          onSuccess={() => {
+            toast.success("Post created successfully");
+            setIsCreatePostOpen(false);
+          }}
+        />
       </div>
     </SidebarProvider>
   );
