@@ -9,6 +9,7 @@ interface PublishPostParams {
   timezone: string;
   scheduledFor?: Date;
   postId?: string;
+  imageUrls?: string[];
 }
 
 export const publishPost = async ({
@@ -18,6 +19,7 @@ export const publishPost = async ({
   timezone,
   scheduledFor,
   postId,
+  imageUrls = [],
 }: PublishPostParams) => {
   if (!selectedAccount) {
     throw new Error("Please select a social media account");
@@ -42,6 +44,7 @@ export const publishPost = async ({
         scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
         status: initialStatus,
         timezone,
+        image_urls: imageUrls,
       })
       .eq('id', postId);
 
@@ -56,6 +59,7 @@ export const publishPost = async ({
         scheduled_for: scheduledFor ? scheduledFor.toISOString() : new Date().toISOString(),
         status: initialStatus,
         timezone,
+        image_urls: imageUrls,
       })
       .select()
       .single();
