@@ -65,24 +65,24 @@ export const CreatePostFormContent = ({
         onChange={setPostType} 
       />
 
-      {postType === "image" ? (
+      {postType === "image" && (
         <MediaUpload
           onFilesSelected={onFilesSelected}
           previewUrls={previewUrls}
           onDeleteImage={onDeleteImage}
         />
-      ) : (
-        <div className="space-y-2">
-          <label htmlFor="content" className="text-sm font-medium">
-            Post Content <span className="text-red-500">*</span>
-          </label>
-          <RichTextEditor
-            value={content}
-            onChange={setContent}
-            maxLength={2200}
-          />
-        </div>
       )}
+
+      <div className="space-y-2">
+        <label htmlFor="content" className="text-sm font-medium">
+          {postType === "image" ? "Image Caption" : "Post Content"} <span className="text-red-500">*</span>
+        </label>
+        <RichTextEditor
+          value={content}
+          onChange={setContent}
+          maxLength={2200}
+        />
+      </div>
 
       <SchedulingOptions
         date={date}
