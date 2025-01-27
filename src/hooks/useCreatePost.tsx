@@ -3,6 +3,7 @@ import { PostType } from '@/components/posts/PostTypeSelect';
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { publishPost } from "@/utils/postPublisher";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useCreatePost = (
   userId: string | null,
@@ -21,6 +22,8 @@ export const useCreatePost = (
   const [timezone, setTimezone] = useState<string>(initialPost?.timezone || "UTC");
   const [postType, setPostType] = useState<PostType>("text");
   const [isDraft, setIsDraft] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (!userId) {
@@ -28,6 +31,17 @@ export const useCreatePost = (
       navigate('/auth');
     }
   }, [userId, navigate]);
+
+  useEffect(() => {
+    // Create preview URLs for selected files
+    const urls = selectedFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+
+    // Cleanup function to revoke object URLs
+    return () => {
+      urls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [selectedFiles]);
 
   useEffect(() => {
     if (!initialPost) {
@@ -57,12 +71,17 @@ export const useCreatePost = (
     }
   }, [content, postType, selectedAccounts, date, timezone, initialPost]);
 
+  const handleDeleteImage = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const resetForm = () => {
     setContent("");
     setSelectedAccounts([]);
     setDate(undefined);
     setPostType("text");
     setIsDraft(false);
+    setSelectedFiles([]);
     localStorage.removeItem('postDraft');
   };
 
@@ -85,6 +104,32 @@ export const useCreatePost = (
     toast.success("Draft saved successfully!");
   };
 
+  const uploadImages = async () => {
+    const uploadedUrls: string[] = [];
+    
+    for (const file of selectedFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw new Error('Failed to upload image');
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(fileName);
+
+      uploadedUrls.push(publicUrl);
+    }
+
+    return uploadedUrls;
+  };
+
   const handlePublishNow = async () => {
     if (!userId) {
       toast.error("Please log in to publish posts");
@@ -98,6 +143,8 @@ export const useCreatePost = (
     }
 
     try {
+      const imageUrls = selectedFiles.length > 0 ? await uploadImages() : [];
+
       for (const accountId of selectedAccounts) {
         await publishPost({
           content,
@@ -105,6 +152,7 @@ export const useCreatePost = (
           userId,
           postType,
           timezone,
+          imageUrls,
         });
       }
       
@@ -138,6 +186,8 @@ export const useCreatePost = (
     }
 
     try {
+      const imageUrls = selectedFiles.length > 0 ? await uploadImages() : [];
+
       for (const accountId of selectedAccounts) {
         await publishPost({
           content,
@@ -147,6 +197,7 @@ export const useCreatePost = (
           timezone,
           scheduledFor: date,
           postId: initialPost?.id,
+          imageUrls,
         });
       }
       
@@ -178,6 +229,10 @@ export const useCreatePost = (
     resetForm: () => {
       resetForm();
       toast.success("Draft cleared successfully!");
-    }
+    },
+    selectedFiles,
+    setSelectedFiles,
+    previewUrls,
+    handleDeleteImage
   };
 };

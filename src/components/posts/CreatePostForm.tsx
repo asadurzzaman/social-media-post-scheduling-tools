@@ -31,7 +31,11 @@ export const CreatePostForm = ({
     handleSaveDraft,
     handlePublishNow,
     handleSubmit,
-    resetForm
+    resetForm,
+    selectedFiles,
+    setSelectedFiles,
+    previewUrls,
+    handleDeleteImage
   } = useCreatePost(userId, initialPost, initialDate, onSuccess);
 
   // If there's no userId, don't render the form
@@ -58,6 +62,10 @@ export const CreatePostForm = ({
       onPublishNow={handlePublishNow}
       onSaveDraft={handleSaveDraft}
       initialPost={initialPost}
+      selectedFiles={selectedFiles}
+      onFilesSelected={setSelectedFiles}
+      previewUrls={previewUrls}
+      onDeleteImage={handleDeleteImage}
     />
   );
 };
