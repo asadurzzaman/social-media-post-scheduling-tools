@@ -37,6 +37,7 @@ export const EditPostForm = ({ post, onSuccess }: EditPostFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <h2 className="text-lg font-semibold">Edit Post</h2>
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}

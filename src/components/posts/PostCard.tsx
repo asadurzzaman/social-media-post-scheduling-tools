@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { PostPreviewDialog } from "./PostPreviewDialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { EditPostForm } from "./EditPostForm";
 
 interface PostCardProps {
   post: {
@@ -25,8 +27,14 @@ interface PostCardProps {
 
 export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
   const [showPreview, setShowPreview] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const hasMedia = post.image_url;
   const isVideo = post.image_url?.includes('.mp4') || post.image_url?.includes('.mov');
+
+  const handleEditSuccess = () => {
+    setShowEditDialog(false);
+    onEdit(post); // Refresh the posts list
+  };
 
   return (
     <>
@@ -106,7 +114,7 @@ export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(post)}
+              onClick={() => setShowEditDialog(true)}
               className="flex-1 bg-white/5 hover:bg-white/10 text-white"
             >
               <Pencil className="h-4 w-4 mr-2" />
@@ -130,6 +138,12 @@ export const PostCard = ({ post, onEdit, onDelete }: PostCardProps) => {
         open={showPreview}
         onOpenChange={setShowPreview}
       />
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <EditPostForm post={post} onSuccess={handleEditSuccess} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
