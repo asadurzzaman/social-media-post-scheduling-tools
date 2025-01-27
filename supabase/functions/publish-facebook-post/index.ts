@@ -17,7 +17,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the post ID from the request
     const { postId } = await req.json();
 
     if (!postId) {
@@ -26,11 +25,11 @@ serve(async (req) => {
 
     console.log('Publishing post:', postId);
 
-    // Fetch the post details with better error handling
     const { data: post, error: postError } = await supabaseClient
       .from('posts')
       .select(`
         content,
+        image_urls,
         social_accounts!inner(
           page_id,
           page_access_token
@@ -64,17 +63,23 @@ serve(async (req) => {
       throw new Error('Missing Facebook page credentials');
     }
 
-    // Use the /feed endpoint for text-only posts
-    const endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
-    const postData = {
+    let endpoint = `https://graph.facebook.com/v18.0/${pageId}/photos`;
+    let postData: any = {
       message: post.content,
       access_token: pageAccessToken,
     };
 
+    // If no images, use /feed endpoint for text-only post
+    if (!post.image_urls || post.image_urls.length === 0) {
+      endpoint = `https://graph.facebook.com/v18.0/${pageId}/feed`;
+    } else {
+      // For image posts, add the URL
+      postData.url = post.image_urls[0]; // Currently only supporting first image
+    }
+
     console.log('Making Facebook API request to:', endpoint);
     console.log('Post data:', { ...postData, access_token: '[REDACTED]' });
 
-    // Make the Facebook API request
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -92,7 +97,6 @@ serve(async (req) => {
     const result = await response.json();
     console.log('Facebook API response:', result);
 
-    // Update post status to published
     const { error: updateError } = await supabaseClient
       .from('posts')
       .update({ status: 'published' })

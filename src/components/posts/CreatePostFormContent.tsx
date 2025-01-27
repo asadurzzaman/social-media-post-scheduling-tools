@@ -3,6 +3,7 @@ import { SocialAccountList } from './SocialAccountList';
 import { RichTextEditor } from './RichTextEditor';
 import { SchedulingOptions } from './SchedulingOptions';
 import { PostFormActions } from './PostFormActions';
+import { MediaUpload } from './MediaUpload';
 
 interface CreatePostFormContentProps {
   accounts: any[];
@@ -22,6 +23,10 @@ interface CreatePostFormContentProps {
   onPublishNow?: () => void;
   onSaveDraft?: () => void;
   initialPost?: any;
+  selectedFiles?: File[];
+  onFilesSelected?: (files: File[]) => void;
+  previewUrls?: string[];
+  onDeleteImage?: (index: number) => void;
 }
 
 export const CreatePostFormContent = ({
@@ -41,7 +46,11 @@ export const CreatePostFormContent = ({
   onTimezoneChange,
   onPublishNow,
   onSaveDraft,
-  initialPost
+  initialPost,
+  selectedFiles,
+  onFilesSelected,
+  previewUrls = [],
+  onDeleteImage,
 }: CreatePostFormContentProps) => {
   return (
     <div className="space-y-6 max-w-2xl">
@@ -55,6 +64,14 @@ export const CreatePostFormContent = ({
         value={postType} 
         onChange={setPostType} 
       />
+
+      {postType === "image" && onFilesSelected && (
+        <MediaUpload
+          onFilesSelected={onFilesSelected}
+          previewUrls={previewUrls}
+          onDeleteImage={onDeleteImage}
+        />
+      )}
 
       <div className="space-y-2">
         <label htmlFor="content" className="text-sm font-medium">
