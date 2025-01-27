@@ -51,6 +51,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
         
         console.log('Facebook SDK initialized successfully');
         setIsSDKLoaded(true);
+        checkLoginStatus();
       };
 
       // Remove existing Facebook SDK if present
@@ -84,6 +85,34 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       delete window.fbAsyncInit;
     };
   }, [appId]);
+
+  const checkLoginStatus = async () => {
+    if (!window.FB) return;
+
+    try {
+      const response = await new Promise<FacebookLoginStatusResponse>((resolve) => {
+        window.FB.getLoginStatus(resolve);
+      });
+
+      if (response.status === 'connected') {
+        const { data: socialAccount } = await supabase
+          .from('social_accounts')
+          .select('token_expires_at')
+          .eq('platform', 'facebook')
+          .single();
+
+        if (socialAccount?.token_expires_at) {
+          const expirationDate = new Date(socialAccount.token_expires_at);
+          if (expirationDate <= new Date()) {
+            console.log('Token expired, requesting new login');
+            await handleFacebookLogin();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+    }
+  };
 
   const fetchProfilePicture = async (userId: string, accessToken: string): Promise<string | null> => {
     try {
@@ -134,7 +163,9 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           access_token: accessToken,
           token_expires_at: expirationDate.toISOString(),
           user_id: user.id,
-          avatar_url: avatarUrl
+          avatar_url: avatarUrl,
+          requires_reconnect: false,
+          last_error: null
         })
         .eq('platform', 'facebook');
 
@@ -174,7 +205,6 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       if (loginResponse.status === 'connected' && loginResponse.authResponse) {
         console.log('Login successful, verifying page access...');
         
-        // Fetch profile picture after successful login
         const profilePicUrl = await fetchProfilePicture(
           loginResponse.authResponse.userID,
           loginResponse.authResponse.accessToken
