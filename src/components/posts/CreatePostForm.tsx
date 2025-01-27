@@ -1,5 +1,8 @@
 import { CreatePostFormContent } from "./CreatePostFormContent";
 import { useCreatePost } from "@/hooks/useCreatePost";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface CreatePostFormProps {
   accounts: any[];
@@ -16,6 +19,17 @@ export const CreatePostForm = ({
   initialPost,
   onSuccess 
 }: CreatePostFormProps) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Validate that there are connected accounts
+    if (accounts.length === 0) {
+      toast.error("Please connect a social media account first");
+      navigate("/add-account");
+      return;
+    }
+  }, [accounts, navigate]);
+
   const {
     content,
     setContent,

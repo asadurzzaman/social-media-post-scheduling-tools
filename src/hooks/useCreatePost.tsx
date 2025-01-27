@@ -26,38 +26,6 @@ export const useCreatePost = (
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!userId) {
-      toast.error("Please log in to create posts");
-      navigate('/auth');
-    }
-  }, [userId, navigate]);
-
-  useEffect(() => {
-    // Create preview URLs for selected files
-    const urls = selectedFiles.map(file => URL.createObjectURL(file));
-    setPreviewUrls(urls);
-
-    // Cleanup function to revoke object URLs
-    return () => {
-      urls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [selectedFiles]);
-
-  useEffect(() => {
-    if (!initialPost) {
-      const savedDraft = localStorage.getItem('postDraft');
-      if (savedDraft) {
-        const draft = JSON.parse(savedDraft);
-        setContent(draft.content || "");
-        setPostType(draft.postType || "text");
-        setSelectedAccounts(draft.selectedAccounts || []);
-        if (draft.date) setDate(new Date(draft.date));
-        if (draft.timezone) setTimezone(draft.timezone);
-      }
-    }
-  }, [initialPost]);
-
-  useEffect(() => {
     if (!initialPost && (content || selectedAccounts.length > 0 || date)) {
       const draft = {
         content,
@@ -71,63 +39,26 @@ export const useCreatePost = (
     }
   }, [content, postType, selectedAccounts, date, timezone, initialPost]);
 
-  const handleDeleteImage = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-  };
+  const validateSelectedAccount = async (accountId: string) => {
+    const { data: account, error } = await supabase
+      .from('social_accounts')
+      .select('*')
+      .eq('id', accountId)
+      .single();
 
-  const resetForm = () => {
-    setContent("");
-    setSelectedAccounts([]);
-    setDate(undefined);
-    setPostType("text");
-    setIsDraft(false);
-    setSelectedFiles([]);
-    localStorage.removeItem('postDraft');
-  };
-
-  const handleSaveDraft = () => {
-    if (!userId) {
-      toast.error("Please log in to save drafts");
-      navigate('/auth');
-      return;
+    if (error || !account) {
+      toast.error("Selected social account is not valid. Please reconnect your account.");
+      navigate('/add-account');
+      return false;
     }
 
-    const draft = {
-      content,
-      postType,
-      selectedAccounts,
-      date: date?.toISOString(),
-      timezone
-    };
-    localStorage.setItem('postDraft', JSON.stringify(draft));
-    setIsDraft(true);
-    toast.success("Draft saved successfully!");
-  };
-
-  const uploadImages = async () => {
-    const uploadedUrls: string[] = [];
-    
-    for (const file of selectedFiles) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(fileName, file);
-
-      if (uploadError) {
-        console.error('Error uploading file:', uploadError);
-        throw new Error('Failed to upload image');
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('media')
-        .getPublicUrl(fileName);
-
-      uploadedUrls.push(publicUrl);
+    if (account.requires_reconnect) {
+      toast.error("Your social account needs to be reconnected");
+      navigate('/add-account');
+      return false;
     }
 
-    return uploadedUrls;
+    return true;
   };
 
   const handlePublishNow = async () => {
@@ -141,6 +72,10 @@ export const useCreatePost = (
       toast.error("Please select at least one social media account");
       return;
     }
+
+    // Validate the selected account exists and is properly connected
+    const isValid = await validateSelectedAccount(selectedAccounts[0]);
+    if (!isValid) return;
 
     try {
       const imageUrls = selectedFiles.length > 0 ? await uploadImages() : [];
@@ -185,6 +120,10 @@ export const useCreatePost = (
       return;
     }
 
+    // Validate the selected account exists and is properly connected
+    const isValid = await validateSelectedAccount(selectedAccounts[0]);
+    if (!isValid) return;
+
     try {
       const imageUrls = selectedFiles.length > 0 ? await uploadImages() : [];
 
@@ -211,6 +150,39 @@ export const useCreatePost = (
     }
   };
 
+  const handleSaveDraft = () => {
+    if (!userId) {
+      toast.error("Please log in to save drafts");
+      navigate('/auth');
+      return;
+    }
+
+    const draft = {
+      content,
+      postType,
+      selectedAccounts,
+      date: date?.toISOString(),
+      timezone
+    };
+    localStorage.setItem('postDraft', JSON.stringify(draft));
+    setIsDraft(true);
+    toast.success("Draft saved successfully!");
+  };
+
+  const resetForm = () => {
+    setContent("");
+    setSelectedAccounts([]);
+    setDate(undefined);
+    setPostType("text");
+    setIsDraft(false);
+    setSelectedFiles([]);
+    localStorage.removeItem('postDraft');
+  };
+
+  const handleDeleteImage = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   return {
     content,
     setContent,
@@ -226,10 +198,7 @@ export const useCreatePost = (
     handleSaveDraft,
     handlePublishNow,
     handleSubmit,
-    resetForm: () => {
-      resetForm();
-      toast.success("Draft cleared successfully!");
-    },
+    resetForm,
     selectedFiles,
     setSelectedFiles,
     previewUrls,
