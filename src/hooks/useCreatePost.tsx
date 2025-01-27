@@ -61,6 +61,34 @@ export const useCreatePost = (
     return true;
   };
 
+  const uploadImages = async () => {
+    if (selectedFiles.length === 0) return [];
+
+    const uploadedUrls: string[] = [];
+    
+    for (const file of selectedFiles) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from('media')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Failed to upload image: ${file.name}`);
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(fileName);
+
+      uploadedUrls.push(publicUrl);
+    }
+
+    return uploadedUrls;
+  };
+
   const handlePublishNow = async () => {
     if (!userId) {
       toast.error("Please log in to publish posts");
@@ -181,6 +209,7 @@ export const useCreatePost = (
 
   const handleDeleteImage = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   return {
