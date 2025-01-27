@@ -32,7 +32,9 @@ serve(async (req) => {
         image_urls,
         social_accounts!inner(
           page_id,
-          page_access_token
+          page_access_token,
+          requires_reconnect,
+          token_expires_at
         )
       `)
       .eq('id', postId)
@@ -46,6 +48,18 @@ serve(async (req) => {
     if (!post) {
       console.error('Post not found:', postId);
       throw new Error('Post not found');
+    }
+
+    // Check if token is expired or account needs reconnection
+    const tokenExpiresAt = post.social_accounts.token_expires_at;
+    if (post.social_accounts.requires_reconnect || 
+        (tokenExpiresAt && new Date(tokenExpiresAt) <= new Date())) {
+      await supabaseClient
+        .from('social_accounts')
+        .update({ requires_reconnect: true })
+        .eq('page_id', post.social_accounts.page_id);
+      
+      throw new Error('Facebook token expired. Please reconnect your account.');
     }
 
     console.log('Post details:', { 
@@ -88,14 +102,25 @@ serve(async (req) => {
       body: JSON.stringify(postData),
     });
 
+    const fbResponse = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Facebook API Error:', errorData);
-      throw new Error(`Facebook API Error: ${JSON.stringify(errorData)}`);
+      console.error('Facebook API Error:', fbResponse);
+      
+      // Check for token expiration in the Facebook response
+      if (fbResponse.error?.code === 190) {
+        await supabaseClient
+          .from('social_accounts')
+          .update({ requires_reconnect: true })
+          .eq('page_id', pageId);
+        
+        throw new Error('Facebook token expired. Please reconnect your account.');
+      }
+      
+      throw new Error(`Facebook API Error: ${JSON.stringify(fbResponse)}`);
     }
 
-    const result = await response.json();
-    console.log('Facebook API response:', result);
+    console.log('Facebook API response:', fbResponse);
 
     const { error: updateError } = await supabaseClient
       .from('posts')
@@ -108,7 +133,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, postId: result.id }),
+      JSON.stringify({ success: true, postId: fbResponse.id }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
