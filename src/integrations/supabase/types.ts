@@ -280,6 +280,7 @@ export type Database = {
           group_id: string | null
           hashtags: string[] | null
           id: string
+          image_urls: string[] | null
           scheduled_for: string
           search_vector: unknown | null
           social_account_id: string
@@ -293,6 +294,7 @@ export type Database = {
           group_id?: string | null
           hashtags?: string[] | null
           id?: string
+          image_urls?: string[] | null
           scheduled_for: string
           search_vector?: unknown | null
           social_account_id: string
@@ -306,6 +308,7 @@ export type Database = {
           group_id?: string | null
           hashtags?: string[] | null
           id?: string
+          image_urls?: string[] | null
           scheduled_for?: string
           search_vector?: unknown | null
           social_account_id?: string
