@@ -84,12 +84,13 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
 
       const { data: accounts } = await supabase
         .from('social_accounts')
-        .select('requires_reconnect')
+        .select('requires_reconnect, token_expires_at')
         .eq('platform', 'facebook')
         .eq('user_id', user.id)
         .single();
 
-      if (accounts?.requires_reconnect) {
+      if (accounts?.requires_reconnect || 
+          (accounts?.token_expires_at && new Date(accounts.token_expires_at) <= new Date())) {
         setNeedsReconnect(true);
         toast.error('Your Facebook account needs to be reconnected');
       }
@@ -122,8 +123,10 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
           .eq('platform', 'facebook')
           .single();
 
-        if (socialAccount?.requires_reconnect || 
-            (socialAccount?.token_expires_at && new Date(socialAccount.token_expires_at) <= new Date())) {
+        const tokenExpired = socialAccount?.token_expires_at && 
+                           new Date(socialAccount.token_expires_at) <= new Date();
+
+        if (socialAccount?.requires_reconnect || tokenExpired) {
           console.log('Token expired or reconnection needed, requesting new login');
           setNeedsReconnect(true);
           await handleFacebookLogin();
@@ -131,6 +134,7 @@ const FacebookLoginButton: React.FC<FacebookLoginButtonProps> = ({
       }
     } catch (error) {
       console.error('Error checking login status:', error);
+      setNeedsReconnect(true);
     }
   };
 
